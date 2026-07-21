@@ -4,6 +4,7 @@ import { Button, Card, Form, Input, Typography, message } from "antd";
 import { UserOutlined, MailOutlined, LockOutlined } from "@ant-design/icons";
 
 import styles from "./page.module.scss";
+import { useRouter } from "next/navigation";
 
 const { Title, Text } = Typography;
 
@@ -15,6 +16,7 @@ type RegisterForm = {
 };
 
 export default function Page() {
+  const router = useRouter();
   const [form] = Form.useForm();
   const [messageApi, contextHolder] = message.useMessage();
 
@@ -44,20 +46,17 @@ export default function Page() {
         messageApi.error(
           validationMessage ?? error.title ?? "Registration failed.",
         );
-
         return;
       }
 
-      const user = await response.json();
+      const userToken = await response.json();
 
-      console.log(user);
+      console.log(userToken);
 
       messageApi.success("Account created successfully!");
+      router.push("/main");
 
       form.resetFields();
-
-      // Later:
-      // router.push("/login");
     } catch (error) {
       console.error(error);
       messageApi.error("Something went wrong.");

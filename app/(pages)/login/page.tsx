@@ -1,48 +1,31 @@
 "use client";
 
 import { Button, Card, Form, Input, Typography, message } from "antd";
-import {
-  LockOutlined,
-  MailOutlined,
-} from "@ant-design/icons";
+import { LockOutlined, MailOutlined } from "@ant-design/icons";
 
 import styles from "./page.module.scss";
+import { useRouter } from "next/navigation";
+import { api } from "@/app/lib/api";
 
 const { Title, Text } = Typography;
 
 export default function Page() {
   const [messageApi, contextHolder] = message.useMessage();
 
-  const onFinish = async (values: {
-    email: string;
-    password: string;
-  }) => {
-    try {
-      const response = await fetch(
-        "http://localhost:5066/v1/api/users/login",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(values),
-        }
-      );
+  const router = useRouter();
 
-      if (!response.ok) {
+  const onFinish = async (values: { email: string; password: string }) => {
+    try {
+      const response = await api.post("/users/login", values);
+
+      if (!response) {
         messageApi.error("Invalid email or password.");
         return;
       }
 
-      const user = await response.json();
-
-      console.log(user);
+      router.push("/main");
 
       messageApi.success("Login successful!");
-
-      // Later, after JWT:
-      // localStorage.setItem("token", user.token);
-
     } catch (error) {
       console.error(error);
       messageApi.error("Something went wrong.");
@@ -57,19 +40,12 @@ export default function Page() {
         <div className={styles.card}>
           <Card>
             <div className={styles.header}>
-              <Title level={2}>
-                Welcome Back 👋
-              </Title>
+              <Title level={2}>Welcome Back 👋</Title>
 
-              <Text type="secondary">
-                Sign in to continue
-              </Text>
+              <Text type="secondary">Sign in to continue</Text>
             </div>
 
-            <Form
-              layout="vertical"
-              onFinish={onFinish}
-            >
+            <Form layout="vertical" onFinish={onFinish}>
               <Form.Item
                 label="Email"
                 name="email"
