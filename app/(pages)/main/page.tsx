@@ -15,7 +15,7 @@ export default function MainDashboard() {
   }, []);
 
   return (
-    <div>
+    <div className={styles.main}>
       <h1>Protected Dashboard</h1>
       {/* Render secure data here */}
     </div>
