@@ -1,10 +1,19 @@
 "use client";
 
-import { Button, Card, Form, Input, Typography, message } from "antd";
+import {
+  ConfigProvider,
+  Button,
+  Card,
+  Form,
+  Input,
+  Typography,
+  message,
+  theme,
+} from "antd";
 import { UserOutlined, MailOutlined, LockOutlined } from "@ant-design/icons";
-
-import styles from "./page.module.scss";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import styles from "./page.module.scss";
 
 const { Title, Text } = Typography;
 
@@ -49,12 +58,8 @@ export default function Page() {
         return;
       }
 
-      const userToken = await response.json();
-
-      console.log(userToken);
-
       messageApi.success("Account created successfully!");
-      router.push("/main");
+      router.push("/dashboard");
 
       form.resetFields();
     } catch (error) {
@@ -64,16 +69,30 @@ export default function Page() {
   };
 
   return (
-    <>
+    <ConfigProvider
+      theme={{
+        algorithm: theme.darkAlgorithm,
+        token: {
+          colorPrimary: "#008d0a",
+          colorBgBase: "#0d1117",
+          colorBgContainer: "#161b22",
+          colorBorderSecondary: "#21262d",
+          borderRadius: 8,
+        },
+      }}
+    >
       {contextHolder}
 
       <main className={styles.container}>
         <div className={styles.card}>
-          <Card>
-            <div className={styles.header}>
-              <Title level={2}>Create Account 🚀</Title>
+          <Card bordered={false}>
+            <div className={styles.logoBadge}>F</div>
 
-              <Text type="secondary">Sign up to get started</Text>
+            <div className={styles.header}>
+              <Title level={2} className={styles.title}>
+                Create Account 🚀
+              </Title>
+              <Text className={styles.subtitle}>Sign up to get started</Text>
             </div>
 
             <Form form={form} layout="vertical" onFinish={onFinish}>
@@ -89,7 +108,7 @@ export default function Page() {
               >
                 <Input
                   size="large"
-                  prefix={<UserOutlined />}
+                  prefix={<UserOutlined className={styles.inputIcon} />}
                   placeholder="John Doe"
                 />
               </Form.Item>
@@ -110,7 +129,7 @@ export default function Page() {
               >
                 <Input
                   size="large"
-                  prefix={<MailOutlined />}
+                  prefix={<MailOutlined className={styles.inputIcon} />}
                   placeholder="your@email.com"
                 />
               </Form.Item>
@@ -151,7 +170,7 @@ export default function Page() {
               >
                 <Input.Password
                   size="large"
-                  prefix={<LockOutlined />}
+                  prefix={<LockOutlined className={styles.inputIcon} />}
                   placeholder="Password"
                 />
               </Form.Item>
@@ -180,7 +199,7 @@ export default function Page() {
               >
                 <Input.Password
                   size="large"
-                  prefix={<LockOutlined />}
+                  prefix={<LockOutlined className={styles.inputIcon} />}
                   placeholder="Confirm password"
                 />
               </Form.Item>
@@ -190,15 +209,25 @@ export default function Page() {
                   type="primary"
                   htmlType="submit"
                   block
+                  size="large"
                   className={styles.button}
                 >
                   Create Account
                 </Button>
               </Form.Item>
             </Form>
+
+            <div className={styles.footer}>
+              <Text className={styles.footerText}>
+                Already have an account?{" "}
+                <Link href="/login" className={styles.link}>
+                  Sign in
+                </Link>
+              </Text>
+            </div>
           </Card>
         </div>
       </main>
-    </>
+    </ConfigProvider>
   );
 }

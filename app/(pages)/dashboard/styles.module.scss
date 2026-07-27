@@ -1,0 +1,185 @@
+.layout {
+  min-height: 100vh;
+  background-color: #0d1117;
+  color: #e6edf3;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+// Sidebar Component Styling
+.sider {
+  border-right: 1px solid #21262d;
+  background: #161b22 !important;
+
+  .logoContainer {
+    height: 64px;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    gap: 12px;
+    border-bottom: 1px solid #21262d;
+
+    .logoBadge {
+      width: 32px;
+      height: 32px;
+      background-color: #008d0a;
+      color: #ffffff;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1.1rem;
+    }
+
+    .logoText {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #ffffff;
+      letter-spacing: 0.5px;
+    }
+  }
+
+  .menu {
+    border-right: none;
+    background: transparent;
+    padding-top: 12px;
+  }
+}
+
+// Main Layout & Modular Header
+.mainLayout {
+  background: #0d1117;
+}
+
+.header {
+  padding: 0 24px;
+  background: #161b22;
+  border-bottom: 1px solid #21262d;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  .triggerBtn {
+    font-size: 18px;
+    color: #8b949e;
+
+    &:hover {
+      color: #008d0a !important;
+      background: rgba(0, 141, 10, 0.1) !important;
+    }
+  }
+
+  .headerActions {
+    .username {
+      color: #c9d1d9;
+      font-weight: 500;
+      font-size: 0.9rem;
+    }
+  }
+}
+
+// Dashboard Body
+.content {
+  margin: 24px;
+
+  .pageHeader {
+    margin-bottom: 24px;
+
+    h2 {
+      margin: 0;
+      color: #f0f6fc;
+      font-weight: 600;
+      font-size: 1.5rem;
+    }
+
+    p {
+      margin: 4px 0 0;
+      color: #8b949e;
+      font-size: 0.9rem;
+    }
+  }
+}
+
+.metricRow {
+  margin-bottom: 24px;
+
+  .statDetailGroup {
+    display: flex;
+    gap: 8px;
+  }
+
+  .trendUp {
+    color: #008d0a;
+    font-size: 0.8rem;
+    display: block;
+    margin-top: 8px;
+    font-weight: 500;
+  }
+
+  .trendDown {
+    color: #ff4d4f;
+    font-size: 0.8rem;
+    display: block;
+    margin-top: 8px;
+    font-weight: 500;
+  }
+}
+
+.middleRow {
+  .positiveText {
+    color: #008d0a;
+    font-weight: 600;
+  }
+
+  .negativeText {
+    color: #ff4d4f;
+    font-weight: 600;
+  }
+
+  .goalCard {
+    height: 100%;
+
+    .goalsContainer {
+      .goalItem {
+        margin-bottom: 20px;
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+
+        .goalLabel {
+          display: flex;
+          justify-content: space-between;
+          margin-bottom: 6px;
+          font-size: 0.85rem;
+          color: #c9d1d9;
+        }
+      }
+    }
+
+    .emptyGoalsState {
+      padding: 16px 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      .emptyText {
+        margin-top: 8px;
+
+        h4 {
+          margin: 0;
+          color: #f0f6fc;
+          font-weight: 600;
+        }
+
+        p {
+          color: #8b949e;
+          font-size: 0.85rem;
+          margin: 6px 0 12px;
+          max-width: 260px;
+        }
+      }
+    }
+  }
+}

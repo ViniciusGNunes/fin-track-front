@@ -1,0 +1,26 @@
+.header {
+  padding: 0 24px;
+  background: #161b22;
+  border-bottom: 1px solid #21262d;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  .triggerBtn {
+    font-size: 18px;
+    color: #8b949e;
+
+    &:hover {
+      color: #008d0a !important;
+      background: rgba(0, 141, 10, 0.1) !important;
+    }
+  }
+
+  .headerActions {
+    .username {
+      color: #c9d1d9;
+      font-weight: 500;
+      font-size: 0.9rem;
+    }
+  }
+}

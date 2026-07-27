@@ -3,13 +3,10 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  background: linear-gradient(
-    135deg,
-    #0f172a 0%,
-    #1e293b 50%,
-    #0f172a 100%
-  );
-  padding: 1rem;
+  background-color: #0d1117;
+  padding: 1.5rem;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 .card {
@@ -17,37 +14,86 @@
   max-width: 420px;
 
   :global(.ant-card) {
-    border: none;
-    border-radius: 20px;
-    box-shadow:
-      0 20px 40px rgba(0, 0, 0, 0.35),
-      0 0 40px rgba(59, 130, 246, 0.15);
-    backdrop-filter: blur(12px);
+    border: 1px solid #21262d !important;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    background: #161b22;
   }
+
+  // Prevents browser autofill from turning input backgrounds white
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active {
+    -webkit-text-fill-color: #e6edf3 !important;
+    -webkit-box-shadow: 0 0 0px 1000px #0d1117 inset !important;
+    transition: background-color 5000s ease-in-out 0s;
+  }
+
+  // Ensures Ant Design input wrappers stay dark when active/focused
+  :global(.ant-input-affix-wrapper) {
+    background-color: #0d1117 !important;
+    border-color: #21262d;
+
+    &:hover,
+    &:focus-within {
+      border-color: #008d0a !important;
+    }
+
+    input {
+      background-color: transparent !important;
+      color: #e6edf3 !important;
+    }
+  }
+}
+
+.logoBadge {
+  width: 42px;
+  height: 42px;
+  background-color: #008d0a;
+  color: #ffffff;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.3rem;
+  margin: 0 auto 1.5rem;
 }
 
 .header {
   text-align: center;
   margin-bottom: 2rem;
 
-  h2 {
-    margin-bottom: 0.5rem !important;
-    color: #0f172a;
+  .title {
+    margin-bottom: 0.25rem !important;
+    color: #f0f6fc !important;
+    font-weight: 600;
   }
 
-  p {
-    color: #64748b;
-    margin: 0;
+  .subtitle {
+    color: #8b949e;
+    font-size: 0.9rem;
   }
 }
 
+.inputIcon {
+  color: #8b949e;
+}
+
 .submit {
-  margin-top: 0.75rem;
+  margin-top: 1rem;
   margin-bottom: 0 !important;
 }
 
 .button {
   height: 44px;
-  border-radius: 10px;
   font-weight: 600;
+  background-color: #008d0a;
+  border-color: #008d0a;
+
+  &:hover {
+    background-color: #00a80c !important;
+    border-color: #00a80c !important;
+  }
 }
