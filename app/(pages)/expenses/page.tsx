@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ConfigProvider,
   Layout,
@@ -29,6 +29,10 @@ import {
 import { Sidebar } from "../../components/Sidebar/Sidebar";
 import { Header } from "../../components/Header/Header";
 import styles from "./styles.module.scss";
+import { getUserFromCookies } from "@/app/services/Frontend/tokenServices";
+import { UserCookieInfo } from "../interfaces/UserCookieInfo";
+import { api } from "@/app/lib/api";
+import { getCategories } from "@/app/services/Backend/CategoriesService";
 
 const { Content } = Layout;
 const { Option } = Select;
@@ -92,12 +96,22 @@ export default function ExpensesPage() {
   const [selectedKey, setSelectedKey] = useState("expenses");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [expenses, setExpenses] = useState(initialExpenses);
+  const [userInfo, setUserInfo] = useState<UserCookieInfo | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const [form] = Form.useForm();
+
+  useEffect(() => {
+    const user = getUserFromCookies();
+    setUserInfo(user);
+  }, [])
 
   // Watch fields to dynamically show Installment / Recurrence settings
   const isInstallment = Form.useWatch("isInstallment", form);
   const isRecurrent = Form.useWatch("isRecurrent", form);
+
+  const categories = getCategories();
+  console.log(categories);
 
   const columns = [
     {
@@ -144,28 +158,29 @@ export default function ExpensesPage() {
   ];
 
   const handleCreateExpense = (values: any) => {
-    let installmentText = "Single";
-    if (values.isInstallment) {
-      installmentText = `1 of ${values.totalInstallments}`;
-    } else if (values.isRecurrent) {
-      installmentText = "Recurring";
+    if (!userInfo){
+      console.error("User not authenticated");
+      return;
+    }
+    const payload = {
+      userID: userInfo.id,
+      name: values.name,
+      totalAmount: values.totalAmount,
+      paymentMethod: values.paymentMethod,
+      categoryName: values.vategoryName,
+      duedate: values.dueDate.format("YYYY-MM-DDTHH:mm:ss"),
+      isInstallment: values.isInstallment ?? false,
+      totalInstallments: values.isInstallment ? values.totalInstallments : null,
+      isRecurrent: values.isRecurrent ?? false,
+      recurrenceInterval: values.isRecurrent ? values.recurrenceInterval : null
     }
 
-    const newExpense = {
-      key: (expenses.length + 1).toString(),
-      id: 4000 + expenses.length,
-      transactionName: values.name,
-      category: values.categoryName || "Uncategorized",
-      amount: `$${Number(values.amount).toFixed(2)}`,
-      dueDate: values.dueDate ? values.dueDate.format("YYYY-MM-DD") : "2026-08-01",
-      installmentText,
-      status: "Pending",
-    };
+    // try {
+    //   setLoading(true);
 
-    setExpenses([newExpense, ...expenses]);
-    setIsModalOpen(false);
-    form.resetFields();
-  };
+    //   // const response = await api.post("/transaction")
+    // }
+  }
 
   return (
     <ConfigProvider
@@ -299,7 +314,7 @@ export default function ExpensesPage() {
                   </Col>
                   <Col span={10}>
                     <Form.Item
-                      name="amount"
+                      name="totalAmount"
                       label="Total Amount ($)"
                       rules={[{ required: true, message: "Please enter amount" }]}
                     >
