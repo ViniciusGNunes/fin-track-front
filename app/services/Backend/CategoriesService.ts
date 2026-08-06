@@ -1,6 +1,6 @@
 import { UserCookieInfo } from "@/app/(pages)/interfaces/UserCookieInfo";
 import { api } from "@/app/lib/api";
-import { getUserFromCookies } from "../Frontend/tokenServices";
+import { getUserFromCookies } from "../Frontend/tokenServicesServer";
 
 export const getCategories = async () =>{
     const userInfo: UserCookieInfo|null = getUserFromCookies();

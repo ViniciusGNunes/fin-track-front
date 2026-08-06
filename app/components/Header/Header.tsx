@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Layout, Button, Space, Avatar } from "antd";
 import {
   MenuFoldOutlined,
@@ -9,6 +9,8 @@ import {
   UserOutlined,
 } from "@ant-design/icons";
 import styles from "./styles.module.scss";
+import { getUserFromCookiesClient } from "@/app/services/Frontend/tokenServicesClient";
+import { UserCookieInfo } from "@/app/(pages)/interfaces/UserCookieInfo";
 
 const { Header: AntHeader } = Layout;
 
@@ -25,8 +27,15 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleCollapse,
   hasGoals,
   onToggleGoals,
-  username = "Alex Vance",
 }) => {
+  const [userInfo, setUserInfo] = useState<UserCookieInfo|null>(null);
+
+  useEffect(() => {
+    const userInfo: UserCookieInfo|null = getUserFromCookiesClient();
+    setUserInfo(userInfo)
+    console.log(userInfo)
+  },[])
+
   return (
     <AntHeader className={styles.header}>
       <Button
@@ -48,7 +57,7 @@ export const Header: React.FC<HeaderProps> = ({
             icon={<UserOutlined />}
             style={{ backgroundColor: "#008d0a" }}
           />
-          <span className={styles.username}>{username}</span>
+          <span className={styles.username}>{userInfo?.name}</span>
         </Space>
       </Space>
     </AntHeader>

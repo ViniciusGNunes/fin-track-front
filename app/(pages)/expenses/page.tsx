@@ -29,15 +29,14 @@ import {
 import { Sidebar } from "../../components/Sidebar/Sidebar";
 import { Header } from "../../components/Header/Header";
 import styles from "./styles.module.scss";
-import { getUserFromCookies } from "@/app/services/Frontend/tokenServices";
 import { UserCookieInfo } from "../interfaces/UserCookieInfo";
 import { api } from "@/app/lib/api";
 import { getCategories } from "@/app/services/Backend/CategoriesService";
+import { getUserFromCookiesClient } from "@/app/services/Frontend/tokenServicesClient";
 
 const { Content } = Layout;
 const { Option } = Select;
 
-// Sample Initial Expenses (Representing Expense Line Items)
 const initialExpenses = [
   {
     key: "1",
@@ -59,36 +58,6 @@ const initialExpenses = [
     installmentText: "1 of 25",
     status: "Paid",
   },
-  {
-    key: "3",
-    id: 3008,
-    transactionName: "Monster Energy Drink",
-    category: "Food & Drinks",
-    amount: "$4.00",
-    dueDate: "2026-07-29",
-    installmentText: "Single",
-    status: "Paid",
-  },
-  {
-    key: "4",
-    id: 3250,
-    transactionName: "Herman Miller Chair",
-    category: "Furniture",
-    amount: "$33.34",
-    dueDate: "2026-08-01",
-    installmentText: "1 of 3",
-    status: "Paid",
-  },
-  {
-    key: "5",
-    id: 3300,
-    transactionName: "Apartment Rent",
-    category: "Housing & Rent",
-    amount: "$1,200.00",
-    dueDate: "2026-08-01",
-    installmentText: "Recurring",
-    status: "PartiallyPaid",
-  },
 ];
 
 export default function ExpensesPage() {
@@ -97,21 +66,22 @@ export default function ExpensesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [expenses, setExpenses] = useState(initialExpenses);
   const [userInfo, setUserInfo] = useState<UserCookieInfo | null>(null);
+  
+  // 1. Add state for categories and loading state
+  const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
   const [form] = Form.useForm();
-
-  useEffect(() => {
-    const user = getUserFromCookies();
-    setUserInfo(user);
-  }, [])
 
   // Watch fields to dynamically show Installment / Recurrence settings
   const isInstallment = Form.useWatch("isInstallment", form);
   const isRecurrent = Form.useWatch("isRecurrent", form);
 
-  const categories = getCategories();
-  console.log(categories);
+  // 2. Read User Info & Fetch Categories safely inside useEffect
+  useEffect(() => {
+    const user = getUserFromCookiesClient();
+    setUserInfo(user);
+  }, []);
 
   const columns = [
     {
@@ -157,30 +127,36 @@ export default function ExpensesPage() {
     },
   ];
 
-  const handleCreateExpense = (values: any) => {
-    if (!userInfo){
+  const handleCreateExpense = async (values: any) => {
+    if (!userInfo) {
       console.error("User not authenticated");
       return;
     }
+
     const payload = {
       userID: userInfo.id,
       name: values.name,
       totalAmount: values.totalAmount,
       paymentMethod: values.paymentMethod,
-      categoryName: values.vategoryName,
-      duedate: values.dueDate.format("YYYY-MM-DDTHH:mm:ss"),
+      categoryName: values.categoryName, // 3. Fixed typo here
+      dueDate: values.dueDate.format("YYYY-MM-DDTHH:mm:ss"),
       isInstallment: values.isInstallment ?? false,
       totalInstallments: values.isInstallment ? values.totalInstallments : null,
       isRecurrent: values.isRecurrent ?? false,
-      recurrenceInterval: values.isRecurrent ? values.recurrenceInterval : null
+      recurrenceInterval: values.isRecurrent ? values.recurrenceInterval : null,
+    };
+
+    try {
+      setLoading(true);
+      await api.post("/transaction", payload);
+      setIsModalOpen(false);
+      form.resetFields();
+    } catch (error) {
+      console.error("Failed to create expense", error);
+    } finally {
+      setLoading(false);
     }
-
-    // try {
-    //   setLoading(true);
-
-    //   // const response = await api.post("/transaction")
-    // }
-  }
+  };
 
   return (
     <ConfigProvider
@@ -206,12 +182,12 @@ export default function ExpensesPage() {
           <Header
             collapsed={collapsed}
             onToggleCollapse={() => setCollapsed(!collapsed)}
-            username="Alex Vance" hasGoals={false} onToggleGoals={function (): void {
-                throw new Error("Function not implemented.");
-            } }          />
+            username={userInfo?.name || "User"}
+            hasGoals={false}
+            onToggleGoals={() => {}}
+          />
 
           <Content className={styles.content}>
-            {/* Page Title & Action Bar */}
             <div className={styles.pageHeader}>
               <div>
                 <h2>Expenses & Outgoings</h2>
@@ -227,7 +203,6 @@ export default function ExpensesPage() {
               </Button>
             </div>
 
-            {/* Quick Metrics */}
             <Row gutter={[16, 16]} className={styles.metricRow}>
               <Col xs={24} sm={8}>
                 <Card bordered={false}>
@@ -263,7 +238,6 @@ export default function ExpensesPage() {
               </Col>
             </Row>
 
-            {/* Expenses List Table */}
             <Row gutter={[16, 16]}>
               <Col xs={24}>
                 <Card title="Latest Expenses & Cash Flow Events" bordered={false}>
@@ -277,17 +251,16 @@ export default function ExpensesPage() {
               </Col>
             </Row>
 
-            {/* Log Expense Modal Form */}
             <Modal
               title="Log New Expense / Transaction"
               open={isModalOpen}
               onCancel={() => setIsModalOpen(false)}
               onOk={() => form.submit()}
               okText="Save Expense"
+              confirmLoading={loading}
               width={600}
               destroyOnClose
-              modalRender={(modal) => modal}
-              style={{top:40}}
+              style={{ top: 40 }}
             >
               <Form
                 form={form}
@@ -331,12 +304,23 @@ export default function ExpensesPage() {
                 <Row gutter={16}>
                   <Col span={12}>
                     <Form.Item name="categoryName" label="Category">
+                      {/* Dynamically render API categories if available */}
                       <Select>
-                        <Option value="Food & Drinks">Food & Drinks</Option>
-                        <Option value="Electronics">Electronics</Option>
-                        <Option value="Subscriptions & SaaS">Subscriptions & SaaS</Option>
-                        <Option value="Housing & Rent">Housing & Rent</Option>
-                        <Option value="Transportation">Transportation</Option>
+                        {categories.length > 0 ? (
+                          categories.map((cat: any) => (
+                            <Option key={cat.id || cat.name} value={cat.name}>
+                              {cat.name}
+                            </Option>
+                          ))
+                        ) : (
+                          <>
+                            <Option value="Food & Drinks">Food & Drinks</Option>
+                            <Option value="Electronics">Electronics</Option>
+                            <Option value="Subscriptions & SaaS">Subscriptions & SaaS</Option>
+                            <Option value="Housing & Rent">Housing & Rent</Option>
+                            <Option value="Transportation">Transportation</Option>
+                          </>
+                        )}
                       </Select>
                     </Form.Item>
                   </Col>
@@ -365,7 +349,6 @@ export default function ExpensesPage() {
                   </Col>
                 </Row>
 
-                {/* Domain Toggles for Installments & Recurrence */}
                 <Row gutter={16} style={{ marginTop: 8 }}>
                   <Col span={12}>
                     <Form.Item
@@ -387,7 +370,6 @@ export default function ExpensesPage() {
                   </Col>
                 </Row>
 
-                {/* Conditional Fields based on Toggles */}
                 {isInstallment && (
                   <Card size="small" style={{ background: "#0d1117", marginBottom: 16 }}>
                     <Form.Item
