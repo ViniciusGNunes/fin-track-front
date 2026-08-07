@@ -60,7 +60,7 @@ export default function Page() {
 
             <div className={styles.header}>
               <Title level={2} className={styles.title}>
-                Welcome Back 👋
+                Welcome Back
               </Title>
               <Text className={styles.subtitle}>Sign in to your account</Text>
             </div>

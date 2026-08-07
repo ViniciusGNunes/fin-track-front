@@ -1,5 +1,10 @@
 "use client";
 
+interface IPaymentOption {
+  label: string;
+  value: PaymentMethod; // Substitua PaymentMethod pelo tipo exato retornado pelo seu Enum
+}
+
 import React, { useEffect, useState } from "react";
 import {
   ConfigProvider,
@@ -31,8 +36,13 @@ import { Header } from "../../components/Header/Header";
 import styles from "./styles.module.scss";
 import { UserCookieInfo } from "../interfaces/UserCookieInfo";
 import { api } from "@/app/lib/api";
-import { getCategories } from "@/app/services/Backend/CategoriesService";
 import { getUserFromCookiesClient } from "@/app/services/Frontend/tokenServicesClient";
+import ICategory from "../interfaces/ICategory";
+import { getCategories } from "@/app/services/Backend/CategoriesService";
+import { ITransactionPost } from "../interfaces/Transaction/ITransaction";
+import { postTransaction } from "@/app/services/Backend/TransactionService";
+import { PaymentMethod, TransactionType } from "@/app/Enums/FinTrackEnums";
+import { camelToNormalCase } from "@/app/utils/utils";
 
 const { Content } = Layout;
 const { Option } = Select;
@@ -66,22 +76,47 @@ export default function ExpensesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [expenses, setExpenses] = useState(initialExpenses);
   const [userInfo, setUserInfo] = useState<UserCookieInfo | null>(null);
-  
-  // 1. Add state for categories and loading state
-  const [categories, setCategories] = useState<any[]>([]);
+
+  const [categories, setCategories] = useState<ICategory[]>([]);
   const [loading, setLoading] = useState(false);
 
   const [form] = Form.useForm();
 
-  // Watch fields to dynamically show Installment / Recurrence settings
   const isInstallment = Form.useWatch("isInstallment", form);
   const isRecurrent = Form.useWatch("isRecurrent", form);
 
-  // 2. Read User Info & Fetch Categories safely inside useEffect
+  const paymentOptions = Object.keys(PaymentMethod)
+    .filter((key) => isNaN(Number(key)))
+    .map((key) => ({
+      label: key,
+      value: PaymentMethod[key as keyof typeof PaymentMethod],
+    }));
+
   useEffect(() => {
-    const user = getUserFromCookiesClient();
-    setUserInfo(user);
+    const fetchUserInfo = () => {
+      try {
+        const data = getUserFromCookiesClient();
+        setUserInfo(data);
+      } catch (err) {
+        console.log("Failed to get user information:", err);
+      }
+    };
+    const fetchCategories = async () => {
+      try {
+        const data = await getCategories();
+        setCategories(data);
+      } catch (err) {
+        console.error("Failed to fetch categories:", err);
+      }
+    };
+    fetchCategories();
+    fetchUserInfo();
   }, []);
+
+  useEffect(() => {
+    console.log(categories);
+    console.log(userInfo);
+  }, [categories, userInfo]);
 
   const columns = [
     {
@@ -111,7 +146,9 @@ export default function ExpensesPage() {
       title: "Amount",
       dataIndex: "amount",
       key: "amount",
-      render: (amt: string) => <span className={styles.negativeText}>{amt}</span>,
+      render: (amt: string) => (
+        <span className={styles.negativeText}>{amt}</span>
+      ),
     },
     {
       title: "Status",
@@ -127,28 +164,29 @@ export default function ExpensesPage() {
     },
   ];
 
-  const handleCreateExpense = async (values: any) => {
+  const handleCreateExpense = async (values: ITransactionPost) => {
     if (!userInfo) {
       console.error("User not authenticated");
       return;
     }
 
-    const payload = {
-      userID: userInfo.id,
+    const payload: ITransactionPost = {
+      userId: Number(userInfo.id),
       name: values.name,
       totalAmount: values.totalAmount,
       paymentMethod: values.paymentMethod,
-      categoryName: values.categoryName, // 3. Fixed typo here
-      dueDate: values.dueDate.format("YYYY-MM-DDTHH:mm:ss"),
+      categoryId: values.categoryId,
+      firstDueDate: values.firstDueDate,
       isInstallment: values.isInstallment ?? false,
       totalInstallments: values.isInstallment ? values.totalInstallments : null,
       isRecurrent: values.isRecurrent ?? false,
       recurrenceInterval: values.isRecurrent ? values.recurrenceInterval : null,
+      type: TransactionType.Expense,
     };
 
     try {
       setLoading(true);
-      await api.post("/transaction", payload);
+      await postTransaction(payload);
       setIsModalOpen(false);
       form.resetFields();
     } catch (error) {
@@ -191,7 +229,10 @@ export default function ExpensesPage() {
             <div className={styles.pageHeader}>
               <div>
                 <h2>Expenses & Outgoings</h2>
-                <p>Track, schedule, and log your purchases, installments, and recurrent bills.</p>
+                <p>
+                  Track, schedule, and log your purchases, installments, and
+                  recurrent bills.
+                </p>
               </div>
               <Button
                 type="primary"
@@ -205,34 +246,34 @@ export default function ExpensesPage() {
 
             <Row gutter={[16, 16]} className={styles.metricRow}>
               <Col xs={24} sm={8}>
-                <Card bordered={false}>
+                <Card variant="borderless">
                   <Statistic
                     title="Total Month Expenses"
                     value={1872.84}
                     precision={2}
                     prefix={<DollarOutlined />}
-                    valueStyle={{ color: "#ff4d4f" }}
+                    styles={{ value: { color: "#ff4d4f" } }}
                   />
                 </Card>
               </Col>
               <Col xs={24} sm={8}>
-                <Card bordered={false}>
+                <Card variant="borderless">
                   <Statistic
                     title="Active Installments"
                     value={2}
                     prefix={<CreditCardOutlined />}
-                    valueStyle={{ color: "#3B82F6" }}
+                    styles={{ value: { color: "#3B82F6" } }}
                   />
                 </Card>
               </Col>
               <Col xs={24} sm={8}>
-                <Card bordered={false}>
+                <Card variant="borderless">
                   <Statistic
                     title="Pending / Overdue Bills"
-                    value={235.50}
+                    value={235.5}
                     precision={2}
                     prefix={<CalendarOutlined />}
-                    valueStyle={{ color: "#faad14" }}
+                    styles={{ value: { color: "#faad14" } }}
                   />
                 </Card>
               </Col>
@@ -240,7 +281,10 @@ export default function ExpensesPage() {
 
             <Row gutter={[16, 16]}>
               <Col xs={24}>
-                <Card title="Latest Expenses & Cash Flow Events" bordered={false}>
+                <Card
+                  title="Latest Expenses & Cash Flow Events"
+                  variant="borderless"
+                >
                   <Table
                     dataSource={expenses}
                     columns={columns}
@@ -259,28 +303,22 @@ export default function ExpensesPage() {
               okText="Save Expense"
               confirmLoading={loading}
               width={600}
-              destroyOnClose
+              destroyOnHidden
               style={{ top: 40 }}
             >
               <Form
                 form={form}
                 layout="vertical"
                 onFinish={handleCreateExpense}
-                initialValues={{
-                  paymentMethod: "CreditCard",
-                  categoryName: "Food & Drinks",
-                  isInstallment: false,
-                  totalInstallments: 2,
-                  isRecurrent: false,
-                  recurrenceInterval: "Monthly",
-                }}
               >
                 <Row gutter={16}>
                   <Col span={14}>
                     <Form.Item
                       name="name"
                       label="Expense Name / Title"
-                      rules={[{ required: true, message: "Please enter a name" }]}
+                      rules={[
+                        { required: true, message: "Please enter a name" },
+                      ]}
                     >
                       <Input placeholder="e.g., Coffee Machine or AWS Bill" />
                     </Form.Item>
@@ -289,7 +327,9 @@ export default function ExpensesPage() {
                     <Form.Item
                       name="totalAmount"
                       label="Total Amount ($)"
-                      rules={[{ required: true, message: "Please enter amount" }]}
+                      rules={[
+                        { required: true, message: "Please enter amount" },
+                      ]}
                     >
                       <InputNumber
                         style={{ width: "100%" }}
@@ -303,35 +343,26 @@ export default function ExpensesPage() {
 
                 <Row gutter={16}>
                   <Col span={12}>
-                    <Form.Item name="categoryName" label="Category">
-                      {/* Dynamically render API categories if available */}
-                      <Select>
-                        {categories.length > 0 ? (
-                          categories.map((cat: any) => (
-                            <Option key={cat.id || cat.name} value={cat.name}>
-                              {cat.name}
-                            </Option>
-                          ))
-                        ) : (
-                          <>
-                            <Option value="Food & Drinks">Food & Drinks</Option>
-                            <Option value="Electronics">Electronics</Option>
-                            <Option value="Subscriptions & SaaS">Subscriptions & SaaS</Option>
-                            <Option value="Housing & Rent">Housing & Rent</Option>
-                            <Option value="Transportation">Transportation</Option>
-                          </>
-                        )}
+                    <Form.Item name="categoryId" label="Category">
+                      <Select
+                        placeholder={"Select a category for your expense"}
+                      >
+                        {categories.map((cat: ICategory) => (
+                          <Option key={cat.categoryID} value={cat.categoryID}>
+                            {cat.name}
+                          </Option>
+                        ))}
                       </Select>
                     </Form.Item>
                   </Col>
                   <Col span={12}>
                     <Form.Item name="paymentMethod" label="Payment Method">
-                      <Select>
-                        <Option value="CreditCard">Credit Card</Option>
-                        <Option value="DebitCard">Debit Card</Option>
-                        <Option value="Cash">Cash</Option>
-                        <Option value="BankTransfer">Bank Transfer</Option>
-                        <Option value="Pix">Pix</Option>
+                      <Select placeholder={"Select a Payment Method"}>
+                        {paymentOptions.map((pay: IPaymentOption) => (
+                          <Option key={pay.value} value={pay.value}>
+                            {camelToNormalCase(pay.label)}
+                          </Option>
+                        ))}
                       </Select>
                     </Form.Item>
                   </Col>
@@ -340,9 +371,11 @@ export default function ExpensesPage() {
                 <Row gutter={16}>
                   <Col span={12}>
                     <Form.Item
-                      name="dueDate"
+                      name="firstDueDate"
                       label="Due / Payment Date"
-                      rules={[{ required: true, message: "Please select date" }]}
+                      rules={[
+                        { required: true, message: "Please select date" },
+                      ]}
                     >
                       <DatePicker style={{ width: "100%" }} />
                     </Form.Item>
@@ -371,20 +404,33 @@ export default function ExpensesPage() {
                 </Row>
 
                 {isInstallment && (
-                  <Card size="small" style={{ background: "#0d1117", marginBottom: 16 }}>
+                  <Card
+                    size="small"
+                    style={{ background: "#0d1117", marginBottom: 16 }}
+                  >
                     <Form.Item
                       name="totalInstallments"
                       label="Total Number of Installments"
                       rules={[{ required: true }]}
                     >
-                      <InputNumber min={2} max={360} style={{ width: "100%" }} />
+                      <InputNumber
+                        min={2}
+                        max={360}
+                        style={{ width: "100%" }}
+                      />
                     </Form.Item>
                   </Card>
                 )}
 
                 {isRecurrent && (
-                  <Card size="small" style={{ background: "#0d1117", marginBottom: 16 }}>
-                    <Form.Item name="recurrenceInterval" label="Billing Frequency">
+                  <Card
+                    size="small"
+                    style={{ background: "#0d1117", marginBottom: 16 }}
+                  >
+                    <Form.Item
+                      name="recurrenceInterval"
+                      label="Billing Frequency"
+                    >
                       <Select>
                         <Option value="Weekly">Weekly</Option>
                         <Option value="Monthly">Monthly</Option>

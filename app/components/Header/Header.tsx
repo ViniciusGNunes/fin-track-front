@@ -28,13 +28,19 @@ export const Header: React.FC<HeaderProps> = ({
   hasGoals,
   onToggleGoals,
 }) => {
-  const [userInfo, setUserInfo] = useState<UserCookieInfo|null>(null);
+  const [userInfo, setUserInfo] = useState<UserCookieInfo | null>(null);
 
   useEffect(() => {
-    const userInfo: UserCookieInfo|null = getUserFromCookiesClient();
-    setUserInfo(userInfo)
-    console.log(userInfo)
-  },[])
+    const fetchUserInfo = () => {
+      try {
+        const userInfo: UserCookieInfo | null = getUserFromCookiesClient();
+        setUserInfo(userInfo);
+      } catch (err) {
+        console.log("Failed to get user information:", err);
+      }
+    };
+    fetchUserInfo();
+  }, []);
 
   return (
     <AntHeader className={styles.header}>
