@@ -39,9 +39,9 @@ import { api } from "@/app/lib/api";
 import { getUserFromCookiesClient } from "@/app/services/Frontend/tokenServicesClient";
 import ICategory from "../interfaces/ICategory";
 import { getCategories } from "@/app/services/Backend/CategoriesService";
-import { ITransactionPost } from "../interfaces/Transaction/ITransaction";
-import { postTransaction } from "@/app/services/Backend/TransactionService";
-import { PaymentMethod, TransactionType } from "@/app/Enums/FinTrackEnums";
+import { ITransactionPost, ITransactionRead } from "../interfaces/Transaction/ITransaction";
+import { getTransactions, postTransaction } from "@/app/services/Backend/TransactionService";
+import { PaymentMethod, RecurrenceInterval, TransactionType } from "@/app/Enums/FinTrackEnums";
 import { camelToNormalCase } from "@/app/utils/utils";
 
 const { Content } = Layout;
@@ -76,6 +76,7 @@ export default function ExpensesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [expenses, setExpenses] = useState(initialExpenses);
   const [userInfo, setUserInfo] = useState<UserCookieInfo | null>(null);
+  const [transactions, setTransactions] = useState<ITransactionRead[] | null>(null);
 
   const [categories, setCategories] = useState<ICategory[]>([]);
   const [loading, setLoading] = useState(false);
@@ -109,8 +110,17 @@ export default function ExpensesPage() {
         console.error("Failed to fetch categories:", err);
       }
     };
+    const fetchTransactions = async () => {
+      try{
+        const data = await getTransactions();
+        setTransactions(data);
+      } catch (err){
+        console.error("Failed to get transactions:", err);
+      }
+    }
     fetchCategories();
     fetchUserInfo();
+    fetchTransactions();
   }, []);
 
   useEffect(() => {
@@ -178,9 +188,9 @@ export default function ExpensesPage() {
       categoryId: values.categoryId,
       firstDueDate: values.firstDueDate,
       isInstallment: values.isInstallment ?? false,
-      totalInstallments: values.isInstallment ? values.totalInstallments : null,
+      totalInstallments: values.isInstallment ? values.totalInstallments : 1,
       isRecurrent: values.isRecurrent ?? false,
-      recurrenceInterval: values.isRecurrent ? values.recurrenceInterval : null,
+      recurrenceInterval: values.isRecurrent ? values.recurrenceInterval : RecurrenceInterval.None,
       type: TransactionType.Expense,
     };
 
