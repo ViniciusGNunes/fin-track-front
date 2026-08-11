@@ -155,12 +155,12 @@ export default function DashboardPage() {
             {/* Metrics Section */}
             <Row gutter={[16, 16]} className={styles.metricRow}>
               <Col xs={24} sm={12} lg={6}>
-                <Card title="Total Monthly Expenses" bordered={false}>
+                <Card title="Total Monthly Expenses" variant={"borderless"}>
                   <Statistic
                     value={3840.5}
                     precision={2}
                     prefix="$"
-                    valueStyle={{ color: "#ff4d4f" }}
+                    styles={{ value: { color: "#ff4d4f" } }}
                   />
                   <span className={styles.trendDown}>
                     <ArrowDownOutlined /> 4.2% from last month
@@ -169,12 +169,12 @@ export default function DashboardPage() {
               </Col>
 
               <Col xs={24} sm={12} lg={6}>
-                <Card title="Total Investments" bordered={false}>
+                <Card title="Total Investments" variant={"borderless"}>
                   <Statistic
                     value={84250.0}
                     precision={2}
                     prefix="$"
-                    valueStyle={{ color: "#008d0a" }}
+                    styles={{ value: { color: "#008d0a" } }}
                   />
                   <div className={styles.statDetailGroup}>
                     <span className={styles.trendUp}>
@@ -185,12 +185,12 @@ export default function DashboardPage() {
               </Col>
 
               <Col xs={24} sm={12} lg={6}>
-                <Card title="Total Dividends" bordered={false}>
+                <Card title="Total Dividends" variant={"borderless"}>
                   <Statistic
                     value={1280.4}
                     precision={2}
                     prefix="$"
-                    valueStyle={{ color: "#008d0a" }}
+                    styles={{ value: { color: "#008d0a" } }}
                   />
                   <span className={styles.trendUp}>
                     <ArrowUpOutlined /> +14.5% vs last month
@@ -199,7 +199,7 @@ export default function DashboardPage() {
               </Col>
 
               <Col xs={24} sm={12} lg={6}>
-                <Card title="Total Debt" bordered={false}>
+                <Card title="Total Debt" variant={"borderless"}>
                   <Statistic value={14500.0} precision={2} prefix="$" />
                   <span className={styles.trendUp}>
                     <ArrowDownOutlined /> Shrunk by 5.8%
@@ -211,7 +211,7 @@ export default function DashboardPage() {
             {/* Tables & Widgets */}
             <Row gutter={[16, 16]} className={styles.middleRow}>
               <Col xs={24} lg={16}>
-                <Card title="Recent Activity" bordered={false}>
+                <Card title="Recent Activity" variant={"borderless"}>
                   <Table
                     dataSource={recentActivity}
                     columns={columns}
@@ -224,7 +224,7 @@ export default function DashboardPage() {
               <Col xs={24} lg={8}>
                 <Card
                   title="Monthly Goals & Health"
-                  bordered={false}
+                  variant={"borderless"}
                   className={styles.goalCard}
                 >
                   {hasGoals ? (

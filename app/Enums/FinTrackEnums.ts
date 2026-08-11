@@ -17,7 +17,6 @@ export enum RecurrenceInterval {
 export enum TransactionType {
   Expense = 1,
   Income = 2,
-  Refund = 3,
 }
 
 export enum TransactionStatus {
@@ -25,6 +24,7 @@ export enum TransactionStatus {
   Completed = 2,
   Cancelled = 3,
   Refunded = 4,
+  PartiallyRefunded = 5,
 }
 
 export enum ExpenseStatus {
@@ -33,4 +33,6 @@ export enum ExpenseStatus {
   Paid = 3,
   Overdue = 4,
   Cancelled = 5,
+  PartiallyRefunded = 6,
+  Refunded = 7,
 }

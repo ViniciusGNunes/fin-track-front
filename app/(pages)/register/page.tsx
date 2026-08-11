@@ -85,12 +85,12 @@ export default function Page() {
 
       <main className={styles.container}>
         <div className={styles.card}>
-          <Card bordered={false}>
+          <Card variant={"borderless"}>
             <div className={styles.logoBadge}>F</div>
 
             <div className={styles.header}>
               <Title level={2} className={styles.title}>
-                Create Account 🚀
+                Create Account
               </Title>
               <Text className={styles.subtitle}>Sign up to get started</Text>
             </div>

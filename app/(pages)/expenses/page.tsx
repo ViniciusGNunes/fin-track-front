@@ -1,6 +1,6 @@
 "use client";
 
-interface IPaymentOption {
+interface IEnumOptions {
   label: string;
   value: PaymentMethod; // Substitua PaymentMethod pelo tipo exato retornado pelo seu Enum
 }
@@ -34,14 +34,23 @@ import {
 import { Sidebar } from "../../components/Sidebar/Sidebar";
 import { Header } from "../../components/Header/Header";
 import styles from "./styles.module.scss";
-import { UserCookieInfo } from "../interfaces/UserCookieInfo";
-import { api } from "@/app/lib/api";
+import { UserCookieInfo } from "../../interfaces/UserCookieInfo";
 import { getUserFromCookiesClient } from "@/app/services/Frontend/tokenServicesClient";
-import ICategory from "../interfaces/ICategory";
+import ICategory from "../../interfaces/ICategory";
 import { getCategories } from "@/app/services/Backend/CategoriesService";
-import { ITransactionPost, ITransactionRead } from "../interfaces/Transaction/ITransaction";
-import { getTransactions, postTransaction } from "@/app/services/Backend/TransactionService";
-import { PaymentMethod, RecurrenceInterval, TransactionType } from "@/app/Enums/FinTrackEnums";
+import {
+  ITransactionPost,
+  ITransactionRead,
+} from "../../interfaces/Transaction/ITransaction";
+import {
+  getTransactions,
+  postTransaction,
+} from "@/app/services/Backend/TransactionService";
+import {
+  PaymentMethod,
+  RecurrenceInterval,
+  TransactionType,
+} from "@/app/Enums/FinTrackEnums";
 import { camelToNormalCase } from "@/app/utils/utils";
 
 const { Content } = Layout;
@@ -76,7 +85,9 @@ export default function ExpensesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [expenses, setExpenses] = useState(initialExpenses);
   const [userInfo, setUserInfo] = useState<UserCookieInfo | null>(null);
-  const [transactions, setTransactions] = useState<ITransactionRead[] | null>(null);
+  const [transactions, setTransactions] = useState<ITransactionRead[] | null>(
+    null,
+  );
 
   const [categories, setCategories] = useState<ICategory[]>([]);
   const [loading, setLoading] = useState(false);
@@ -92,6 +103,14 @@ export default function ExpensesPage() {
       label: key,
       value: PaymentMethod[key as keyof typeof PaymentMethod],
     }));
+
+  const recurrenceInterval = Object.keys(RecurrenceInterval)
+    .filter((key) => isNaN(Number(key)))
+    .map((key) => ({
+      label: key,
+      value: RecurrenceInterval[key as keyof typeof RecurrenceInterval],
+    }))
+    .slice(1, 5); //length of enum, removing the none option
 
   useEffect(() => {
     const fetchUserInfo = () => {
@@ -111,13 +130,13 @@ export default function ExpensesPage() {
       }
     };
     const fetchTransactions = async () => {
-      try{
+      try {
         const data = await getTransactions();
         setTransactions(data);
-      } catch (err){
+      } catch (err) {
         console.error("Failed to get transactions:", err);
       }
-    }
+    };
     fetchCategories();
     fetchUserInfo();
     fetchTransactions();
@@ -174,29 +193,43 @@ export default function ExpensesPage() {
     },
   ];
 
-  const handleCreateExpense = async (values: ITransactionPost) => {
-    if (!userInfo) {
+  const handleCreateExpense = async (values: any) => {
+    if (!userInfo?.id) {
       console.error("User not authenticated");
       return;
     }
 
+    // Formatamos a data vinda do DatePicker (Dayjs)
+    const formattedDate = values.firstDueDate
+      ? values.firstDueDate.toISOString()
+      : new Date().toISOString();
+
     const payload: ITransactionPost = {
       userId: Number(userInfo.id),
       name: values.name,
-      totalAmount: values.totalAmount,
-      paymentMethod: values.paymentMethod,
-      categoryId: values.categoryId,
-      firstDueDate: values.firstDueDate,
-      isInstallment: values.isInstallment ?? false,
-      totalInstallments: values.isInstallment ? values.totalInstallments : 1,
-      isRecurrent: values.isRecurrent ?? false,
-      recurrenceInterval: values.isRecurrent ? values.recurrenceInterval : RecurrenceInterval.None,
+      totalAmount: Number(values.totalAmount),
+      paymentMethod: Number(values.paymentMethod),
+      categoryId: Number(values.categoryId),
+      firstDueDate: formattedDate,
+      isInstallment: Boolean(values.isInstallment),
+      totalInstallments: values.isInstallment
+        ? Number(values.totalInstallments)
+        : 1,
+      isRecurrent: Boolean(values.isRecurrent),
+      recurrenceInterval: values.isRecurrent
+        ? Number(values.recurrenceInterval)
+        : RecurrenceInterval.None,
       type: TransactionType.Expense,
     };
 
     try {
       setLoading(true);
       await postTransaction(payload);
+
+      // Atualiza a lista após criação e limpa o modal
+      const updatedTransactions = await getTransactions();
+      setTransactions(updatedTransactions);
+
       setIsModalOpen(false);
       form.resetFields();
     } catch (error) {
@@ -308,18 +341,26 @@ export default function ExpensesPage() {
             <Modal
               title="Log New Expense / Transaction"
               open={isModalOpen}
-              onCancel={() => setIsModalOpen(false)}
+              onCancel={() => {
+                setIsModalOpen(false);
+                form.resetFields();
+              }}
               onOk={() => form.submit()}
               okText="Save Expense"
               confirmLoading={loading}
               width={600}
-              destroyOnHidden
+              destroyOnClose
               style={{ top: 40 }}
             >
               <Form
                 form={form}
                 layout="vertical"
                 onFinish={handleCreateExpense}
+                initialValues={{
+                  isInstallment: false,
+                  isRecurrent: false,
+                  paymentMethod: paymentOptions[0]?.value,
+                }}
               >
                 <Row gutter={16}>
                   <Col span={14}>
@@ -353,10 +394,14 @@ export default function ExpensesPage() {
 
                 <Row gutter={16}>
                   <Col span={12}>
-                    <Form.Item name="categoryId" label="Category">
-                      <Select
-                        placeholder={"Select a category for your expense"}
-                      >
+                    <Form.Item
+                      name="categoryId"
+                      label="Category"
+                      rules={[
+                        { required: true, message: "Please select a category" },
+                      ]}
+                    >
+                      <Select placeholder="Select a category">
                         {categories.map((cat: ICategory) => (
                           <Option key={cat.categoryID} value={cat.categoryID}>
                             {cat.name}
@@ -366,9 +411,18 @@ export default function ExpensesPage() {
                     </Form.Item>
                   </Col>
                   <Col span={12}>
-                    <Form.Item name="paymentMethod" label="Payment Method">
-                      <Select placeholder={"Select a Payment Method"}>
-                        {paymentOptions.map((pay: IPaymentOption) => (
+                    <Form.Item
+                      name="paymentMethod"
+                      label="Payment Method"
+                      rules={[
+                        {
+                          required: true,
+                          message: "Please select payment method",
+                        },
+                      ]}
+                    >
+                      <Select placeholder="Select a Payment Method">
+                        {paymentOptions.map((pay: IEnumOptions) => (
                           <Option key={pay.value} value={pay.value}>
                             {camelToNormalCase(pay.label)}
                           </Option>
@@ -387,7 +441,10 @@ export default function ExpensesPage() {
                         { required: true, message: "Please select date" },
                       ]}
                     >
-                      <DatePicker style={{ width: "100%" }} />
+                      <DatePicker
+                        style={{ width: "100%" }}
+                        format="YYYY-MM-DD"
+                      />
                     </Form.Item>
                   </Col>
                 </Row>
@@ -421,12 +478,18 @@ export default function ExpensesPage() {
                     <Form.Item
                       name="totalInstallments"
                       label="Total Number of Installments"
-                      rules={[{ required: true }]}
+                      rules={[
+                        {
+                          required: true,
+                          message: "Specify number of installments",
+                        },
+                      ]}
                     >
                       <InputNumber
                         min={2}
                         max={360}
                         style={{ width: "100%" }}
+                        placeholder="e.g., 12"
                       />
                     </Form.Item>
                   </Card>
@@ -440,11 +503,19 @@ export default function ExpensesPage() {
                     <Form.Item
                       name="recurrenceInterval"
                       label="Billing Frequency"
+                      rules={[
+                        {
+                          required: true,
+                          message: "Select recurrence interval",
+                        },
+                      ]}
                     >
-                      <Select>
-                        <Option value="Weekly">Weekly</Option>
-                        <Option value="Monthly">Monthly</Option>
-                        <Option value="Yearly">Yearly</Option>
+                      <Select placeholder="Select frequency">
+                        {recurrenceInterval.map((rec) => (
+                          <Option value={rec.value} key={rec.value}>
+                            {rec.label}
+                          </Option>
+                        ))}
                       </Select>
                     </Form.Item>
                   </Card>

@@ -1,8 +1,8 @@
-import { ITransactionPost } from "@/app/(pages)/interfaces/Transaction/ITransaction";
+import { ITransactionPost } from "@/app/interfaces/Transaction/ITransaction";
 import { api } from "@/app/lib/api";
 import { getUserFromCookiesClient } from "../Frontend/tokenServicesClient";
 
-  const userInfo = getUserFromCookiesClient();
+const userInfo = getUserFromCookiesClient();
 
 export const postTransaction = async (transaction: ITransactionPost) => {
   try {
@@ -13,11 +13,11 @@ export const postTransaction = async (transaction: ITransactionPost) => {
   }
 };
 
-export const getTransactions = async() => {
-  try{
+export const getTransactions = async () => {
+  try {
     const response = await api.get(`/transactions?userId=${userInfo?.id}`);
     return response.data;
-  } catch (err){
-    console.error("Failed to get transactions", err)
+  } catch (err) {
+    console.error("Failed to get transactions", err);
   }
-}
+};

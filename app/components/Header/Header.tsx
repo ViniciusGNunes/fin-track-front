@@ -10,7 +10,7 @@ import {
 } from "@ant-design/icons";
 import styles from "./styles.module.scss";
 import { getUserFromCookiesClient } from "@/app/services/Frontend/tokenServicesClient";
-import { UserCookieInfo } from "@/app/(pages)/interfaces/UserCookieInfo";
+import { UserCookieInfo } from "@/app/interfaces/UserCookieInfo";
 
 const { Header: AntHeader } = Layout;
 

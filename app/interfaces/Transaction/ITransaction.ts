@@ -16,7 +16,7 @@ export interface ITransactionPost {
   totalInstallments: number | null;
   isRecurrent: boolean;
   recurrenceInterval: RecurrenceInterval | null;
-  firstDueDate: Date;
+  firstDueDate: string; // Enviamos como ISO string (ex: "2026-08-10T00:00:00.000Z")
   userId: number;
 }
 
@@ -36,5 +36,5 @@ export interface ITransactionRead {
   recurrenceTargetDay?: number | null;
   userID: number;
   createdAtUtc: string; // ISO 8601 string from DateTime
-  expenses: IExpenseRead;
+  expenses: IExpenseRead[];
 }
