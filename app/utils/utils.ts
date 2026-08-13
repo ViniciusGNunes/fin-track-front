@@ -1,3 +1,8 @@
+export interface IEnumOptions<T = string|number> {
+  label: string;
+  value: T;
+}
+
 export function camelToNormalCase(str: string): string {
   if (!str) return "";
 
@@ -11,3 +16,14 @@ export function camelToNormalCase(str: string): string {
       .replace(/^./, (char) => char.toUpperCase())
   );
 }
+
+export function EnumToList<E extends Record<string, string | number>>(enumObj: E): IEnumOptions[]{
+  const items:IEnumOptions[] = Object.keys(enumObj)
+    .filter((key) => isNaN(Number(key)))
+    .map((key) => ({
+      label: key,
+      value: enumObj[key]
+    }));
+
+  return items;
+} 

@@ -1,10 +1,5 @@
 "use client";
 
-interface IEnumOptions {
-  label: string;
-  value: PaymentMethod; // Substitua PaymentMethod pelo tipo exato retornado pelo seu Enum
-}
-
 import React, { useEffect, useState } from "react";
 import {
   ConfigProvider,
@@ -49,9 +44,11 @@ import {
 import {
   PaymentMethod,
   RecurrenceInterval,
+  TimeCategory,
+  TimePeriod,
   TransactionType,
 } from "@/app/Enums/FinTrackEnums";
-import { camelToNormalCase } from "@/app/utils/utils";
+import { camelToNormalCase, EnumToList, IEnumOptions } from "@/app/utils/utils";
 
 const { Content } = Layout;
 const { Option } = Select;
@@ -91,26 +88,21 @@ export default function ExpensesPage() {
 
   const [categories, setCategories] = useState<ICategory[]>([]);
   const [loading, setLoading] = useState(false);
-
+  
   const [form] = Form.useForm();
-
+  
   const isInstallment = Form.useWatch("isInstallment", form);
   const isRecurrent = Form.useWatch("isRecurrent", form);
-
-  const paymentOptions = Object.keys(PaymentMethod)
-    .filter((key) => isNaN(Number(key)))
-    .map((key) => ({
-      label: key,
-      value: PaymentMethod[key as keyof typeof PaymentMethod],
-    }));
-
-  const recurrenceInterval = Object.keys(RecurrenceInterval)
-    .filter((key) => isNaN(Number(key)))
-    .map((key) => ({
-      label: key,
-      value: RecurrenceInterval[key as keyof typeof RecurrenceInterval],
-    }))
-    .slice(1, 5); //length of enum, removing the none option
+  
+  const paymentOptions = EnumToList(PaymentMethod)
+  const recurrenceInterval = EnumToList(RecurrenceInterval).slice(1, 5);
+  const timeCategory = EnumToList(TimeCategory);
+  const timePeriod = EnumToList(TimePeriod);
+  
+  const [selectedCategory, setSelectedCategory] = 
+    useState<IEnumOptions>({label: timeCategory[1].label, value: timeCategory[1].value})
+  const [selectedPeriod, setSelectedPeriod] = 
+    useState<IEnumOptions>({label: timePeriod[1].label, value:timePeriod[1].value})
 
   useEffect(() => {
     const fetchUserInfo = () => {
@@ -141,12 +133,7 @@ export default function ExpensesPage() {
     fetchUserInfo();
     fetchTransactions();
   }, []);
-
-  useEffect(() => {
-    console.log(categories);
-    console.log(userInfo);
-  }, [categories, userInfo]);
-
+  
   const columns = [
     {
       title: "Due Date",
@@ -198,12 +185,12 @@ export default function ExpensesPage() {
       console.error("User not authenticated");
       return;
     }
-
+    
     // Formatamos a data vinda do DatePicker (Dayjs)
     const formattedDate = values.firstDueDate
       ? values.firstDueDate.toISOString()
       : new Date().toISOString();
-
+      
     const payload: ITransactionPost = {
       userId: Number(userInfo.id),
       name: values.name,
@@ -219,17 +206,17 @@ export default function ExpensesPage() {
       recurrenceInterval: values.isRecurrent
         ? Number(values.recurrenceInterval)
         : RecurrenceInterval.None,
-      type: TransactionType.Expense,
-    };
+        type: TransactionType.Expense,
+      };
 
     try {
       setLoading(true);
       await postTransaction(payload);
-
+      
       // Atualiza a lista após criação e limpa o modal
       const updatedTransactions = await getTransactions();
       setTransactions(updatedTransactions);
-
+      
       setIsModalOpen(false);
       form.resetFields();
     } catch (error) {
@@ -238,7 +225,7 @@ export default function ExpensesPage() {
       setLoading(false);
     }
   };
-
+  
   return (
     <ConfigProvider
       theme={{
@@ -325,7 +312,31 @@ export default function ExpensesPage() {
             <Row gutter={[16, 16]}>
               <Col xs={24}>
                 <Card
-                  title="Latest Expenses & Cash Flow Events"
+                  title={
+                    <>
+                    <Select className={styles.titleSelect}
+                    labelInValue
+                    value={selectedCategory}
+                    onChange={(val) => setSelectedCategory(val as IEnumOptions)} >
+                      {timeCategory.map((tCat) => (
+                        <Option key={tCat.value} value={tCat.value}>
+                          {camelToNormalCase(tCat.label)}
+                        </Option>
+                      ))}
+                    </Select>
+                    <Select className={styles.titleSelect}
+                    labelInValue
+                    value={selectedPeriod}
+                    onChange={(val) => setSelectedPeriod(val as IEnumOptions)}>
+                      {timePeriod.map((tCat) => (
+                        <Option key={tCat.value} value={tCat.value}>
+                          {camelToNormalCase(tCat.label)}
+                        </Option>
+                      ))}
+                    </Select>
+                    Expenses
+                    </>
+                  }
                   variant="borderless"
                 >
                   <Table
@@ -422,7 +433,7 @@ export default function ExpensesPage() {
                       ]}
                     >
                       <Select placeholder="Select a Payment Method">
-                        {paymentOptions.map((pay: IEnumOptions) => (
+                        {paymentOptions.map((pay) => (
                           <Option key={pay.value} value={pay.value}>
                             {camelToNormalCase(pay.label)}
                           </Option>

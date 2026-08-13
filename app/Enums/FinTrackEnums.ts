@@ -36,3 +36,17 @@ export enum ExpenseStatus {
   PartiallyRefunded = 6,
   Refunded = 7,
 }
+
+export enum TimeCategory{
+  Last = 1,
+  Current = 2,
+  Next = 3
+}
+
+export enum TimePeriod{
+  Day = 1,
+  Week = 2,
+  TwoWeeks = 3,
+  Month = 4,
+  Year = 5
+}

@@ -8,7 +8,10 @@
 .mainLayout {
   background: #0d1117;
 }
-
+.titleSelect{
+  min-width: 120px;
+  margin-right: 5px;
+}
 :global(html){
     overflow-y: scroll;
     scrollbar-gutter: stable;
