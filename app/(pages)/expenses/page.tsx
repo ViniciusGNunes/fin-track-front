@@ -88,21 +88,25 @@ export default function ExpensesPage() {
 
   const [categories, setCategories] = useState<ICategory[]>([]);
   const [loading, setLoading] = useState(false);
-  
+
   const [form] = Form.useForm();
-  
+
   const isInstallment = Form.useWatch("isInstallment", form);
   const isRecurrent = Form.useWatch("isRecurrent", form);
-  
-  const paymentOptions = EnumToList(PaymentMethod)
+
+  const paymentOptions = EnumToList(PaymentMethod);
   const recurrenceInterval = EnumToList(RecurrenceInterval).slice(1, 5);
   const timeCategory = EnumToList(TimeCategory);
   const timePeriod = EnumToList(TimePeriod);
-  
-  const [selectedCategory, setSelectedCategory] = 
-    useState<IEnumOptions>({label: timeCategory[1].label, value: timeCategory[1].value})
-  const [selectedPeriod, setSelectedPeriod] = 
-    useState<IEnumOptions>({label: timePeriod[1].label, value:timePeriod[1].value})
+
+  const [selectedCategory, setSelectedCategory] = useState<IEnumOptions>({
+    label: timeCategory[1]?.label || "",
+    value: timeCategory[1]?.value || 0,
+  });
+  const [selectedPeriod, setSelectedPeriod] = useState<IEnumOptions>({
+    label: timePeriod[1]?.label || "",
+    value: timePeriod[1]?.value || 0,
+  });
 
   useEffect(() => {
     const fetchUserInfo = () => {
@@ -133,7 +137,7 @@ export default function ExpensesPage() {
     fetchUserInfo();
     fetchTransactions();
   }, []);
-  
+
   const columns = [
     {
       title: "Due Date",
@@ -185,19 +189,20 @@ export default function ExpensesPage() {
       console.error("User not authenticated");
       return;
     }
-    
-    // Formatamos a data vinda do DatePicker (Dayjs)
+
     const formattedDate = values.firstDueDate
       ? values.firstDueDate.toISOString()
       : new Date().toISOString();
-      
+
+    // Payload montado rigorosamente conforme o TransactionCreateDto
     const payload: ITransactionPost = {
-      userId: Number(userInfo.id),
+      userID: Number(userInfo.id),
       name: values.name,
+      description: values.description || null,
       totalAmount: Number(values.totalAmount),
+      type: TransactionType.Expense,
+      categoryID: Number(values.categoryId),
       paymentMethod: Number(values.paymentMethod),
-      categoryId: Number(values.categoryId),
-      firstDueDate: formattedDate,
       isInstallment: Boolean(values.isInstallment),
       totalInstallments: values.isInstallment
         ? Number(values.totalInstallments)
@@ -206,17 +211,16 @@ export default function ExpensesPage() {
       recurrenceInterval: values.isRecurrent
         ? Number(values.recurrenceInterval)
         : RecurrenceInterval.None,
-        type: TransactionType.Expense,
-      };
+      firstDueDate: formattedDate,
+    };
 
     try {
       setLoading(true);
       await postTransaction(payload);
-      
-      // Atualiza a lista após criação e limpa o modal
+
       const updatedTransactions = await getTransactions();
       setTransactions(updatedTransactions);
-      
+
       setIsModalOpen(false);
       form.resetFields();
     } catch (error) {
@@ -225,7 +229,7 @@ export default function ExpensesPage() {
       setLoading(false);
     }
   };
-  
+
   return (
     <ConfigProvider
       theme={{
@@ -314,27 +318,42 @@ export default function ExpensesPage() {
                 <Card
                   title={
                     <>
-                    <Select className={styles.titleSelect}
-                    labelInValue
-                    value={selectedCategory}
-                    onChange={(val) => setSelectedCategory(val as IEnumOptions)} >
-                      {timeCategory.map((tCat) => (
-                        <Option key={tCat.value} value={tCat.value}>
-                          {camelToNormalCase(tCat.label)}
-                        </Option>
-                      ))}
-                    </Select>
-                    <Select className={styles.titleSelect}
-                    labelInValue
-                    value={selectedPeriod}
-                    onChange={(val) => setSelectedPeriod(val as IEnumOptions)}>
-                      {timePeriod.map((tCat) => (
-                        <Option key={tCat.value} value={tCat.value}>
-                          {camelToNormalCase(tCat.label)}
-                        </Option>
-                      ))}
-                    </Select>
-                    Expenses
+                      <Button
+                        type="primary"
+                        className={styles.titleButton}
+                        onClick={() => {}}
+                      >
+                        Search{" "}
+                      </Button>
+                      <Select
+                        className={styles.titleSelect}
+                        labelInValue
+                        value={selectedCategory}
+                        onChange={(val) =>
+                          setSelectedCategory(val as IEnumOptions)
+                        }
+                      >
+                        {timeCategory.map((tCat) => (
+                          <Option key={tCat.value} value={tCat.value}>
+                            {camelToNormalCase(tCat.label)}
+                          </Option>
+                        ))}
+                      </Select>
+                      <Select
+                        className={styles.titleSelect}
+                        labelInValue
+                        value={selectedPeriod}
+                        onChange={(val) =>
+                          setSelectedPeriod(val as IEnumOptions)
+                        }
+                      >
+                        {timePeriod.map((tCat) => (
+                          <Option key={tCat.value} value={tCat.value}>
+                            {camelToNormalCase(tCat.label)}
+                          </Option>
+                        ))}
+                      </Select>
+                      Expenses
                     </>
                   }
                   variant="borderless"
@@ -369,7 +388,9 @@ export default function ExpensesPage() {
                 onFinish={handleCreateExpense}
                 initialValues={{
                   isInstallment: false,
+                  totalInstallments: 1,
                   isRecurrent: false,
+                  recurrenceInterval: RecurrenceInterval.None,
                   paymentMethod: paymentOptions[0]?.value,
                 }}
               >
@@ -380,9 +401,16 @@ export default function ExpensesPage() {
                       label="Expense Name / Title"
                       rules={[
                         { required: true, message: "Please enter a name" },
+                        {
+                          max: 150,
+                          message: "Name cannot exceed 150 characters",
+                        },
                       ]}
                     >
-                      <Input placeholder="e.g., Coffee Machine or AWS Bill" />
+                      <Input
+                        placeholder="e.g., Coffee Machine or AWS Bill"
+                        maxLength={150}
+                      />
                     </Form.Item>
                   </Col>
                   <Col span={10}>
@@ -396,8 +424,31 @@ export default function ExpensesPage() {
                       <InputNumber
                         style={{ width: "100%" }}
                         min={0.01}
+                        max={999999999.99}
                         precision={2}
                         placeholder="0.00"
+                      />
+                    </Form.Item>
+                  </Col>
+                </Row>
+
+                {/* Campo Description adicionado conforme [MaxLength(500)] no DTO */}
+                <Row gutter={16}>
+                  <Col span={24}>
+                    <Form.Item
+                      name="description"
+                      label="Description (Optional)"
+                      rules={[
+                        {
+                          max: 500,
+                          message: "Description cannot exceed 500 characters",
+                        },
+                      ]}
+                    >
+                      <Input.TextArea
+                        rows={2}
+                        placeholder="e.g., Additional notes about this expense"
+                        maxLength={500}
                       />
                     </Form.Item>
                   </Col>
@@ -497,7 +548,7 @@ export default function ExpensesPage() {
                       ]}
                     >
                       <InputNumber
-                        min={2}
+                        min={1}
                         max={360}
                         style={{ width: "100%" }}
                         placeholder="e.g., 12"
