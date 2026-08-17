@@ -8,6 +8,7 @@ import { IExpenseRead } from "../Expenses/IExpenses";
 
 export interface ITransactionPost {
   name: string;
+  description?: string | null;
   totalAmount: number;
   type: TransactionType;
   categoryId: number;
@@ -20,9 +21,21 @@ export interface ITransactionPost {
   userId: number;
 }
 
+export interface ITransactionUpdate {
+  name: string;
+  description?: string | null;
+  totalAmount?: number;
+  type: TransactionType;
+  status: TransactionStatus;
+  categoryID: number;
+  paymentMethod: PaymentMethod;
+  cancellationDate?: string | null;
+}
+
 export interface ITransactionRead {
   transactionID: number;
   name: string;
+  description?: string | null;
   totalAmount: number;
   type: TransactionType;
   status: TransactionStatus;
