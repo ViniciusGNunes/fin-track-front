@@ -209,14 +209,12 @@ export default function ExpensesPage() {
     useState<IEnumOptions>(initialPeriod);
 
   const fetchTransactionsData = useCallback(
-    async (catVal?: number, perVal?: number) => {
-      const c = catVal ?? Number(selectedCategory.value);
-      const p = perVal ?? Number(selectedPeriod.value);
+    async (catVal: number, perVal: number) => {
       try {
         setLoadingTable(true);
         const data = await getTransactions({
-          timeCategory: c,
-          timePeriod: p,
+          timeCategory: catVal,
+          timePeriod: perVal,
         });
         setTransactions(Array.isArray(data) ? data : []);
       } catch (err) {
@@ -226,31 +224,15 @@ export default function ExpensesPage() {
         setLoadingTable(false);
       }
     },
-    [selectedCategory.value, selectedPeriod.value]
+    [] // no state deps — callers always pass values explicitly
   );
 
   useEffect(() => {
-    const fetchUserInfo = () => {
-      try {
-        const data = getUserFromCookiesClient();
-        setUserInfo(data);
-      } catch (err) {
-        console.log("Failed to get user information:", err);
-      }
-    };
-    const fetchCategories = async () => {
-      try {
-        const data = await getCategories();
-        setCategories(data);
-      } catch (err) {
-        console.error("Failed to fetch categories:", err);
-      }
-    };
-
-    fetchCategories();
-    fetchUserInfo();
+    try { setUserInfo(getUserFromCookiesClient()); } catch { /* noop */ }
+    getCategories().then(setCategories).catch(() => {});
     fetchTransactionsData(TimeCategory.Current, TimePeriod.Week);
-  }, [fetchTransactionsData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // run only once on mount — fetchTransactionsData is stable
 
   const expenses = useMemo(
     () => mapTransactionsToTableItems(transactions),

@@ -1,0 +1,348 @@
+/* ─── Layout shell ─────────────────────────────────────────────── */
+.layout {
+  min-height: 100vh;
+  background-color: #0d1117;
+  color: #e6edf3;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.mainLayout {
+  background: #0d1117;
+}
+
+:global(html) {
+  overflow-y: scroll;
+  scrollbar-gutter: stable;
+}
+
+:global(body) {
+  padding-right: 0 !important;
+  overflow: auto !important;
+}
+
+/* ─── Page header ──────────────────────────────────────────────── */
+.content {
+  margin: 24px;
+}
+
+.pageHeader {
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  h2 {
+    margin: 0;
+    color: #f0f6fc;
+    font-weight: 700;
+    font-size: 1.5rem;
+  }
+
+  p {
+    margin: 4px 0 0;
+    color: #8b949e;
+    font-size: 0.9rem;
+  }
+}
+
+/* ─── Metrics row ──────────────────────────────────────────────── */
+.metricRow {
+  margin-bottom: 24px;
+}
+
+/* ─── Controls bar ─────────────────────────────────────────────── */
+.titleSelect {
+  min-width: 120px;
+  margin-right: 5px;
+}
+
+.titleButton {
+  margin-right: 5px;
+}
+
+/* ─── Calendar card wrapper ────────────────────────────────────── */
+.calendarCard {
+  background: #161b22;
+  border: 1px solid #21262d;
+  border-radius: 12px;
+}
+
+/* ─── Period header (e.g. "Aug 2026") ──────────────────────────── */
+.periodLabel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  color: #f0f6fc;
+  font-size: 1rem;
+  font-weight: 600;
+
+  span {
+    color: #8b949e;
+    font-size: 0.85rem;
+    font-weight: 400;
+  }
+}
+
+/* ─── Calendar grid ────────────────────────────────────────────── */
+.calendarGrid {
+  display: grid;
+  gap: 10px;
+
+  /* default: 7 cols (Week). Overridden inline via style prop */
+  grid-template-columns: repeat(7, 1fr);
+}
+
+/* Single-day variant */
+.calendarGridSingle {
+  grid-template-columns: 1fr;
+  max-width: 420px;
+}
+
+/* Month variant: let them wrap freely */
+.calendarGridMonth {
+  grid-template-columns: repeat(7, 1fr);
+}
+
+/* ─── Day cell ─────────────────────────────────────────────────── */
+.dayCell {
+  background: #0d1117;
+  border: 1px solid #21262d;
+  border-radius: 10px;
+  padding: 10px 10px 8px;
+  min-height: 120px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+  overflow: hidden;
+
+  &:hover {
+    border-color: #388bfd44;
+    box-shadow: 0 0 0 1px #388bfd22;
+  }
+}
+
+/* Today gets a subtle green glow */
+.dayCell.today {
+  border-color: #1a7f3755;
+  box-shadow: 0 0 12px 0 #1a7f3722, inset 0 0 20px 0 #1a7f3708;
+
+  .dayCellNumber {
+    background: #1a7f37;
+    color: #fff;
+    border-radius: 50%;
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/* Empty / filler cell (days outside the real range for month view) */
+.dayCell.empty {
+  background: transparent;
+  border-color: transparent;
+  pointer-events: none;
+}
+
+/* ─── Day-cell header ──────────────────────────────────────────── */
+.dayCellHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.dayCellNumber {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #8b949e;
+  line-height: 1;
+  min-width: 22px;
+  text-align: center;
+}
+
+.dayCellWeekday {
+  font-size: 0.65rem;
+  color: #484f58;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* total badge shown when day has multiple expenses */
+.dayCellTotal {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #ff6b6b;
+  background: #ff4d4f18;
+  border: 1px solid #ff4d4f33;
+  border-radius: 6px;
+  padding: 1px 5px;
+}
+
+/* ─── Expense chip ─────────────────────────────────────────────── */
+.expenseChip {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 4px;
+  padding: 5px 7px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  line-height: 1.3;
+  cursor: pointer;
+  margin-bottom: 4px;
+  border-left: 3px solid transparent;
+  transition: opacity 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+
+  &:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  /* status colour variants */
+  &.statusPending {
+    background: #faad1415;
+    border-left-color: #faad14;
+    color: #ffd666;
+  }
+
+  &.statusPaid {
+    background: #52c41a15;
+    border-left-color: #52c41a;
+    color: #95de64;
+  }
+
+  &.statusOverdue {
+    background: #ff4d4f15;
+    border-left-color: #ff4d4f;
+    color: #ff7875;
+  }
+
+  &.statusPartiallyPaid {
+    background: #1890ff15;
+    border-left-color: #1890ff;
+    color: #69c0ff;
+  }
+
+  &.statusCancelled {
+    background: #8b949e15;
+    border-left-color: #484f58;
+    color: #484f58;
+  }
+
+  &.statusRefunded {
+    background: #b37feb15;
+    border-left-color: #b37feb;
+    color: #d3adf7;
+  }
+}
+
+.chipName {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 600;
+}
+
+.chipAmount {
+  flex-shrink: 0;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+/* overflow indicator when more than N chips */
+.moreChips {
+  font-size: 0.65rem;
+  color: #484f58;
+  padding: 2px 4px;
+  cursor: pointer;
+  text-align: center;
+  border-radius: 4px;
+  transition: color 0.15s;
+
+  &:hover {
+    color: #8b949e;
+  }
+}
+
+/* ─── Empty state inside a day cell ───────────────────────────── */
+.emptyCellMsg {
+  font-size: 0.65rem;
+  color: #21262d;
+  text-align: center;
+  margin-top: 24px;
+}
+
+/* ─── Year view: month block ───────────────────────────────────── */
+.yearMonthBlock {
+  margin-bottom: 32px;
+}
+
+.yearMonthTitle {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #c9d1d9;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #21262d;
+}
+
+/* ─── Modal overrides ──────────────────────────────────────────── */
+.modalChipPreview {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-bottom: 18px;
+  background: #0d1117;
+  border: 1px solid #21262d;
+
+  .chipPreviewIcon {
+    font-size: 1.2rem;
+  }
+
+  .chipPreviewDetails {
+    line-height: 1.4;
+
+    .chipPreviewName {
+      font-weight: 600;
+      color: #f0f6fc;
+      font-size: 0.95rem;
+    }
+
+    .chipPreviewMeta {
+      font-size: 0.78rem;
+      color: #8b949e;
+    }
+  }
+}
+
+.negativeText {
+  color: #ff4d4f;
+  font-weight: 600;
+}
+
+/* ─── Responsive ───────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .calendarGrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .calendarGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .dayCell {
+    min-height: 80px;
+  }
+}
