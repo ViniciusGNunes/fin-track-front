@@ -36,18 +36,17 @@ import {
 } from "@ant-design/icons";
 import { Sidebar } from "../../components/Sidebar/Sidebar";
 import { Header } from "../../components/Header/Header";
+import { LogExpenseButton, LogExpenseModal } from "../../components/LogExpense";
 import styles from "./styles.module.scss";
 import { UserCookieInfo } from "../../interfaces/UserCookieInfo";
 import { getUserFromCookiesClient } from "@/app/services/Frontend/tokenServicesClient";
 import ICategory from "../../interfaces/ICategory";
 import { getCategories } from "@/app/services/Backend/CategoriesService";
 import {
-  ITransactionPost,
   ITransactionRead,
 } from "../../interfaces/Transaction/ITransaction";
 import {
   getTransactions,
-  postTransaction,
   updateTransaction,
   cancelTransaction,
   deleteTransaction,
@@ -56,7 +55,6 @@ import {
 import {
   ExpenseStatus,
   PaymentMethod,
-  RecurrenceInterval,
   TimeCategory,
   TimePeriod,
   TransactionStatus,
@@ -86,6 +84,14 @@ interface ExpenseTableItem {
   totalInstallments: number;
   transactionStatus: TransactionStatus;
   description?: string | null;
+}
+
+interface EditExpenseFormValues {
+  name: string;
+  amount: number;
+  categoryId: number;
+  paymentMethod: number;
+  description?: string;
 }
 
 const mapTransactionsToTableItems = (
@@ -164,24 +170,25 @@ export default function ExpensesPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<ExpenseTableItem | null>(null);
 
-  const [userInfo, setUserInfo] = useState<UserCookieInfo | null>(null);
-  const [transactions, setTransactions] = useState<ITransactionRead[]>([]);
+  const [userInfo] = useState<UserCookieInfo | null>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        return getUserFromCookiesClient();
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  });
 
+  const [transactions, setTransactions] = useState<ITransactionRead[]>([]);
   const [categories, setCategories] = useState<ICategory[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingTable, setLoadingTable] = useState(false);
 
-  const [form] = Form.useForm();
-  const [editForm] = Form.useForm();
-
-  const isInstallment = Form.useWatch("isInstallment", form);
-  const isRecurrent = Form.useWatch("isRecurrent", form);
+  const [editForm] = Form.useForm<EditExpenseFormValues>();
 
   const paymentOptions = useMemo(() => EnumToList(PaymentMethod), []);
-  const recurrenceInterval = useMemo(
-    () => EnumToList(RecurrenceInterval).slice(1, 5),
-    []
-  );
   const timeCategory = useMemo(() => EnumToList(TimeCategory), []);
   const timePeriod = useMemo(() => EnumToList(TimePeriod), []);
 
@@ -224,15 +231,31 @@ export default function ExpensesPage() {
         setLoadingTable(false);
       }
     },
-    [] // no state deps — callers always pass values explicitly
+    []
   );
 
   useEffect(() => {
-    try { setUserInfo(getUserFromCookiesClient()); } catch { /* noop */ }
-    getCategories().then(setCategories).catch(() => {});
-    fetchTransactionsData(TimeCategory.Current, TimePeriod.Week);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // run only once on mount — fetchTransactionsData is stable
+    let isMounted = true;
+
+    const initData = async () => {
+      try {
+        const catData = await getCategories();
+        if (isMounted) setCategories(catData);
+      } catch {
+        // noop
+      }
+
+      if (isMounted) {
+        await fetchTransactionsData(TimeCategory.Current, TimePeriod.Week);
+      }
+    };
+
+    initData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [fetchTransactionsData]);
 
   const expenses = useMemo(
     () => mapTransactionsToTableItems(transactions),
@@ -293,7 +316,7 @@ export default function ExpensesPage() {
     setIsEditModalOpen(true);
   };
 
-  const handleSaveEdit = async (values: any) => {
+  const handleSaveEdit = async (values: EditExpenseFormValues) => {
     if (!editingItem) return;
     try {
       setLoading(true);
@@ -422,7 +445,7 @@ export default function ExpensesPage() {
     {
       title: "Actions",
       key: "actions",
-      render: (_: any, record: ExpenseTableItem) => (
+      render: (_: unknown, record: ExpenseTableItem) => (
         <Space size="small">
           {(record.statusCode === ExpenseStatus.Pending ||
             record.statusCode === ExpenseStatus.Overdue ||
@@ -488,54 +511,7 @@ export default function ExpensesPage() {
     },
   ];
 
-  const handleCreateExpense = async (values: any) => {
-    if (!userInfo?.id) {
-      console.error("User not authenticated");
-      return;
-    }
 
-    const formattedDate = values.firstDueDate
-      ? values.firstDueDate.toISOString()
-      : new Date().toISOString();
-
-    const payload: ITransactionPost = {
-      userId: Number(userInfo.id),
-      name: values.name,
-      description: values.description || null,
-      totalAmount: Number(values.totalAmount),
-      type: TransactionType.Expense,
-      categoryId: Number(values.categoryId),
-      paymentMethod: Number(values.paymentMethod),
-      isInstallment: Boolean(values.isInstallment),
-      totalInstallments: values.isInstallment
-        ? Number(values.totalInstallments)
-        : 1,
-      isRecurrent: Boolean(values.isRecurrent),
-      recurrenceInterval: values.isRecurrent
-        ? Number(values.recurrenceInterval)
-        : RecurrenceInterval.None,
-      firstDueDate: formattedDate,
-    };
-
-    try {
-      setLoading(true);
-      await postTransaction(payload);
-      message.success("Expense registered successfully");
-
-      await fetchTransactionsData(
-        Number(selectedCategory.value),
-        Number(selectedPeriod.value)
-      );
-
-      setIsModalOpen(false);
-      form.resetFields();
-    } catch (error) {
-      console.error("Failed to create expense", error);
-      message.error("Failed to register expense");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <ConfigProvider
@@ -575,14 +551,7 @@ export default function ExpensesPage() {
                   recurrent bills.
                 </p>
               </div>
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                size="large"
-                onClick={() => setIsModalOpen(true)}
-              >
-                Log New Expense
-              </Button>
+              <LogExpenseButton onClick={() => setIsModalOpen(true)} />
             </div>
 
             <Row gutter={[16, 16]} className={styles.metricRow}>
@@ -692,221 +661,17 @@ export default function ExpensesPage() {
               </Col>
             </Row>
 
-            <Modal
-              title="Log New Expense / Transaction"
+            <LogExpenseModal
               open={isModalOpen}
-              onCancel={() => {
-                setIsModalOpen(false);
-                form.resetFields();
-              }}
-              onOk={() => form.submit()}
-              okText="Save Expense"
-              confirmLoading={loading}
-              width={600}
-              destroyOnHidden
-              style={{ top: 40 }}
-            >
-              <Form
-                form={form}
-                layout="vertical"
-                onFinish={handleCreateExpense}
-                initialValues={{
-                  isInstallment: false,
-                  totalInstallments: 1,
-                  isRecurrent: false,
-                  recurrenceInterval: RecurrenceInterval.None,
-                  paymentMethod: paymentOptions[0]?.value,
-                }}
-              >
-                <Row gutter={16}>
-                  <Col span={14}>
-                    <Form.Item
-                      name="name"
-                      label="Expense Name / Title"
-                      rules={[
-                        { required: true, message: "Please enter a name" },
-                        {
-                          max: 150,
-                          message: "Name cannot exceed 150 characters",
-                        },
-                      ]}
-                    >
-                      <Input
-                        placeholder="e.g., Coffee Machine or AWS Bill"
-                        maxLength={150}
-                      />
-                    </Form.Item>
-                  </Col>
-                  <Col span={10}>
-                    <Form.Item
-                      name="totalAmount"
-                      label="Total Amount ($)"
-                      rules={[
-                        { required: true, message: "Please enter amount" },
-                      ]}
-                    >
-                      <InputNumber
-                        style={{ width: "100%" }}
-                        min={0.01}
-                        max={999999999.99}
-                        precision={2}
-                        placeholder="0.00"
-                      />
-                    </Form.Item>
-                  </Col>
-                </Row>
-
-                <Row gutter={16}>
-                  <Col span={24}>
-                    <Form.Item
-                      name="description"
-                      label="Description (Optional)"
-                      rules={[
-                        {
-                          max: 500,
-                          message: "Description cannot exceed 500 characters",
-                        },
-                      ]}
-                    >
-                      <Input.TextArea
-                        rows={2}
-                        placeholder="e.g., Additional notes about this expense"
-                        maxLength={500}
-                      />
-                    </Form.Item>
-                  </Col>
-                </Row>
-
-                <Row gutter={16}>
-                  <Col span={12}>
-                    <Form.Item
-                      name="categoryId"
-                      label="Category"
-                      rules={[
-                        { required: true, message: "Please select a category" },
-                      ]}
-                    >
-                      <Select placeholder="Select a category">
-                        {categories.map((cat: ICategory) => (
-                          <Option key={cat.categoryID} value={cat.categoryID}>
-                            {cat.name}
-                          </Option>
-                        ))}
-                      </Select>
-                    </Form.Item>
-                  </Col>
-                  <Col span={12}>
-                    <Form.Item
-                      name="paymentMethod"
-                      label="Payment Method"
-                      rules={[
-                        {
-                          required: true,
-                          message: "Please select payment method",
-                        },
-                      ]}
-                    >
-                      <Select placeholder="Select a Payment Method">
-                        {paymentOptions.map((pay) => (
-                          <Option key={pay.value} value={pay.value}>
-                            {camelToNormalCase(pay.label)}
-                          </Option>
-                        ))}
-                      </Select>
-                    </Form.Item>
-                  </Col>
-                </Row>
-
-                <Row gutter={16}>
-                  <Col span={12}>
-                    <Form.Item
-                      name="firstDueDate"
-                      label="Due / Payment Date"
-                      rules={[
-                        { required: true, message: "Please select date" },
-                      ]}
-                    >
-                      <DatePicker
-                        style={{ width: "100%" }}
-                        format="YYYY-MM-DD"
-                      />
-                    </Form.Item>
-                  </Col>
-                </Row>
-
-                <Row gutter={16} style={{ marginTop: 8 }}>
-                  <Col span={12}>
-                    <Form.Item
-                      name="isInstallment"
-                      label="Is this an Installment Purchase?"
-                      valuePropName="checked"
-                    >
-                      <Switch disabled={isRecurrent} />
-                    </Form.Item>
-                  </Col>
-                  <Col span={12}>
-                    <Form.Item
-                      name="isRecurrent"
-                      label="Is this a Recurring Expense?"
-                      valuePropName="checked"
-                    >
-                      <Switch disabled={isInstallment} />
-                    </Form.Item>
-                  </Col>
-                </Row>
-
-                {isInstallment && (
-                  <Card
-                    size="small"
-                    style={{ background: "#0d1117", marginBottom: 16 }}
-                  >
-                    <Form.Item
-                      name="totalInstallments"
-                      label="Total Number of Installments"
-                      rules={[
-                        {
-                          required: true,
-                          message: "Specify number of installments",
-                        },
-                      ]}
-                    >
-                      <InputNumber
-                        min={1}
-                        max={360}
-                        style={{ width: "100%" }}
-                        placeholder="e.g., 12"
-                      />
-                    </Form.Item>
-                  </Card>
-                )}
-
-                {isRecurrent && (
-                  <Card
-                    size="small"
-                    style={{ background: "#0d1117", marginBottom: 16 }}
-                  >
-                    <Form.Item
-                      name="recurrenceInterval"
-                      label="Billing Frequency"
-                      rules={[
-                        {
-                          required: true,
-                          message: "Select recurrence interval",
-                        },
-                      ]}
-                    >
-                      <Select placeholder="Select frequency">
-                        {recurrenceInterval.map((rec) => (
-                          <Option value={rec.value} key={rec.value}>
-                            {rec.label}
-                          </Option>
-                        ))}
-                      </Select>
-                    </Form.Item>
-                  </Card>
-                )}
-              </Form>
-            </Modal>
+              onCancel={() => setIsModalOpen(false)}
+              onSuccess={() =>
+                fetchTransactionsData(
+                  Number(selectedCategory.value),
+                  Number(selectedPeriod.value)
+                )
+              }
+              categories={categories}
+            />
 
             <Modal
               title={`Edit Expense: ${editingItem?.transactionName || ""}`}
@@ -952,27 +717,26 @@ export default function ExpensesPage() {
                         { required: true, message: "Please enter amount" },
                       ]}
                     >
-                      <InputNumber
-                        style={{ width: "100%" }}
-                        min={0.01}
-                        max={999999999.99}
-                        precision={2}
-                      />
+                      <InputNumber style={{ width: "100%" }} min={0.01} precision={2} />
                     </Form.Item>
                   </Col>
                 </Row>
-
+                <Row gutter={16}>
+                  <Col span={24}>
+                    <Form.Item name="description" label="Description">
+                      <Input.TextArea rows={2} maxLength={500} />
+                    </Form.Item>
+                  </Col>
+                </Row>
                 <Row gutter={16}>
                   <Col span={12}>
                     <Form.Item
                       name="categoryId"
                       label="Category"
-                      rules={[
-                        { required: true, message: "Please select a category" },
-                      ]}
+                      rules={[{ required: true, message: "Please select category" }]}
                     >
-                      <Select placeholder="Select a category">
-                        {categories.map((cat: ICategory) => (
+                      <Select>
+                        {categories.map((cat) => (
                           <Option key={cat.categoryID} value={cat.categoryID}>
                             {cat.name}
                           </Option>
@@ -984,41 +748,15 @@ export default function ExpensesPage() {
                     <Form.Item
                       name="paymentMethod"
                       label="Payment Method"
-                      rules={[
-                        {
-                          required: true,
-                          message: "Please select payment method",
-                        },
-                      ]}
+                      rules={[{ required: true, message: "Please select payment method" }]}
                     >
-                      <Select placeholder="Select a Payment Method">
+                      <Select>
                         {paymentOptions.map((pay) => (
                           <Option key={pay.value} value={pay.value}>
                             {camelToNormalCase(pay.label)}
                           </Option>
                         ))}
                       </Select>
-                    </Form.Item>
-                  </Col>
-                </Row>
-
-                <Row gutter={16}>
-                  <Col span={24}>
-                    <Form.Item
-                      name="description"
-                      label="Description (Optional)"
-                      rules={[
-                        {
-                          max: 500,
-                          message: "Description cannot exceed 500 characters",
-                        },
-                      ]}
-                    >
-                      <Input.TextArea
-                        rows={2}
-                        placeholder="Additional notes"
-                        maxLength={500}
-                      />
                     </Form.Item>
                   </Col>
                 </Row>

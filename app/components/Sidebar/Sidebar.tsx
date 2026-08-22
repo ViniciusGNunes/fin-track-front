@@ -54,7 +54,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     >
       <div className={styles.logoContainer}>
         <div className={styles.logoBadge}>F</div>
-        {!collapsed && <span className={styles.logoText}>FinCorp</span>}
+        {!collapsed && <span className={styles.logoText}>FinTrack</span>}
       </div>
 
       <Menu

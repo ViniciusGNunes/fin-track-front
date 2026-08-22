@@ -50,3 +50,23 @@ export enum TimePeriod{
   Month = 4,
   Year = 5
 }
+
+export enum InvestmentType {
+  FixedIncome = 0,
+  VariableIncome = 1,
+  Crypto = 2,
+}
+
+export enum FixedRateType {
+  Prefixado = 0,
+  Selic_CDI = 1,
+  IPCA_Plus = 2,
+}
+
+export enum InvestmentTransactionType {
+  Buy = 0,
+  Sell = 1,
+  Liquidate = 2,
+  Dividend = 3,
+  StockSplit = 4,
+}

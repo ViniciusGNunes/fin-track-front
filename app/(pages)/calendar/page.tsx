@@ -32,6 +32,7 @@ import {
 } from "@ant-design/icons";
 import { Sidebar } from "../../components/Sidebar/Sidebar";
 import { Header } from "../../components/Header/Header";
+import { LogExpenseButton, LogExpenseModal } from "../../components/LogExpense";
 import styles from "./styles.module.scss";
 import { UserCookieInfo } from "../../interfaces/UserCookieInfo";
 import { getUserFromCookiesClient } from "@/app/services/Frontend/tokenServicesClient";
@@ -329,6 +330,9 @@ export default function CalendarPage() {
   const [categories, setCategories] = useState<ICategory[]>([]);
   const [loadingTable, setLoadingTable] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  /* Create Expense modal */
+  const [isLogModalOpen, setIsLogModalOpen] = useState(false);
 
   /* Edit modal */
   const [editingItem, setEditingItem] = useState<CalendarExpenseItem | null>(null);
@@ -632,6 +636,7 @@ export default function CalendarPage() {
                 <h2>Expense Calendar</h2>
                 <p>Visualise your upcoming and past bills across a time period.</p>
               </div>
+              <LogExpenseButton onClick={() => setIsLogModalOpen(true)} />
             </div>
 
             {/* Stat cards */}
@@ -880,6 +885,19 @@ export default function CalendarPage() {
           </div>
         </Form>
       </Modal>
+
+      {/* ── Log New Expense Modal ─────────────────────────────── */}
+      <LogExpenseModal
+        open={isLogModalOpen}
+        onCancel={() => setIsLogModalOpen(false)}
+        onSuccess={() =>
+          fetchData(
+            Number(selectedCategory.value),
+            Number(selectedPeriod.value)
+          )
+        }
+        categories={categories}
+      />
     </ConfigProvider>
   );
 }
