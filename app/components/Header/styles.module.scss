@@ -1,26 +1,56 @@
 .header {
-  padding: 0 24px;
-  background: #161b22;
-  border-bottom: 1px solid #21262d;
+  padding: 0 var(--space-6);
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
   display: flex;
   align-items: center;
   justify-content: space-between;
+  height: 64px;
+  line-height: 64px;
 
   .triggerBtn {
-    font-size: 18px;
-    color: #8b949e;
+    font-size: var(--text-lg);
+    color: var(--text-secondary);
+    transition: color 0.15s ease, background-color 0.15s ease;
 
     &:hover {
-      color: #008d0a !important;
-      background: rgba(0, 141, 10, 0.1) !important;
+      color: var(--color-success) !important;
+      background: var(--color-success-bg) !important;
     }
   }
 
   .headerActions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+
+    .profileBadge {
+      padding: var(--space-1) var(--space-3);
+      border-radius: var(--radius-sm);
+      transition: background-color 0.15s ease;
+
+      &:hover {
+        background-color: var(--bg-surface-raised);
+      }
+    }
+
     .username {
-      color: #c9d1d9;
+      color: var(--text-primary);
       font-weight: 500;
-      font-size: 0.9rem;
+      font-size: var(--text-sm);
+    }
+
+    .logoutBtn {
+      font-size: var(--text-base);
+      color: var(--text-secondary);
+      transition: color 0.15s ease, background-color 0.15s ease;
+
+      &:hover {
+        color: var(--color-danger) !important;
+        background: var(--color-danger-bg) !important;
+      }
     }
   }
 }
+
+

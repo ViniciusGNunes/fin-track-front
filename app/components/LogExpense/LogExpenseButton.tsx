@@ -11,7 +11,7 @@ export interface LogExpenseButtonProps extends Omit<ButtonProps, "onClick"> {
 
 export const LogExpenseButton: React.FC<LogExpenseButtonProps> = ({
   onClick,
-  buttonText = "Log New Expense",
+  buttonText = "Nova Despesa",
   type = "primary",
   size = "large",
   icon = <PlusOutlined />,

@@ -14,6 +14,7 @@ import { LockOutlined, MailOutlined } from "@ant-design/icons";
 import { useRouter } from "next/navigation";
 import { api } from "@/app/lib/api";
 import styles from "./page.module.scss";
+import { FINTRACK_THEME } from "@/app/lib/theme";
 
 const { Title, Text } = Typography;
 
@@ -26,81 +27,70 @@ export default function Page() {
       const response = await api.post("/users/login", values);
 
       if (!response) {
-        messageApi.error("Invalid email or password.");
+        messageApi.error("E-mail ou senha incorretos.");
         return;
       }
 
-      messageApi.success("Login successful!");
+      messageApi.success("Login realizado com sucesso!");
       router.push("/dashboard");
     } catch (error) {
       console.error(error);
-      messageApi.error("Something went wrong.");
+      messageApi.error("Ocorreu um erro ao tentar entrar.");
     }
   };
 
   return (
-    <ConfigProvider
-      theme={{
-        algorithm: theme.darkAlgorithm,
-        token: {
-          colorPrimary: "#008d0a",
-          colorBgBase: "#0d1117",
-          colorBgContainer: "#161b22",
-          colorBorderSecondary: "#21262d",
-          borderRadius: 8,
-        },
-      }}
-    >
+    <ConfigProvider theme={FINTRACK_THEME}>
       {contextHolder}
 
       <main className={styles.container}>
         <div className={styles.card}>
           <Card variant={"borderless"}>
-            <div className={styles.logoBadge}>F</div>
+            <div className={styles.logoBadge} onClick={() => router.push("/")} style={{ cursor: "pointer" }}>F</div>
 
             <div className={styles.header}>
               <Title level={2} className={styles.title}>
-                Welcome Back
+                Bem-vindo de volta
               </Title>
-              <Text className={styles.subtitle}>Sign in to your account</Text>
+              <Text className={styles.subtitle}>Acesse sua conta para continuar</Text>
             </div>
 
             <Form layout="vertical" onFinish={onFinish}>
               <Form.Item
-                label="Email"
+                label="E-mail"
                 name="email"
                 rules={[
                   {
                     required: true,
-                    message: "Please enter your email.",
+                    message: "Por favor, insira seu e-mail.",
                   },
                   {
                     type: "email",
-                    message: "Please enter a valid email.",
+                    message: "Por favor, insira um e-mail válido.",
                   },
                 ]}
               >
                 <Input
                   size="large"
                   prefix={<MailOutlined className={styles.inputIcon} />}
-                  placeholder="your@email.com"
+                  placeholder="seu@email.com"
                 />
               </Form.Item>
 
               <Form.Item
-                label="Password"
+                label="Senha"
                 name="password"
                 rules={[
                   {
                     required: true,
-                    message: "Please enter your password.",
+                    message: "Por favor, insira sua senha.",
                   },
                 ]}
               >
                 <Input.Password
                   size="large"
                   prefix={<LockOutlined className={styles.inputIcon} />}
-                  placeholder="Password"
+                  placeholder="Sua senha"
                 />
               </Form.Item>
 
@@ -112,7 +102,7 @@ export default function Page() {
                   size="large"
                   className={styles.button}
                 >
-                  Sign In
+                  Entrar
                 </Button>
               </Form.Item>
             </Form>

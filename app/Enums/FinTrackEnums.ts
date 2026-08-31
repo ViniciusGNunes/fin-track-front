@@ -70,3 +70,34 @@ export enum InvestmentTransactionType {
   Dividend = 3,
   StockSplit = 4,
 }
+
+export enum DebtType {
+  Personal = 0,
+  Bank = 1,
+  Student = 2,
+  Financing_Mortgage = 3,
+  CreditCard = 4,
+  Other = 5,
+}
+
+export enum DebtRateType {
+  FixedAnnual = 0,
+  FixedMonthly = 1,
+  CDI_Linked = 2,
+  IPCA_Linked = 3,
+}
+
+export enum GoalCategory {
+  MonthlyInvestment = 0,
+  MonthlyDebtReduction = 1,
+  ExpenseCap = 2,
+  TargetSavings = 3,
+  PortfolioMilestone = 4,
+}
+
+export enum GoalFrequency {
+  Monthly = 0,
+  OneTimeTarget = 1,
+  Yearly = 2,
+}
+

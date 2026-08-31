@@ -30,17 +30,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const router = useRouter();
   const menuItems = [
-    { key: "dashboard", icon: <DashboardOutlined />, label: "Dashboard" },
-    { key: "expenses", icon: <CreditCardOutlined />, label: "Expenses" },
-    { key: "calendar", icon: <CalendarOutlined />, label: "Calendar" },
-    { key: "investments", icon: <RiseOutlined />, label: "Investments" },
-    { key: "debts", icon: <AccountBookOutlined />, label: "Debts" },
-    { key: "receivables", icon: <DollarOutlined />, label: "Receivables" },
-    { key: "goals", icon: <RocketOutlined />, label: "Goals" },
+    { key: "dashboard", icon: <DashboardOutlined />, label: "Visão Geral" },
+    { key: "expenses", icon: <CreditCardOutlined />, label: "Despesas" },
+    { key: "calendar", icon: <CalendarOutlined />, label: "Calendário" },
+    { key: "investments", icon: <RiseOutlined />, label: "Investimentos" },
+    { key: "debts", icon: <AccountBookOutlined />, label: "Dívidas" },
+    { key: "receivables", icon: <DollarOutlined />, label: "A Receber" },
+    { key: "goals", icon: <RocketOutlined />, label: "Metas" },
     {
-      key: "configuration",
+      key: "settings",
       icon: <SettingOutlined />,
-      label: "Configurations",
+      label: "Configurações",
     },
   ];
 

@@ -1,102 +1,39 @@
 .layout {
   min-height: 100vh;
-  background-color: #0d1117;
-  color: #e6edf3;
-  font-family:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background-color: var(--bg-canvas, #090d16);
+  color: var(--text-primary, #f8fafc);
 }
 
-// Sidebar Component Styling
-.sider {
-  border-right: 1px solid #21262d;
-  background: #161b22 !important;
-
-  .logoContainer {
-    height: 64px;
-    display: flex;
-    align-items: center;
-    padding: 0 20px;
-    gap: 12px;
-    border-bottom: 1px solid #21262d;
-
-    .logoBadge {
-      width: 32px;
-      height: 32px;
-      background-color: #008d0a;
-      color: #ffffff;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
-      font-size: 1.1rem;
-    }
-
-    .logoText {
-      font-size: 1.1rem;
-      font-weight: 600;
-      color: #ffffff;
-      letter-spacing: 0.5px;
-    }
-  }
-
-  .menu {
-    border-right: none;
-    background: transparent;
-    padding-top: 12px;
-  }
-}
-
-// Main Layout & Modular Header
 .mainLayout {
-  background: #0d1117;
+  background: var(--bg-canvas, #090d16);
 }
 
-.header {
-  padding: 0 24px;
-  background: #161b22;
-  border-bottom: 1px solid #21262d;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  .triggerBtn {
-    font-size: 18px;
-    color: #8b949e;
-
-    &:hover {
-      color: #008d0a !important;
-      background: rgba(0, 141, 10, 0.1) !important;
-    }
-  }
-
-  .headerActions {
-    .username {
-      color: #c9d1d9;
-      font-weight: 500;
-      font-size: 0.9rem;
-    }
-  }
-}
-
-// Dashboard Body
 .content {
   margin: 24px;
 
   .pageHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 24px;
 
     h2 {
       margin: 0;
-      color: #f0f6fc;
+      color: var(--text-primary, #f8fafc);
       font-weight: 600;
       font-size: 1.5rem;
+      letter-spacing: -0.02em;
     }
 
     p {
       margin: 4px 0 0;
-      color: #8b949e;
-      font-size: 0.9rem;
+      color: var(--text-secondary, #94a3b8);
+      font-size: 0.875rem;
+    }
+
+    .headerActions {
+      display: flex;
+      gap: 12px;
     }
   }
 }
@@ -104,82 +41,118 @@
 .metricRow {
   margin-bottom: 24px;
 
-  .statDetailGroup {
-    display: flex;
-    gap: 8px;
+  .metricCard {
+    cursor: pointer;
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+    border: 1px solid var(--border-subtle, #1e293b);
+
+    &:hover {
+      transform: translateY(-2px);
+      border-color: var(--border-default, #26354a);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+    }
   }
 
   .trendUp {
-    color: #008d0a;
-    font-size: 0.8rem;
-    display: block;
-    margin-top: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--color-success, #10b981);
+    background: var(--color-success-bg, rgba(16, 185, 129, 0.1));
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    margin-top: 10px;
     font-weight: 500;
   }
 
   .trendDown {
-    color: #ff4d4f;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--color-danger, #f43f5e);
+    background: var(--color-danger-bg, rgba(244, 63, 94, 0.1));
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    margin-top: 10px;
+    font-weight: 500;
+  }
+
+  .subDetail {
+    color: var(--text-secondary, #94a3b8);
     font-size: 0.8rem;
     display: block;
     margin-top: 8px;
-    font-weight: 500;
+    font-weight: 400;
   }
 }
 
 .middleRow {
-  .positiveText {
-    color: #008d0a;
-    font-weight: 600;
-  }
-
-  .negativeText {
-    color: #ff4d4f;
-    font-weight: 600;
-  }
+  margin-bottom: 24px;
 
   .goalCard {
     height: 100%;
 
     .goalsContainer {
-      .goalItem {
-        margin-bottom: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
 
-        &:last-child {
-          margin-bottom: 0;
-        }
+      .goalItem {
+        padding: 10px 12px;
+        background: var(--bg-surface-subtle, #0f172a);
+        border: 1px solid var(--border-subtle, #1e293b);
+        border-radius: 8px;
 
         .goalLabel {
           display: flex;
           justify-content: space-between;
-          margin-bottom: 6px;
+          margin-bottom: 8px;
           font-size: 0.85rem;
-          color: #c9d1d9;
-        }
-      }
-    }
-
-    .emptyGoalsState {
-      padding: 16px 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      .emptyText {
-        margin-top: 8px;
-
-        h4 {
-          margin: 0;
-          color: #f0f6fc;
-          font-weight: 600;
-        }
-
-        p {
-          color: #8b949e;
-          font-size: 0.85rem;
-          margin: 6px 0 12px;
-          max-width: 260px;
+          color: var(--text-primary, #f8fafc);
         }
       }
     }
   }
 }
+
+.bottomRow {
+  margin-bottom: 24px;
+
+  .moduleSummaryItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 14px;
+    background: var(--bg-surface-subtle, #0f172a);
+    border: 1px solid var(--border-subtle, #1e293b);
+    border-radius: 8px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &:hover {
+      border-color: var(--border-default, #26354a);
+      background: var(--bg-surface-raised, #182234);
+      transform: translateX(2px);
+    }
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    .itemInfo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+
+      .itemTitle {
+        font-weight: 500;
+        color: var(--text-primary, #f8fafc);
+        font-size: 0.875rem;
+      }
+    }
+  }
+}
+

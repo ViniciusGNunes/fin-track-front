@@ -44,6 +44,7 @@ import {
 import { Sidebar } from "../../components/Sidebar/Sidebar";
 import { Header } from "../../components/Header/Header";
 import styles from "./styles.module.scss";
+import { FINTRACK_THEME } from "@/app/lib/theme";
 import { UserCookieInfo } from "../../interfaces/UserCookieInfo";
 import { getUserFromCookiesClient } from "@/app/services/Frontend/tokenServicesClient";
 import {
@@ -172,12 +173,13 @@ export default function InvestmentsPage() {
       };
 
       await createInvestment(payload);
-      message.success("Investment added successfully!");
+      message.success("Investimento cadastrado com sucesso!");
       setIsAddModalOpen(false);
       addForm.resetFields();
       await fetchPortfolio();
     } catch (err) {
-      message.error("Failed to add investment");
+      console.error("Failed to add investment", err);
+      message.error("Não foi possível cadastrar o investimento.");
     } finally {
       setLoading(false);
     }
@@ -200,12 +202,13 @@ export default function InvestmentsPage() {
         userInfo?.id ? Number(userInfo.id) : undefined
       );
 
-      message.success("Transaction recorded successfully!");
+      message.success("Transação registrada com sucesso!");
       transForm.resetFields();
       setIsDetailModalOpen(false);
       await fetchPortfolio();
     } catch (err) {
-      message.error("Failed to record transaction");
+      console.error("Failed to record transaction", err);
+      message.error("Não foi possível registrar a transação.");
     } finally {
       setLoading(false);
     }
@@ -215,11 +218,12 @@ export default function InvestmentsPage() {
     try {
       setLoading(true);
       await liquidateInvestment(investmentId, userInfo?.id ? Number(userInfo.id) : undefined);
-      message.success("Investment liquidated successfully!");
+      message.success("Investimento resgatado/liquidado com sucesso!");
       setIsDetailModalOpen(false);
       await fetchPortfolio();
     } catch (err) {
-      message.error("Failed to liquidate investment");
+      console.error("Failed to liquidate investment", err);
+      message.error("Não foi possível liquidar o investimento.");
     } finally {
       setLoading(false);
     }
@@ -229,11 +233,12 @@ export default function InvestmentsPage() {
     try {
       setLoading(true);
       await deleteInvestment(investmentId, userInfo?.id ? Number(userInfo.id) : undefined);
-      message.success("Investment removed");
+      message.success("Investimento excluído com sucesso!");
       setIsDetailModalOpen(false);
       await fetchPortfolio();
     } catch (err) {
-      message.error("Failed to delete investment");
+      console.error("Failed to delete investment", err);
+      message.error("Não foi possível excluir o investimento.");
     } finally {
       setLoading(false);
     }
@@ -242,7 +247,7 @@ export default function InvestmentsPage() {
   // Table columns for list view
   const columns = [
     {
-      title: "Asset",
+      title: "Ativo",
       dataIndex: "name",
       key: "name",
       render: (text: string, record: IInvestment) => (
@@ -266,55 +271,55 @@ export default function InvestmentsPage() {
       ),
     },
     {
-      title: "Type",
+      title: "Tipo",
       dataIndex: "investmentType",
       key: "investmentType",
       render: (type: InvestmentType) => {
         if (type === InvestmentType.Crypto) {
-          return <Tag color="purple">Crypto</Tag>;
+          return <Tag color="purple">Cripto</Tag>;
         }
         if (type === InvestmentType.VariableIncome) {
-          return <Tag color="blue">Variable (Stock/FII)</Tag>;
+          return <Tag color="blue">Renda Variável (Ação/FII)</Tag>;
         }
-        return <Tag color="gold">Fixed Income</Tag>;
+        return <Tag color="gold">Renda Fixa</Tag>;
       },
     },
     {
-      title: "Total Invested",
+      title: "Total Aportado",
       dataIndex: "totalInvested",
       key: "totalInvested",
       render: (val: number, record: IInvestment) =>
-        `${record.currency === "USD" ? "$" : "R$"} ${Number(val).toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
+        `${record.currency === "USD" ? "$" : "R$"} ${Number(val).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
     },
     {
-      title: "Current Value",
+      title: "Saldo Atual",
       dataIndex: "currentValue",
       key: "currentValue",
       render: (val: number, record: IInvestment) => (
-        <strong>
+        <strong style={{ fontVariantNumeric: "tabular-nums" }}>
           {record.currency === "USD" ? "$" : "R$"}{" "}
-          {Number(val).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+          {Number(val).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
         </strong>
       ),
     },
     {
-      title: "Profit / Loss",
+      title: "Lucro / Prejuízo",
       dataIndex: "profitLossAmount",
       key: "profitLossAmount",
       render: (val: number, record: IInvestment) => {
         const isPos = val >= 0;
         return (
-          <span className={isPos ? styles.positiveText : styles.negativeText}>
+          <span className={isPos ? styles.positiveText : styles.negativeText} style={{ fontVariantNumeric: "tabular-nums" }}>
             {isPos ? "+" : ""}
             {record.currency === "USD" ? "$" : "R$"}{" "}
-            {Number(val).toFixed(2)} ({isPos ? "+" : ""}
+            {Number(val).toLocaleString("pt-BR", { minimumFractionDigits: 2 })} ({isPos ? "+" : ""}
             {record.profitLossPercentage}%)
           </span>
         );
       },
     },
     {
-      title: "Portfolio %",
+      title: "% Carteira",
       key: "share",
       render: (_: any, record: IInvestment) => {
         const pct =
@@ -325,11 +330,11 @@ export default function InvestmentsPage() {
       },
     },
     {
-      title: "Actions",
+      title: "Ações",
       key: "actions",
       render: (_: any, record: IInvestment) => (
         <Space size="small">
-          <Tooltip title="View & Manage">
+          <Tooltip title="Gerenciar Ativo">
             <Button
               size="small"
               type="primary"
@@ -360,18 +365,7 @@ export default function InvestmentsPage() {
   ];
 
   return (
-    <ConfigProvider
-      theme={{
-        algorithm: theme.darkAlgorithm,
-        token: {
-          colorPrimary: "#008d0a",
-          colorBgBase: "#0d1117",
-          colorBgContainer: "#161b22",
-          colorBorderSecondary: "#21262d",
-          borderRadius: 8,
-        },
-      }}
-    >
+    <ConfigProvider theme={FINTRACK_THEME}>
       <Layout className={styles.layout}>
         <Sidebar
           collapsed={collapsed}
@@ -383,17 +377,14 @@ export default function InvestmentsPage() {
           <Header
             collapsed={collapsed}
             onToggleCollapse={() => setCollapsed(!collapsed)}
-            username={userInfo?.name || "User"}
-            hasGoals={false}
-            onToggleGoals={() => {}}
           />
 
           <Content className={styles.content}>
             <div className={styles.pageHeader}>
               <div>
-                <h2>Investments Portfolio</h2>
+                <h2>Carteira de Investimentos</h2>
                 <p>
-                  Monitor asset allocations, market returns, rates, and historical growth.
+                  Acompanhe alocação de ativos, rentabilidade da carteira, taxas e evolução patrimonial.
                 </p>
               </div>
 
@@ -402,9 +393,9 @@ export default function InvestmentsPage() {
                   value={viewMode}
                   onChange={(val) => setViewMode(val as any)}
                   options={[
-                    { value: "treemap", icon: <AppstoreOutlined />, label: "Mosaic / Size" },
-                    { value: "pie", icon: <PieChartOutlined />, label: "Pizza Chart" },
-                    { value: "list", icon: <UnorderedListOutlined />, label: "List" },
+                    { value: "treemap", icon: <AppstoreOutlined />, label: "Mosaico / Tamanho" },
+                    { value: "pie", icon: <PieChartOutlined />, label: "Pizza" },
+                    { value: "list", icon: <UnorderedListOutlined />, label: "Lista" },
                   ]}
                 />
                 <Button
@@ -412,7 +403,7 @@ export default function InvestmentsPage() {
                   icon={<PlusOutlined />}
                   onClick={() => setIsAddModalOpen(true)}
                 >
-                  New Investment
+                  Novo Investimento
                 </Button>
               </div>
             </div>
@@ -422,35 +413,37 @@ export default function InvestmentsPage() {
               <Col xs={24} sm={8}>
                 <Card variant="borderless">
                   <Statistic
-                    title="Total Portfolio Value"
+                    title="Patrimônio Total Investido"
                     value={portfolio.totalCurrentValue}
                     precision={2}
                     prefix="R$ "
-                    styles={{ value: { color: "#58a6ff" } }}
+                    styles={{ value: { color: "#38bdf8", fontVariantNumeric: "tabular-nums" } }}
                   />
                 </Card>
               </Col>
               <Col xs={24} sm={8}>
                 <Card variant="borderless">
                   <Statistic
-                    title="Total Invested Capital"
+                    title="Total de Aportes Realizados"
                     value={portfolio.totalInvested}
                     precision={2}
                     prefix="R$ "
+                    styles={{ value: { fontVariantNumeric: "tabular-nums" } }}
                   />
                 </Card>
               </Col>
               <Col xs={24} sm={8}>
                 <Card variant="borderless">
                   <Statistic
-                    title="Total Return (Profit / Loss)"
+                    title="Rentabilidade Total (Lucro / Prejuízo)"
                     value={portfolio.totalProfitLossAmount}
                     precision={2}
                     prefix={portfolio.totalProfitLossAmount >= 0 ? "+R$ " : "R$ "}
                     styles={{
                       value: {
                         color:
-                          portfolio.totalProfitLossAmount >= 0 ? "#008d0a" : "#ff4d4f",
+                          portfolio.totalProfitLossAmount >= 0 ? "#10b981" : "#f43f5e",
+                        fontVariantNumeric: "tabular-nums",
                       },
                     }}
                   />
@@ -466,7 +459,7 @@ export default function InvestmentsPage() {
                     ) : (
                       <FallOutlined />
                     )}{" "}
-                    {portfolio.totalProfitLossPercentage}% Overall Return
+                    {portfolio.totalProfitLossPercentage}% Rendimento Global
                   </span>
                 </Card>
               </Col>
@@ -474,9 +467,9 @@ export default function InvestmentsPage() {
 
             {/* Views Section */}
             {viewMode === "treemap" && (
-              <Card variant="borderless" title="Portfolio Mosaic (Size by Invested Amount)">
+              <Card variant="borderless" title="Mosaico da Carteira (Proporção pelo Saldo)">
                 {portfolio.investments.length === 0 ? (
-                  <Empty description="No investments found. Add your first asset!" />
+                  <Empty description="Nenhum investimento cadastrado. Adicione seu primeiro ativo!" />
                 ) : (
                   <div className={styles.treemapContainer}>
                     {portfolio.investments.map((inv) => {
@@ -534,17 +527,17 @@ export default function InvestmentsPage() {
 
                           <div className={styles.tileFooter}>
                             <span>
-                              Invested: {inv.currency === "USD" ? "$" : "R$"}{" "}
-                              {Number(inv.totalInvested).toFixed(2)}
+                              Aportado: {inv.currency === "USD" ? "$" : "R$"}{" "}
+                              {Number(inv.totalInvested).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                             </span>
                             <span>
                               {inv.investmentType === InvestmentType.Crypto
-                                ? `${inv.quantity ?? 0} units`
+                                ? `${inv.quantity ?? 0} unidades`
                                 : inv.investmentType === InvestmentType.VariableIncome
-                                ? `${inv.quantity ?? 0} shares`
+                                ? `${inv.quantity ?? 0} cotas`
                                 : inv.annualRate
-                                ? `${inv.annualRate}% p.a.`
-                                : "Fixed Rate"}
+                                ? `${inv.annualRate}% a.a.`
+                                : "Renda Fixa"}
                             </span>
                           </div>
                         </div>
@@ -556,9 +549,9 @@ export default function InvestmentsPage() {
             )}
 
             {viewMode === "pie" && (
-              <Card variant="borderless" title="Portfolio Pizza Chart (Asset Allocation)">
+              <Card variant="borderless" title="Alocação da Carteira (Distribuição de Ativos)">
                 {portfolio.investments.length === 0 ? (
-                  <Empty description="No investments found" />
+                  <Empty description="Nenhum investimento encontrado" />
                 ) : (
                   <div className={styles.chartLayout}>
                     <div className={styles.pizzaCanvasContainer}>
@@ -628,7 +621,7 @@ export default function InvestmentsPage() {
             )}
 
             {viewMode === "list" && (
-              <Card variant="borderless" title="All Investments">
+              <Card variant="borderless" title="Todos os Investimentos">
                 <Table
                   dataSource={portfolio.investments}
                   columns={columns}
@@ -641,11 +634,12 @@ export default function InvestmentsPage() {
 
             {/* Modal: Create New Investment */}
             <Modal
-              title="Add New Investment"
+              title="Adicionar Novo Investimento"
               open={isAddModalOpen}
               onCancel={() => setIsAddModalOpen(false)}
               onOk={() => addForm.submit()}
-              okText="Create Investment"
+              okText="Cadastrar Investimento"
+              cancelText="Cancelar"
               confirmLoading={loading}
               width={560}
               destroyOnHidden
@@ -664,14 +658,14 @@ export default function InvestmentsPage() {
                   <Col span={16}>
                     <Form.Item
                       name="name"
-                      label="Investment Name"
-                      rules={[{ required: true, message: "Enter name" }]}
+                      label="Nome do Ativo"
+                      rules={[{ required: true, message: "Insira o nome do ativo" }]}
                     >
-                      <Input placeholder="e.g. Petrobras PN, Tesouro Selic 2029" />
+                      <Input placeholder="Ex: Petrobras PN, Tesouro Selic 2029, Bitcoin" />
                     </Form.Item>
                   </Col>
                   <Col span={8}>
-                    <Form.Item name="currency" label="Currency">
+                    <Form.Item name="currency" label="Moeda">
                       <Select>
                         <Option value="BRL">BRL (R$)</Option>
                         <Option value="USD">USD ($)</Option>
@@ -683,18 +677,18 @@ export default function InvestmentsPage() {
 
                 <Form.Item
                   name="investmentType"
-                  label="Investment Category"
+                  label="Tipo de Investimento"
                   rules={[{ required: true }]}
                 >
                   <Select>
                     <Option value={InvestmentType.VariableIncome}>
-                      Variable Income (Stock, FII, ETF, Wall St / B3)
+                      Renda Variável (Ações, FIIs, ETFs, B3 / Exterior)
                     </Option>
                     <Option value={InvestmentType.FixedIncome}>
-                      Fixed Income (CDB, Tesouro Selic, LCI/LCA)
+                      Renda Fixa (CDB, Tesouro Selic/IPCA, LCI/LCA, Debêntures)
                     </Option>
                     <Option value={InvestmentType.Crypto}>
-                      Cryptocurrency (BTC, ETH, SOL, Crypto Assets)
+                      Criptomoedas (Bitcoin, Ethereum, Solana)
                     </Option>
                   </Select>
                 </Form.Item>
@@ -715,29 +709,30 @@ export default function InvestmentsPage() {
                           <Col span={10}>
                             <Form.Item
                               name="ticker"
-                              label={isCrypto ? "Crypto Symbol" : "Ticker Symbol"}
-                              rules={[{ required: true, message: "Enter ticker" }]}
+                              label={isCrypto ? "Código / Par (Cripto)" : "Código / Ticker (B3 / Bolsa)"}
+                              rules={[{ required: true, message: "Insira o código do ativo" }]}
                             >
-                              <Input placeholder={isCrypto ? "e.g. BTC, ETH, SOL" : "e.g. PETR4, AAPL, VALE3"} />
+                              <Input placeholder={isCrypto ? "Ex: BTC, ETH, SOL" : "Ex: PETR4, AAPL, VALE3"} />
                             </Form.Item>
                           </Col>
                           <Col span={7}>
-                            <Form.Item name="quantity" label={isCrypto ? "Coins / Units" : "Shares / Units"}>
+                            <Form.Item name="quantity" label={isCrypto ? "Quantidade de Moedas" : "Nº de Cotas / Ações"}>
                               <InputNumber
                                 style={{ width: "100%" }}
                                 min={0.00000001}
                                 step={isCrypto ? 0.00000001 : 1}
                                 precision={isCrypto ? 8 : 4}
-                                placeholder={isCrypto ? "0.00000000" : "0"}
+                                placeholder={isCrypto ? "0,00000000" : "0"}
                               />
                             </Form.Item>
                           </Col>
                           <Col span={7}>
-                            <Form.Item name="purchasePricePerUnit" label={isCrypto ? "Price / Unit" : "Price / Share"}>
+                            <Form.Item name="purchasePricePerUnit" label={isCrypto ? "Preço Médio / Unidade" : "Preço Médio / Cota"}>
                               <InputNumber
                                 style={{ width: "100%" }}
                                 min={0.00000001}
                                 precision={2}
+                                prefix="R$"
                               />
                             </Form.Item>
                           </Col>
@@ -748,19 +743,20 @@ export default function InvestmentsPage() {
                     return (
                       <Row gutter={16}>
                         <Col span={12}>
-                          <Form.Item name="rateType" label="Rate Index">
-                            <Select placeholder="Select index type">
-                              <Option value={FixedRateType.Selic_CDI}>% of CDI / Selic</Option>
-                              <Option value={FixedRateType.Prefixado}>Pré-fixado (Fixed %)</Option>
-                              <Option value={FixedRateType.IPCA_Plus}>IPCA + Fixed %</Option>
+                          <Form.Item name="rateType" label="Indexador / Taxa">
+                            <Select placeholder="Selecione o indexador">
+                              <Option value={FixedRateType.Selic_CDI}>% do CDI / Selic</Option>
+                              <Option value={FixedRateType.Prefixado}>Pré-fixado (Taxa Fixa)</Option>
+                              <Option value={FixedRateType.IPCA_Plus}>IPCA + Taxa Fixa</Option>
                             </Select>
                           </Form.Item>
                         </Col>
                         <Col span={12}>
-                          <Form.Item name="annualRate" label="Contracted Rate (%)">
+                          <Form.Item name="annualRate" label="Rentabilidade Contratada (%)">
                             <InputNumber
                               style={{ width: "100%" }}
-                              placeholder="e.g. 110 (for 110% CDI) or 12.5"
+                              placeholder="Ex: 110 (para 110% CDI) ou 12.5"
+                              suffix="%"
                             />
                           </Form.Item>
                         </Col>
@@ -773,15 +769,15 @@ export default function InvestmentsPage() {
                   <Col span={12}>
                     <Form.Item
                       name="totalInvested"
-                      label="Initial Invested Amount"
-                      rules={[{ required: true, message: "Enter amount" }]}
+                      label="Valor Total Aportado"
+                      rules={[{ required: true, message: "Insira o valor investido" }]}
                     >
-                      <InputNumber style={{ width: "100%" }} min={0.01} precision={2} />
+                      <InputNumber style={{ width: "100%" }} min={0.01} precision={2} prefix="R$" />
                     </Form.Item>
                   </Col>
                   <Col span={12}>
-                    <Form.Item name="startDate" label="Start / Purchase Date">
-                      <DatePicker style={{ width: "100%" }} />
+                    <Form.Item name="startDate" label="Data do Aporte / Aquisição">
+                      <DatePicker style={{ width: "100%" }} format="DD/MM/YYYY" placeholder="Selecione a data" />
                     </Form.Item>
                   </Col>
                 </Row>
@@ -790,7 +786,7 @@ export default function InvestmentsPage() {
 
             {/* Modal: Detail, Growth Graph & Manage (Add/Remove/Liquidate) */}
             <Modal
-              title={`Manage Investment: ${selectedInvestment?.name || ""}`}
+              title={`Gerenciar Ativo: ${selectedInvestment?.name || ""}`}
               open={isDetailModalOpen}
               onCancel={() => {
                 setIsDetailModalOpen(false);
@@ -806,35 +802,36 @@ export default function InvestmentsPage() {
                   items={[
                     {
                       key: "overview",
-                      label: "Performance & Growth",
+                      label: "Evolução & Desempenho",
                       children: (
                         <div>
                           <Row gutter={16}>
                             <Col span={8}>
                               <Card size="small" variant="borderless">
                                 <Statistic
-                                  title="Current Value"
+                                  title="Saldo Atual"
                                   value={selectedInvestment.currentValue}
                                   precision={2}
                                   prefix={`${selectedInvestment.currency === "USD" ? "$" : "R$"} `}
-                                  styles={{ value: { color: "#58a6ff" } }}
+                                  styles={{ value: { color: "#38bdf8", fontVariantNumeric: "tabular-nums" } }}
                                 />
                               </Card>
                             </Col>
                             <Col span={8}>
                               <Card size="small" variant="borderless">
                                 <Statistic
-                                  title="Total Invested"
+                                  title="Total Aportado"
                                   value={selectedInvestment.totalInvested}
                                   precision={2}
                                   prefix={`${selectedInvestment.currency === "USD" ? "$" : "R$"} `}
+                                  styles={{ value: { fontVariantNumeric: "tabular-nums" } }}
                                 />
                               </Card>
                             </Col>
                             <Col span={8}>
                               <Card size="small" variant="borderless">
                                 <Statistic
-                                  title="Profit / Loss"
+                                  title="Lucro / Prejuízo"
                                   value={selectedInvestment.profitLossAmount}
                                   precision={2}
                                   prefix={
@@ -846,8 +843,9 @@ export default function InvestmentsPage() {
                                     value: {
                                       color:
                                         selectedInvestment.profitLossAmount >= 0
-                                          ? "#008d0a"
-                                          : "#ff4d4f",
+                                          ? "#10b981"
+                                          : "#f43f5e",
+                                      fontVariantNumeric: "tabular-nums",
                                     },
                                   }}
                                 />
@@ -858,9 +856,9 @@ export default function InvestmentsPage() {
                           {/* Historical Growth SVG Graph */}
                           <div className={styles.growthChartContainer}>
                             <div className={styles.chartHeader}>
-                              <h4>Historical Growth & Value Timeline</h4>
-                              <span style={{ color: "#8b949e", fontSize: 12 }}>
-                                Total Invested vs. Net Value
+                              <h4>Linha do Tempo da Rentabilidade</h4>
+                              <span style={{ color: "var(--text-secondary)", fontSize: 12 }}>
+                                Total Investido vs. Saldo Líquido
                               </span>
                             </div>
 
@@ -889,7 +887,7 @@ export default function InvestmentsPage() {
                                     <>
                                       <polyline
                                         fill="none"
-                                        stroke="#008d0a"
+                                        stroke="#10b981"
                                         strokeWidth="3"
                                         points={pointsStr}
                                       />
@@ -898,35 +896,38 @@ export default function InvestmentsPage() {
                                 })()}
                               </svg>
                             ) : (
-                              <p style={{ color: "#8b949e", textAlign: "center" }}>
+                              <p style={{ color: "var(--text-secondary)", textAlign: "center", padding: "20px 0" }}>
                                 {loadingGrowth
-                                  ? "Calculating historical performance..."
-                                  : "Single point in time recorded so far."}
+                                  ? "Calculando histórico de rentabilidade..."
+                                  : "Apenas um registro histórico disponível até o momento."}
                               </p>
                             )}
                           </div>
 
                           <div style={{ marginTop: 20, display: "flex", justifyContent: "space-between" }}>
                             <Popconfirm
-                              title="Liquidate Investment?"
-                              description="Zeroes your active position and records full liquidation payout."
+                              title="Resgatar / Liquidar Ativo?"
+                              description="Zera a posição na carteira e registra o resgate do valor."
                               onConfirm={() => handleLiquidate(selectedInvestment.investmentID)}
-                              okText="Liquidate"
+                              okText="Liquidar"
                               okButtonProps={{ danger: true }}
+                              cancelText="Cancelar"
                             >
                               <Button danger icon={<CheckCircleOutlined />}>
-                                Liquidate Position
+                                Resgatar / Liquidar
                               </Button>
                             </Popconfirm>
 
                             <Popconfirm
-                              title="Delete permanently?"
+                              title="Excluir Permanentemente?"
+                              description="Deseja remover este ativo da carteira?"
                               onConfirm={() => handleDelete(selectedInvestment.investmentID)}
-                              okText="Delete"
+                              okText="Excluir"
                               okButtonProps={{ danger: true }}
+                              cancelText="Cancelar"
                             >
                               <Button type="text" danger icon={<DeleteOutlined />}>
-                                Delete Record
+                                Excluir Registro
                               </Button>
                             </Popconfirm>
                           </div>
@@ -935,7 +936,7 @@ export default function InvestmentsPage() {
                     },
                     {
                       key: "transact",
-                      label: "Add / Remove Money",
+                      label: "Aportar / Resgatar",
                       children: (
                         <Form
                           form={transForm}
@@ -948,28 +949,28 @@ export default function InvestmentsPage() {
                         >
                           <Form.Item
                             name="transactionType"
-                            label="Action"
+                            label="Operação"
                             rules={[{ required: true }]}
                           >
                             <Select>
                               <Option value={InvestmentTransactionType.Buy}>
                                 {selectedInvestment?.investmentType === InvestmentType.Crypto
-                                  ? "Add Money / Buy More Coins"
-                                  : "Add Money / Buy More Shares"}
+                                  ? "Novo Aporte / Comprar Moedas"
+                                  : "Novo Aporte / Comprar Cotas / Ações"}
                               </Option>
                               <Option value={InvestmentTransactionType.Sell}>
                                 {selectedInvestment?.investmentType === InvestmentType.Crypto
-                                  ? "Remove Money / Sell Coins"
-                                  : "Remove Money / Sell Partial"}
+                                  ? "Venda Parcial / Resgate de Moedas"
+                                  : "Venda Parcial / Resgate de Cotas"}
                               </Option>
                               <Option value={InvestmentTransactionType.Dividend}>
                                 {selectedInvestment?.investmentType === InvestmentType.Crypto
-                                  ? "Staking Reward / Yield"
-                                  : "Dividend / Yield Payout"}
+                                  ? "Rendimento / Recompensa (Staking)"
+                                  : "Dividendos / Proventos / JCP"}
                               </Option>
                               {selectedInvestment?.investmentType !== InvestmentType.Crypto && (
                                 <Option value={InvestmentTransactionType.StockSplit}>
-                                  Stock Split / Consolidation
+                                  Desdobramento / Grupamento
                                 </Option>
                               )}
                             </Select>
@@ -979,10 +980,10 @@ export default function InvestmentsPage() {
                             <Col span={12}>
                               <Form.Item
                                 name="amount"
-                                label="Amount ($/R$)"
-                                rules={[{ required: true, message: "Enter amount" }]}
+                                label="Valor Financeiro (R$)"
+                                rules={[{ required: true, message: "Insira o valor" }]}
                               >
-                                <InputNumber style={{ width: "100%" }} min={0} precision={2} />
+                                <InputNumber style={{ width: "100%" }} min={0} precision={2} prefix="R$" />
                               </Form.Item>
                             </Col>
                             <Col span={12}>
@@ -990,8 +991,8 @@ export default function InvestmentsPage() {
                                 name="quantity"
                                 label={
                                   selectedInvestment?.investmentType === InvestmentType.Crypto
-                                    ? "Coins Altered"
-                                    : "Shares Altered"
+                                    ? "Quantidade de Moedas"
+                                    : "Quantidade de Cotas"
                                 }
                               >
                                 <InputNumber
@@ -1004,12 +1005,12 @@ export default function InvestmentsPage() {
                             </Col>
                           </Row>
 
-                          <Form.Item name="notes" label="Notes / Reason">
-                            <Input placeholder="e.g. Monthly top-up" />
+                          <Form.Item name="notes" label="Observações">
+                            <Input placeholder="Ex: Aporte mensal, reinvestimento de dividendos" />
                           </Form.Item>
 
                           <Button type="primary" htmlType="submit" loading={loading} block>
-                            Confirm Action
+                            Confirmar Operação
                           </Button>
                         </Form>
                       ),

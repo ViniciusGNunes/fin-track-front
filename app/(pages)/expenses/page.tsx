@@ -38,6 +38,7 @@ import { Sidebar } from "../../components/Sidebar/Sidebar";
 import { Header } from "../../components/Header/Header";
 import { LogExpenseButton, LogExpenseModal } from "../../components/LogExpense";
 import styles from "./styles.module.scss";
+import { FINTRACK_THEME } from "@/app/lib/theme";
 import { UserCookieInfo } from "../../interfaces/UserCookieInfo";
 import { getUserFromCookiesClient } from "@/app/services/Frontend/tokenServicesClient";
 import ICategory from "../../interfaces/ICategory";
@@ -60,7 +61,7 @@ import {
   TransactionStatus,
   TransactionType,
 } from "@/app/Enums/FinTrackEnums";
-import { camelToNormalCase, EnumToList, IEnumOptions } from "@/app/utils/utils";
+import { camelToNormalCase, EnumToList, IEnumOptions, getTimeCategoryLabel, getTimePeriodLabel } from "@/app/utils/utils";
 
 const { Content } = Layout;
 const { Option } = Select;
@@ -330,7 +331,7 @@ export default function ExpensesPage() {
         status: editingItem.transactionStatus,
       });
 
-      message.success("Expense updated successfully");
+      message.success("Despesa atualizada com sucesso!");
       setIsEditModalOpen(false);
       await fetchTransactionsData(
         Number(selectedCategory.value),
@@ -338,7 +339,7 @@ export default function ExpensesPage() {
       );
     } catch (err) {
       console.error("Failed to update expense", err);
-      message.error("Failed to update expense");
+      message.error("Não foi possível atualizar a despesa.");
     } finally {
       setLoading(false);
     }
@@ -348,14 +349,14 @@ export default function ExpensesPage() {
     try {
       setLoadingTable(true);
       await cancelTransaction(transactionId);
-      message.success("Subscription cancelled successfully. Future bills stopped.");
+      message.success("Assinatura cancelada. Cobranças futuras foram interrompidas.");
       await fetchTransactionsData(
         Number(selectedCategory.value),
         Number(selectedPeriod.value)
       );
     } catch (err) {
       console.error("Failed to cancel subscription", err);
-      message.error("Failed to cancel subscription");
+      message.error("Não foi possível cancelar a assinatura.");
     } finally {
       setLoadingTable(false);
     }
@@ -365,14 +366,14 @@ export default function ExpensesPage() {
     try {
       setLoadingTable(true);
       await deleteTransaction(transactionId);
-      message.success("Transaction permanently deleted");
+      message.success("Despesa excluída com sucesso!");
       await fetchTransactionsData(
         Number(selectedCategory.value),
         Number(selectedPeriod.value)
       );
     } catch (err) {
       console.error("Failed to delete transaction", err);
-      message.error("Failed to delete transaction");
+      message.error("Não foi possível excluir a despesa.");
     } finally {
       setLoadingTable(false);
     }
@@ -382,14 +383,14 @@ export default function ExpensesPage() {
     try {
       setLoadingTable(true);
       await payExpense(expenseId);
-      message.success("Bill marked as paid");
+      message.success("Pagamento registrado com sucesso!");
       await fetchTransactionsData(
         Number(selectedCategory.value),
         Number(selectedPeriod.value)
       );
     } catch (err) {
-      console.error("Failed to mark as paid", err);
-      message.error("Failed to mark as paid");
+      console.error("Failed to pay expense", err);
+      message.error("Não foi possível registrar o pagamento.");
     } finally {
       setLoadingTable(false);
     }
@@ -397,75 +398,97 @@ export default function ExpensesPage() {
 
   const columns = [
     {
-      title: "Due Date",
+      title: "Data de Vencimento",
       dataIndex: "dueDate",
       key: "dueDate",
     },
     {
-      title: "Description",
+      title: "Descrição / Título",
       dataIndex: "transactionName",
       key: "transactionName",
       render: (text: string) => <strong>{text}</strong>,
     },
     {
-      title: "Category",
+      title: "Categoria",
       dataIndex: "category",
       key: "category",
       render: (cat: string) => <Tag color="blue">{cat}</Tag>,
     },
     {
-      title: "Type / Installment",
+      title: "Tipo / Parcela",
       dataIndex: "installmentText",
       key: "installmentText",
       render: (text: string) => <Tag color="default">{text}</Tag>,
     },
     {
-      title: "Amount",
+      title: "Valor",
       dataIndex: "amount",
       key: "amount",
       render: (amt: string) => (
-        <span className={styles.negativeText}>{amt}</span>
+        <span className={styles.negativeText} style={{ fontVariantNumeric: "tabular-nums" }}>{amt}</span>
       ),
     },
     {
       title: "Status",
       dataIndex: "status",
       key: "status",
-      render: (status: string) => {
+      render: (status: string, record: ExpenseTableItem) => {
         let color = "default";
-        if (status === "Paid") color = "success";
-        if (status === "Pending") color = "warning";
-        if (status === "PartiallyPaid") color = "processing";
-        if (status === "Overdue") color = "error";
-        if (status === "Cancelled") color = "default";
-        if (status === "Refunded" || status === "PartiallyRefunded") color = "purple";
-        return <Tag color={color}>{status}</Tag>;
+        let icon = null;
+        let label = camelToNormalCase(record.status);
+
+        switch (record.statusCode) {
+          case ExpenseStatus.Paid:
+            color = "success";
+            icon = <CheckCircleOutlined />;
+            label = "Pago";
+            break;
+          case ExpenseStatus.Pending:
+            color = "warning";
+            label = "Pendente";
+            break;
+          case ExpenseStatus.Overdue:
+            color = "error";
+            label = "Em Atraso";
+            break;
+          case ExpenseStatus.PartiallyPaid:
+            color = "processing";
+            label = "Parcialmente Pago";
+            break;
+        }
+
+        return (
+          <Tag color={color} icon={icon} style={{ borderRadius: 4 }}>
+            {label}
+          </Tag>
+        );
       },
     },
     {
-      title: "Actions",
+      title: "Ações",
       key: "actions",
-      render: (_: unknown, record: ExpenseTableItem) => (
+      align: "center" as const,
+      render: (_: any, record: ExpenseTableItem) => (
         <Space size="small">
           {(record.statusCode === ExpenseStatus.Pending ||
             record.statusCode === ExpenseStatus.Overdue ||
             record.statusCode === ExpenseStatus.PartiallyPaid) &&
             record.expenseId > 0 && (
-              <Tooltip title="Mark as Paid">
+              <Tooltip title="Marcar como Pago">
                 <Button
                   size="small"
                   type="text"
-                  icon={<CheckCircleOutlined style={{ color: "#52c41a", fontSize: 16 }} />}
+                  icon={<CheckCircleOutlined style={{ color: "#10b981", fontSize: 16 }} />}
                   onClick={() => handleMarkAsPaid(record.expenseId)}
                 />
               </Tooltip>
             )}
 
-          <Tooltip title="Edit">
+          <Tooltip title="Editar">
             <Button
               size="small"
               type="text"
-              icon={<EditOutlined style={{ color: "#1890ff", fontSize: 16 }} />}
+              icon={<EditOutlined style={{ color: "#38bdf8", fontSize: 16 }} />}
               onClick={() => handleOpenEditModal(record)}
             />
           </Tooltip>
@@ -473,13 +496,13 @@ export default function ExpensesPage() {
           {record.isRecurrent &&
             record.transactionStatus === TransactionStatus.Active && (
               <Popconfirm
-                title="Cancel Subscription?"
-                description="Past paid history remains. Future bills will be stopped."
+                title="Cancelar Assinatura?"
+                description="O histórico pago será mantido. Cobranças futuras serão canceladas."
                 onConfirm={() => handleCancelSubscription(record.transactionId)}
-                okText="Yes, Cancel"
-                cancelText="No"
+                okText="Sim, Cancelar"
+                cancelText="Não"
               >
-                <Tooltip title="Cancel Subscription">
+                <Tooltip title="Cancelar Assinatura">
                   <Button
                     size="small"
                     type="text"
@@ -490,14 +513,14 @@ export default function ExpensesPage() {
             )}
 
           <Popconfirm
-            title="Delete Expense?"
-            description="Permanently delete this transaction and all associated records?"
+            title="Excluir Despesa?"
+            description="Deseja excluir permanentemente esta transação e todos os registros associados?"
             onConfirm={() => handleDeleteTransaction(record.transactionId)}
-            okText="Delete"
+            okText="Excluir"
             okButtonProps={{ danger: true }}
-            cancelText="Cancel"
+            cancelText="Cancelar"
           >
-            <Tooltip title="Delete Permanently">
+            <Tooltip title="Excluir Permanentemente">
               <Button
                 size="small"
                 type="text"
@@ -514,18 +537,7 @@ export default function ExpensesPage() {
 
 
   return (
-    <ConfigProvider
-      theme={{
-        algorithm: theme.darkAlgorithm,
-        token: {
-          colorPrimary: "#008d0a",
-          colorBgBase: "#0d1117",
-          colorBgContainer: "#161b22",
-          colorBorderSecondary: "#21262d",
-          borderRadius: 8,
-        },
-      }}
-    >
+    <ConfigProvider theme={FINTRACK_THEME}>
       <Layout className={styles.layout}>
         <Sidebar
           collapsed={collapsed}
@@ -537,18 +549,14 @@ export default function ExpensesPage() {
           <Header
             collapsed={collapsed}
             onToggleCollapse={() => setCollapsed(!collapsed)}
-            username={userInfo?.name || "User"}
-            hasGoals={false}
-            onToggleGoals={() => { }}
           />
 
           <Content className={styles.content}>
             <div className={styles.pageHeader}>
               <div>
-                <h2>Expenses & Outgoings</h2>
+                <h2>Despesas e Saídas</h2>
                 <p>
-                  Track, schedule, and log your purchases, installments, and
-                  recurrent bills.
+                  Acompanhe, parcele e planeje suas compras, boletos e contas recorrentes.
                 </p>
               </div>
               <LogExpenseButton onClick={() => setIsModalOpen(true)} />
@@ -558,32 +566,32 @@ export default function ExpensesPage() {
               <Col xs={24} sm={8}>
                 <Card variant="borderless">
                   <Statistic
-                    title="Total Period Expenses"
+                    title="Total de Despesas no Período"
                     value={totalPeriodExpenses}
                     precision={2}
-                    prefix={<DollarOutlined />}
-                    styles={{ value: { color: "#ff4d4f" } }}
+                    prefix="R$"
+                    styles={{ value: { color: "#f43f5e", fontVariantNumeric: "tabular-nums" } }}
                   />
                 </Card>
               </Col>
               <Col xs={24} sm={8}>
                 <Card variant="borderless">
                   <Statistic
-                    title="Active Installments"
+                    title="Parcelamentos Ativos"
                     value={activeInstallmentsCount}
                     prefix={<CreditCardOutlined />}
-                    styles={{ value: { color: "#3B82F6" } }}
+                    styles={{ value: { color: "#38bdf8", fontVariantNumeric: "tabular-nums" } }}
                   />
                 </Card>
               </Col>
               <Col xs={24} sm={8}>
                 <Card variant="borderless">
                   <Statistic
-                    title="Pending / Overdue Bills"
+                    title="Contas Pendentes / Atrasadas"
                     value={pendingBillsAmount}
                     precision={2}
-                    prefix={<CalendarOutlined />}
-                    styles={{ value: { color: "#faad14" } }}
+                    prefix="R$"
+                    styles={{ value: { color: "#f59e0b", fontVariantNumeric: "tabular-nums" } }}
                   />
                 </Card>
               </Col>
@@ -594,23 +602,35 @@ export default function ExpensesPage() {
                 <Card
                   title={
                     <>
-                      <Button
-                        type="primary"
-                        className={styles.titleButton}
-                        onClick={() =>
-                          fetchTransactionsData(
-                            Number(selectedCategory.value),
-                            Number(selectedPeriod.value)
-                          )
-                        }
-                        loading={loadingTable}
-                      >
-                        Search{" "}
-                      </Button>
                       <Select
                         className={styles.titleSelect}
                         labelInValue
-                        value={selectedCategory}
+                        value={{
+                          value: selectedPeriod.value,
+                          label: getTimePeriodLabel(selectedPeriod.value),
+                        }}
+                        onChange={(val) => {
+                          const opt = val as IEnumOptions;
+                          setSelectedPeriod(opt);
+                          fetchTransactionsData(
+                            Number(selectedCategory.value),
+                            Number(opt.value)
+                          );
+                        }}
+                      >
+                        {timePeriod.map((tPer) => (
+                          <Option key={tPer.value} value={tPer.value}>
+                            {getTimePeriodLabel(tPer.value)}
+                          </Option>
+                        ))}
+                      </Select>
+                      <Select
+                        className={styles.titleSelect}
+                        labelInValue
+                        value={{
+                          value: selectedCategory.value,
+                          label: getTimeCategoryLabel(selectedCategory.value, selectedPeriod.value),
+                        }}
                         onChange={(val) => {
                           const opt = val as IEnumOptions;
                           setSelectedCategory(opt);
@@ -622,30 +642,23 @@ export default function ExpensesPage() {
                       >
                         {timeCategory.map((tCat) => (
                           <Option key={tCat.value} value={tCat.value}>
-                            {camelToNormalCase(tCat.label)}
+                            {getTimeCategoryLabel(tCat.value, selectedPeriod.value)}
                           </Option>
                         ))}
                       </Select>
-                      <Select
-                        className={styles.titleSelect}
-                        labelInValue
-                        value={selectedPeriod}
-                        onChange={(val) => {
-                          const opt = val as IEnumOptions;
-                          setSelectedPeriod(opt);
+                      <Button
+                        type="primary"
+                        className={styles.titleButton}
+                        onClick={() =>
                           fetchTransactionsData(
                             Number(selectedCategory.value),
-                            Number(opt.value)
-                          );
-                        }}
+                            Number(selectedPeriod.value)
+                          )
+                        }
+                        loading={loadingTable}
                       >
-                        {timePeriod.map((tCat) => (
-                          <Option key={tCat.value} value={tCat.value}>
-                            {camelToNormalCase(tCat.label)}
-                          </Option>
-                        ))}
-                      </Select>
-                      Expenses
+                        Filtrar
+                      </Button>
                     </>
                   }
                   variant="borderless"
@@ -674,7 +687,7 @@ export default function ExpensesPage() {
             />
 
             <Modal
-              title={`Edit Expense: ${editingItem?.transactionName || ""}`}
+              title={`Editar Despesa: ${editingItem?.transactionName || ""}`}
               open={isEditModalOpen}
               onCancel={() => {
                 setIsEditModalOpen(false);
@@ -682,7 +695,8 @@ export default function ExpensesPage() {
                 editForm.resetFields();
               }}
               onOk={() => editForm.submit()}
-              okText="Save Changes"
+              okText="Salvar Alterações"
+              cancelText="Cancelar"
               confirmLoading={loading}
               width={550}
               destroyOnHidden
@@ -697,12 +711,12 @@ export default function ExpensesPage() {
                   <Col span={14}>
                     <Form.Item
                       name="name"
-                      label="Expense Name / Title"
+                      label="Título / Nome da Despesa"
                       rules={[
-                        { required: true, message: "Please enter a name" },
+                        { required: true, message: "Insira o nome da despesa" },
                         {
                           max: 150,
-                          message: "Name cannot exceed 150 characters",
+                          message: "O nome não pode exceder 150 caracteres",
                         },
                       ]}
                     >
@@ -712,19 +726,19 @@ export default function ExpensesPage() {
                   <Col span={10}>
                     <Form.Item
                       name="amount"
-                      label="Amount ($)"
+                      label="Valor (R$)"
                       rules={[
-                        { required: true, message: "Please enter amount" },
+                        { required: true, message: "Insira o valor" },
                       ]}
                     >
-                      <InputNumber style={{ width: "100%" }} min={0.01} precision={2} />
+                      <InputNumber style={{ width: "100%" }} min={0.01} precision={2} prefix="R$" />
                     </Form.Item>
                   </Col>
                 </Row>
                 <Row gutter={16}>
                   <Col span={24}>
-                    <Form.Item name="description" label="Description">
-                      <Input.TextArea rows={2} maxLength={500} />
+                    <Form.Item name="description" label="Descrição (Opcional)">
+                      <Input.TextArea rows={2} maxLength={500} placeholder="Observações adicionais" />
                     </Form.Item>
                   </Col>
                 </Row>
@@ -732,10 +746,10 @@ export default function ExpensesPage() {
                   <Col span={12}>
                     <Form.Item
                       name="categoryId"
-                      label="Category"
-                      rules={[{ required: true, message: "Please select category" }]}
+                      label="Categoria"
+                      rules={[{ required: true, message: "Selecione uma categoria" }]}
                     >
-                      <Select>
+                      <Select placeholder="Selecione a categoria">
                         {categories.map((cat) => (
                           <Option key={cat.categoryID} value={cat.categoryID}>
                             {cat.name}
@@ -747,10 +761,10 @@ export default function ExpensesPage() {
                   <Col span={12}>
                     <Form.Item
                       name="paymentMethod"
-                      label="Payment Method"
-                      rules={[{ required: true, message: "Please select payment method" }]}
+                      label="Forma de Pagamento"
+                      rules={[{ required: true, message: "Selecione a forma de pagamento" }]}
                     >
-                      <Select>
+                      <Select placeholder="Selecione a forma de pagamento">
                         {paymentOptions.map((pay) => (
                           <Option key={pay.value} value={pay.value}>
                             {camelToNormalCase(pay.label)}

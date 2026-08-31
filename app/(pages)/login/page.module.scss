@@ -3,21 +3,21 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: #0d1117;
-  padding: 1.5rem;
-  font-family:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background-color: var(--bg-canvas);
+  padding: var(--space-6);
+  font-family: var(--font-sans);
 }
 
 .card {
   width: 100%;
-  max-width: 420px;
+  max-width: 400px;
 
   :global(.ant-card) {
-    border: 1px solid #21262d !important;
-    border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-    background: #161b22;
+    border: 1px solid var(--border-subtle) !important;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    background: var(--bg-surface);
+    padding: var(--space-4);
   }
 
   // Prevents browser autofill from turning input backgrounds white
@@ -25,75 +25,72 @@
   input:-webkit-autofill:hover,
   input:-webkit-autofill:focus,
   input:-webkit-autofill:active {
-    -webkit-text-fill-color: #e6edf3 !important;
-    -webkit-box-shadow: 0 0 0px 1000px #0d1117 inset !important;
+    -webkit-text-fill-color: var(--text-primary) !important;
+    -webkit-box-shadow: 0 0 0px 1000px var(--bg-surface-subtle) inset !important;
     transition: background-color 5000s ease-in-out 0s;
   }
 
-  // Ensures Ant Design input wrappers stay dark when active/focused
   :global(.ant-input-affix-wrapper) {
-    background-color: #0d1117 !important;
-    border-color: #21262d;
+    background-color: var(--bg-surface-subtle) !important;
+    border-color: var(--border-default);
+    border-radius: var(--radius-sm);
 
     &:hover,
     &:focus-within {
-      border-color: #008d0a !important;
+      border-color: var(--color-success) !important;
     }
 
     input {
       background-color: transparent !important;
-      color: #e6edf3 !important;
+      color: var(--text-primary) !important;
     }
   }
 }
 
 .logoBadge {
-  width: 42px;
-  height: 42px;
-  background-color: #008d0a;
+  width: 36px;
+  height: 36px;
+  background-color: var(--color-success);
   color: #ffffff;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 1.3rem;
-  margin: 0 auto 1.5rem;
+  font-size: var(--text-base);
+  margin: 0 auto var(--space-4);
 }
 
 .header {
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: var(--space-6);
 
   .title {
-    margin-bottom: 0.25rem !important;
-    color: #f0f6fc !important;
-    font-weight: 600;
+    margin-bottom: var(--space-1) !important;
+    color: var(--text-primary) !important;
+    font-weight: 700;
+    font-size: var(--text-xl);
+    letter-spacing: -0.02em;
   }
 
   .subtitle {
-    color: #8b949e;
-    font-size: 0.9rem;
+    color: var(--text-secondary);
+    font-size: var(--text-sm);
   }
 }
 
 .inputIcon {
-  color: #8b949e;
+  color: var(--text-secondary);
 }
 
 .submit {
-  margin-top: 1rem;
+  margin-top: var(--space-4);
   margin-bottom: 0 !important;
 }
 
 .button {
-  height: 44px;
+  height: 40px;
   font-weight: 600;
-  background-color: #008d0a;
-  border-color: #008d0a;
-
-  &:hover {
-    background-color: #00a80c !important;
-    border-color: #00a80c !important;
-  }
+  border-radius: var(--radius-sm);
 }
+

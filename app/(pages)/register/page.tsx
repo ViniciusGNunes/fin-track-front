@@ -13,7 +13,9 @@ import {
 import { UserOutlined, MailOutlined, LockOutlined } from "@ant-design/icons";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { api } from "@/app/lib/api";
 import styles from "./page.module.scss";
+import { FINTRACK_THEME } from "@/app/lib/theme";
 
 const { Title, Text } = Typography;
 
@@ -53,98 +55,87 @@ export default function Page() {
           error.errors && Object.values(error.errors).flat()[0];
 
         messageApi.error(
-          validationMessage ?? error.title ?? "Registration failed.",
+          validationMessage ?? error.title ?? "Falha ao criar conta.",
         );
         return;
       }
 
-      messageApi.success("Account created successfully!");
+      messageApi.success("Conta criada com sucesso!");
       router.push("/dashboard");
 
       form.resetFields();
     } catch (error) {
       console.error(error);
-      messageApi.error("Something went wrong.");
+      messageApi.error("Ocorreu um erro ao tentar cadastrar.");
     }
   };
 
   return (
-    <ConfigProvider
-      theme={{
-        algorithm: theme.darkAlgorithm,
-        token: {
-          colorPrimary: "#008d0a",
-          colorBgBase: "#0d1117",
-          colorBgContainer: "#161b22",
-          colorBorderSecondary: "#21262d",
-          borderRadius: 8,
-        },
-      }}
-    >
+    <ConfigProvider theme={FINTRACK_THEME}>
       {contextHolder}
 
       <main className={styles.container}>
         <div className={styles.card}>
           <Card variant={"borderless"}>
-            <div className={styles.logoBadge}>F</div>
+            <div className={styles.logoBadge} onClick={() => router.push("/")} style={{ cursor: "pointer" }}>F</div>
 
             <div className={styles.header}>
               <Title level={2} className={styles.title}>
-                Create Account
+                Criar Conta
               </Title>
-              <Text className={styles.subtitle}>Sign up to get started</Text>
+              <Text className={styles.subtitle}>Cadastre-se para começar</Text>
             </div>
 
             <Form form={form} layout="vertical" onFinish={onFinish}>
               <Form.Item
-                label="Full Name"
+                label="Nome Completo"
                 name="name"
                 rules={[
                   {
                     required: true,
-                    message: "Please enter your name.",
+                    message: "Por favor, insira seu nome.",
                   },
                 ]}
               >
                 <Input
                   size="large"
                   prefix={<UserOutlined className={styles.inputIcon} />}
-                  placeholder="John Doe"
+                  placeholder="Seu Nome"
                 />
               </Form.Item>
 
               <Form.Item
-                label="Email"
+                label="E-mail"
                 name="email"
                 rules={[
                   {
                     required: true,
-                    message: "Please enter your email.",
+                    message: "Por favor, insira seu e-mail.",
                   },
                   {
                     type: "email",
-                    message: "Please enter a valid email.",
+                    message: "Por favor, insira um e-mail válido.",
                   },
                 ]}
               >
                 <Input
                   size="large"
                   prefix={<MailOutlined className={styles.inputIcon} />}
-                  placeholder="your@email.com"
+                  placeholder="seu@email.com"
                 />
               </Form.Item>
 
               <Form.Item
-                label="Password"
+                label="Senha"
                 name="password"
                 rules={[
                   {
                     required: true,
-                    message: "Please enter a password.",
+                    message: "Por favor, insira uma senha.",
                   },
                   {
                     min: 8,
-                    message: "Password must be at least 8 characters.",
+                    message: "A senha deve ter pelo menos 8 caracteres.",
                   },
                   {
                     validator(_, value) {
@@ -161,7 +152,7 @@ export default function Page() {
 
                       return Promise.reject(
                         new Error(
-                          "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.",
+                          "A senha deve conter pelo menos uma letra maiúscula, uma minúscula, um número e um caractere especial.",
                         ),
                       );
                     },
@@ -171,18 +162,18 @@ export default function Page() {
                 <Input.Password
                   size="large"
                   prefix={<LockOutlined className={styles.inputIcon} />}
-                  placeholder="Password"
+                  placeholder="Sua senha"
                 />
               </Form.Item>
 
               <Form.Item
-                label="Confirm Password"
+                label="Confirmar Senha"
                 name="confirmPassword"
                 dependencies={["password"]}
                 rules={[
                   {
                     required: true,
-                    message: "Please confirm your password.",
+                    message: "Por favor, confirme sua senha.",
                   },
                   ({ getFieldValue }) => ({
                     validator(_, value) {
@@ -191,7 +182,7 @@ export default function Page() {
                       }
 
                       return Promise.reject(
-                        new Error("Passwords do not match."),
+                        new Error("As senhas não coincidem."),
                       );
                     },
                   }),
@@ -200,7 +191,7 @@ export default function Page() {
                 <Input.Password
                   size="large"
                   prefix={<LockOutlined className={styles.inputIcon} />}
-                  placeholder="Confirm password"
+                  placeholder="Confirme sua senha"
                 />
               </Form.Item>
 
@@ -212,16 +203,16 @@ export default function Page() {
                   size="large"
                   className={styles.button}
                 >
-                  Create Account
+                  Criar Conta
                 </Button>
               </Form.Item>
             </Form>
 
             <div className={styles.footer}>
               <Text className={styles.footerText}>
-                Already have an account?{" "}
+                Já possui uma conta?{" "}
                 <Link href="/login" className={styles.link}>
-                  Sign in
+                  Entrar
                 </Link>
               </Text>
             </div>

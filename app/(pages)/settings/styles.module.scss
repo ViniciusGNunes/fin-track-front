@@ -1,0 +1,112 @@
+.layout {
+  min-height: 100vh;
+  background-color: var(--bg-canvas);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+}
+
+.mainLayout {
+  background: var(--bg-canvas);
+}
+
+.content {
+  margin: var(--space-6);
+
+  .pageHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-6);
+
+    h2 {
+      margin: 0;
+      color: var(--text-primary);
+      font-weight: 700;
+      font-size: var(--text-2xl);
+      letter-spacing: -0.02em;
+    }
+
+    p {
+      margin: var(--space-1) 0 0;
+      color: var(--text-secondary);
+      font-size: var(--text-sm);
+    }
+  }
+}
+
+.settingsCard {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-5);
+
+  .cardSectionTitle {
+    font-size: var(--text-base);
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--space-4);
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+}
+
+.categoriesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+}
+
+.categoryCard {
+  background: var(--bg-surface-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3) var(--space-4);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+
+  &:hover {
+    border-color: var(--border-default);
+    background: var(--bg-surface-raised);
+  }
+
+  .catInfo {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+
+    .colorBadge {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .catName {
+      font-weight: 500;
+      color: var(--text-primary);
+      font-size: var(--text-sm);
+    }
+  }
+}
+
+.dangerZoneCard {
+  border-color: rgba(244, 63, 94, 0.3) !important;
+  background: rgba(244, 63, 94, 0.02) !important;
+}
+
+
+.dangerCard {
+  background: #161b22;
+  border: 1px solid #f85149;
+  border-radius: 10px;
+
+  .dangerTitle {
+    color: #f85149;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+}

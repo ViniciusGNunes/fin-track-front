@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import dayjs from "dayjs";
 import {
   ConfigProvider,
   Layout,
@@ -34,6 +35,7 @@ import { Sidebar } from "../../components/Sidebar/Sidebar";
 import { Header } from "../../components/Header/Header";
 import { LogExpenseButton, LogExpenseModal } from "../../components/LogExpense";
 import styles from "./styles.module.scss";
+import { FINTRACK_THEME } from "@/app/lib/theme";
 import { UserCookieInfo } from "../../interfaces/UserCookieInfo";
 import { getUserFromCookiesClient } from "@/app/services/Frontend/tokenServicesClient";
 import ICategory from "../../interfaces/ICategory";
@@ -54,13 +56,17 @@ import {
   TimeCategory,
   TimePeriod,
 } from "@/app/Enums/FinTrackEnums";
-import { camelToNormalCase, EnumToList, IEnumOptions } from "@/app/utils/utils";
+import { camelToNormalCase, EnumToList, IEnumOptions, getTimeCategoryLabel, getTimePeriodLabel } from "@/app/utils/utils";
 
 const { Content } = Layout;
 const { Option } = Select;
 
-/* ─── Constants ────────────────────────────────────────────────── */
-const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+/* ─── Constants ─────────────────────────────────────────────────── */
+const WEEKDAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+const MONTH_NAMES = [
+  "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
+];
 const MAX_CHIPS_PER_CELL = 3;
 
 /* ─── Types ─────────────────────────────────────────────────────── */
@@ -503,9 +509,9 @@ export default function CalendarPage() {
     const real = dayCells.filter((c) => !c.isFiller);
     if (!real.length) return "";
     const fmt = (d: Date) =>
-      d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      d.toLocaleDateString("pt-BR", { month: "short", day: "numeric" });
     const fmtFull = (d: Date) =>
-      d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+      d.toLocaleDateString("pt-BR", { month: "short", day: "numeric", year: "numeric" });
     return real.length === 1 ? fmtFull(real[0].date) : `${fmt(real[0].date)} – ${fmtFull(real[real.length - 1].date)}`;
   }, [dayCells]);
 
@@ -514,8 +520,6 @@ export default function CalendarPage() {
   /* ── Year view: group by month ───────────────────────────────── */
   const yearMonthGroups = useMemo(() => {
     if (Number(selectedPeriod.value) !== TimePeriod.Year) return null;
-    const MONTH_NAMES = ["January", "February", "March", "April", "May", "June",
-      "July", "August", "September", "October", "November", "December"];
     type Group = { label: string; cells: DayCell[] };
     const groups: Group[] = [];
     for (const cell of dayCells) {
@@ -605,18 +609,7 @@ export default function CalendarPage() {
   };
 
   return (
-    <ConfigProvider
-      theme={{
-        algorithm: theme.darkAlgorithm,
-        token: {
-          colorPrimary: "#008d0a",
-          colorBgBase: "#0d1117",
-          colorBgContainer: "#161b22",
-          colorBorderSecondary: "#21262d",
-          borderRadius: 8,
-        },
-      }}
-    >
+    <ConfigProvider theme={FINTRACK_THEME}>
       <Layout className={styles.layout}>
         <Sidebar collapsed={collapsed} selectedKey="calendar" onSelectKey={() => { }} />
 
@@ -624,17 +617,14 @@ export default function CalendarPage() {
           <Header
             collapsed={collapsed}
             onToggleCollapse={() => setCollapsed(!collapsed)}
-            username={userInfo?.name || "User"}
-            hasGoals={false}
-            onToggleGoals={() => { }}
           />
 
           <Content className={styles.content}>
             {/* Page header */}
             <div className={styles.pageHeader}>
               <div>
-                <h2>Expense Calendar</h2>
-                <p>Visualise your upcoming and past bills across a time period.</p>
+                <h2>Calendário de Despesas</h2>
+                <p>Visualize suas contas vencidas, atuais e futuras distribuídas pelo calendário.</p>
               </div>
               <LogExpenseButton onClick={() => setIsLogModalOpen(true)} />
             </div>
@@ -644,32 +634,32 @@ export default function CalendarPage() {
               <Col xs={24} sm={8}>
                 <Card variant="borderless">
                   <Statistic
-                    title="Total Period Expenses"
+                    title="Total de Despesas no Período"
                     value={totalPeriodExpenses}
                     precision={2}
-                    prefix={<DollarOutlined />}
-                    styles={{ value: { color: "#ff4d4f" } }}
+                    prefix="R$"
+                    styles={{ value: { color: "#f43f5e", fontVariantNumeric: "tabular-nums" } }}
                   />
                 </Card>
               </Col>
               <Col xs={24} sm={8}>
                 <Card variant="borderless">
                   <Statistic
-                    title="Active Installments"
+                    title="Parcelamentos Ativos"
                     value={activeInstallmentsCount}
                     prefix={<CreditCardOutlined />}
-                    styles={{ value: { color: "#3B82F6" } }}
+                    styles={{ value: { color: "#38bdf8", fontVariantNumeric: "tabular-nums" } }}
                   />
                 </Card>
               </Col>
               <Col xs={24} sm={8}>
                 <Card variant="borderless">
                   <Statistic
-                    title="Pending / Overdue Bills"
+                    title="Contas Pendentes / Atrasadas"
                     value={pendingBillsAmount}
                     precision={2}
-                    prefix={<CalendarOutlined />}
-                    styles={{ value: { color: "#faad14" } }}
+                    prefix="R$"
+                    styles={{ value: { color: "#f59e0b", fontVariantNumeric: "tabular-nums" } }}
                   />
                 </Card>
               </Col>
@@ -680,34 +670,13 @@ export default function CalendarPage() {
               className={styles.calendarCard}
               title={
                 <>
-                  <Button
-                    type="primary"
-                    className={styles.titleButton}
-                    onClick={() => fetchData(Number(selectedCategory.value), Number(selectedPeriod.value))}
-                    loading={loadingTable}
-                  >
-                    Search
-                  </Button>
-
                   <Select
                     className={styles.titleSelect}
                     labelInValue
-                    value={selectedCategory}
-                    onChange={(val) => {
-                      const opt = val as IEnumOptions;
-                      setSelectedCategory(opt);
-                      fetchData(Number(opt.value), Number(selectedPeriod.value));
+                    value={{
+                      value: selectedPeriod.value,
+                      label: getTimePeriodLabel(selectedPeriod.value),
                     }}
-                  >
-                    {timeCategoryOptions.map((tc) => (
-                      <Option key={tc.value} value={tc.value}>{camelToNormalCase(tc.label)}</Option>
-                    ))}
-                  </Select>
-
-                  <Select
-                    className={styles.titleSelect}
-                    labelInValue
-                    value={selectedPeriod}
                     onChange={(val) => {
                       const opt = val as IEnumOptions;
                       setSelectedPeriod(opt);
@@ -716,12 +685,39 @@ export default function CalendarPage() {
                   >
                     {timePeriodOptions.map((tp) => (
                       <Option key={tp.value} value={tp.value}>
-                        {periodLabel(tp.value as TimePeriod, tp.label)}
+                        {getTimePeriodLabel(tp.value)}
                       </Option>
                     ))}
                   </Select>
 
-                  Calendar
+                  <Select
+                    className={styles.titleSelect}
+                    labelInValue
+                    value={{
+                      value: selectedCategory.value,
+                      label: getTimeCategoryLabel(selectedCategory.value, selectedPeriod.value),
+                    }}
+                    onChange={(val) => {
+                      const opt = val as IEnumOptions;
+                      setSelectedCategory(opt);
+                      fetchData(Number(opt.value), Number(selectedPeriod.value));
+                    }}
+                  >
+                    {timeCategoryOptions.map((tc) => (
+                      <Option key={tc.value} value={tc.value}>
+                        {getTimeCategoryLabel(tc.value, selectedPeriod.value)}
+                      </Option>
+                    ))}
+                  </Select>
+
+                  <Button
+                    type="primary"
+                    className={styles.titleButton}
+                    onClick={() => fetchData(Number(selectedCategory.value), Number(selectedPeriod.value))}
+                    loading={loadingTable}
+                  >
+                    Filtrar
+                  </Button>
                 </>
               }
               variant="borderless"
@@ -730,7 +726,7 @@ export default function CalendarPage() {
               <div className={styles.periodLabel}>
                 <CalendarOutlined />
                 {periodRangeLabel}
-                <span>{realDayCount} day{realDayCount !== 1 ? "s" : ""}</span>
+                <span>({realDayCount} {realDayCount === 1 ? "dia" : "dias"})</span>
               </div>
 
               {renderGrid()}
@@ -741,7 +737,7 @@ export default function CalendarPage() {
 
       {/* ── Edit / Action Modal ─────────────────────────────────── */}
       <Modal
-        title={`Edit: ${editingItem?.transactionName || ""}`}
+        title={`Editar: ${editingItem?.transactionName || ""}`}
         open={isEditModalOpen}
         onCancel={() => { setIsEditModalOpen(false); setEditingItem(null); editForm.resetFields(); }}
         footer={null}
@@ -755,7 +751,7 @@ export default function CalendarPage() {
             <div className={styles.chipPreviewDetails}>
               <div className={styles.chipPreviewName}>{editingItem.transactionName}</div>
               <div className={styles.chipPreviewMeta}>
-                Due: {editingItem.dueDate} &nbsp;·&nbsp; {editingItem.category} &nbsp;·&nbsp;
+                Vencimento: {editingItem.dueDate ? dayjs(editingItem.dueDate).format("DD/MM/YYYY") : "—"} &nbsp;·&nbsp; {editingItem.category} &nbsp;·&nbsp;
                 <Tag color={statusTagColor(editingItem.status)} style={{ marginLeft: 4 }}>
                   {statusLabel(editingItem.status)}
                 </Tag>
@@ -769,8 +765,8 @@ export default function CalendarPage() {
             <Col span={14}>
               <Form.Item
                 name="name"
-                label="Expense Name / Title"
-                rules={[{ required: true, message: "Please enter a name" }, { max: 150 }]}
+                label="Título / Nome da Despesa"
+                rules={[{ required: true, message: "Insira o nome da despesa" }, { max: 150 }]}
               >
                 <Input maxLength={150} />
               </Form.Item>
@@ -778,8 +774,8 @@ export default function CalendarPage() {
             <Col span={10}>
               <Form.Item
                 name="amount"
-                label="Amount ($)"
-                rules={[{ required: true, message: "Please enter amount" }]}
+                label="Valor (R$)"
+                rules={[{ required: true, message: "Insira o valor" }]}
               >
                 <InputNumber style={{ width: "100%" }} min={0.01} max={999999999.99} precision={2} />
               </Form.Item>
@@ -790,10 +786,10 @@ export default function CalendarPage() {
             <Col span={12}>
               <Form.Item
                 name="categoryId"
-                label="Category"
-                rules={[{ required: true, message: "Please select a category" }]}
+                label="Categoria"
+                rules={[{ required: true, message: "Selecione uma categoria" }]}
               >
-                <Select placeholder="Select a category">
+                <Select placeholder="Selecione a categoria">
                   {categories.map((cat) => (
                     <Option key={cat.categoryID} value={cat.categoryID}>{cat.name}</Option>
                   ))}
@@ -803,10 +799,10 @@ export default function CalendarPage() {
             <Col span={12}>
               <Form.Item
                 name="paymentMethod"
-                label="Payment Method"
-                rules={[{ required: true, message: "Please select payment method" }]}
+                label="Forma de Pagamento"
+                rules={[{ required: true, message: "Selecione a forma de pagamento" }]}
               >
-                <Select placeholder="Select a Payment Method">
+                <Select placeholder="Selecione a forma de pagamento">
                   {paymentOptions.map((pay) => (
                     <Option key={pay.value} value={pay.value}>{camelToNormalCase(pay.label)}</Option>
                   ))}
@@ -817,8 +813,8 @@ export default function CalendarPage() {
 
           <Row gutter={16}>
             <Col span={24}>
-              <Form.Item name="description" label="Description (Optional)" rules={[{ max: 500 }]}>
-                <Input.TextArea rows={2} placeholder="Additional notes" maxLength={500} />
+              <Form.Item name="description" label="Descrição (Opcional)" rules={[{ max: 500 }]}>
+                <Input.TextArea rows={2} placeholder="Observações adicionais" maxLength={500} />
               </Form.Item>
             </Col>
           </Row>
@@ -830,14 +826,14 @@ export default function CalendarPage() {
                 (editingItem.status === ExpenseStatus.Pending ||
                   editingItem.status === ExpenseStatus.Overdue ||
                   editingItem.status === ExpenseStatus.PartiallyPaid) && (
-                  <Tooltip title="Mark as Paid">
+                  <Tooltip title="Marcar como Pago">
                     <Button
                       icon={<CheckCircleOutlined />}
-                      style={{ borderColor: "#52c41a", color: "#52c41a" }}
+                      style={{ borderColor: "#10b981", color: "#10b981" }}
                       loading={loading}
                       onClick={() => handleMarkAsPaid(editingItem.expenseId)}
                     >
-                      Mark Paid
+                      Pagar
                     </Button>
                   </Tooltip>
                 )}

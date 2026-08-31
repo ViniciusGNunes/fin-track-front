@@ -83,7 +83,7 @@ export const LogExpenseModal: React.FC<LogExpenseModalProps> = ({
     const userInfo = getUserFromCookiesClient();
     if (!userInfo?.id) {
       console.error("User not authenticated");
-      message.error("User not authenticated");
+      message.error("Você precisa estar conectado para realizar esta ação.");
       return;
     }
 
@@ -91,56 +91,54 @@ export const LogExpenseModal: React.FC<LogExpenseModalProps> = ({
       ? values.firstDueDate.toISOString()
       : new Date().toISOString();
 
-    const payload: ITransactionPost = {
+    const payload: any = {
       userId: Number(userInfo.id),
       name: values.name,
       description: values.description || null,
       totalAmount: Number(values.totalAmount),
       type: TransactionType.Expense,
       categoryId: Number(values.categoryId),
+      categoryID: Number(values.categoryId),
       paymentMethod: Number(values.paymentMethod),
+      firstDueDate: formattedDate,
       isInstallment: Boolean(values.isInstallment),
-      totalInstallments: values.isInstallment
+      totalInstallments: values.isInstallment && values.totalInstallments
         ? Number(values.totalInstallments)
         : 1,
       isRecurrent: Boolean(values.isRecurrent),
-      recurrenceInterval: values.isRecurrent
+      recurrenceInterval: values.isRecurrent && values.recurrenceInterval
         ? Number(values.recurrenceInterval)
-        : RecurrenceInterval.None,
-      firstDueDate: formattedDate,
+        : 0,
     };
 
     try {
       setLoading(true);
       await postTransaction(payload);
-      message.success("Expense registered successfully");
+      message.success("Despesa cadastrada com sucesso!");
       form.resetFields();
       onCancel();
       onSuccess?.();
     } catch (error) {
       console.error("Failed to create expense", error);
-      message.error("Failed to register expense");
+      message.error("Não foi possível salvar a despesa. Tente novamente.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleModalCancel = () => {
-    form.resetFields();
-    onCancel();
-  };
-
   return (
     <Modal
-      title="Log New Expense / Transaction"
+      title="Registrar Nova Despesa"
       open={open}
-      onCancel={handleModalCancel}
       onOk={() => form.submit()}
-      okText="Save Expense"
+      onCancel={() => {
+        form.resetFields();
+        onCancel();
+      }}
       confirmLoading={loading}
+      okText="Salvar Despesa"
+      cancelText="Cancelar"
       width={600}
-      destroyOnHidden
-      style={{ top: 40 }}
     >
       <Form
         form={form}
@@ -158,17 +156,17 @@ export const LogExpenseModal: React.FC<LogExpenseModalProps> = ({
           <Col span={14}>
             <Form.Item
               name="name"
-              label="Expense Name / Title"
+              label="Título / Nome da Despesa"
               rules={[
-                { required: true, message: "Please enter a name" },
+                { required: true, message: "Por favor, insira o título" },
                 {
                   max: 150,
-                  message: "Name cannot exceed 150 characters",
+                  message: "O título não pode exceder 150 caracteres",
                 },
               ]}
             >
               <Input
-                placeholder="e.g., Coffee Machine or AWS Bill"
+                placeholder="Ex: Supermercado ou Assinatura AWS"
                 maxLength={150}
               />
             </Form.Item>
@@ -176,15 +174,15 @@ export const LogExpenseModal: React.FC<LogExpenseModalProps> = ({
           <Col span={10}>
             <Form.Item
               name="totalAmount"
-              label="Total Amount ($)"
-              rules={[{ required: true, message: "Please enter amount" }]}
+              label="Valor Total (R$)"
+              rules={[{ required: true, message: "Por favor, insira o valor" }]}
             >
               <InputNumber
                 style={{ width: "100%" }}
                 min={0.01}
                 max={999999999.99}
                 precision={2}
-                placeholder="0.00"
+                placeholder="0,00"
               />
             </Form.Item>
           </Col>
@@ -194,17 +192,17 @@ export const LogExpenseModal: React.FC<LogExpenseModalProps> = ({
           <Col span={24}>
             <Form.Item
               name="description"
-              label="Description (Optional)"
+              label="Descrição (Opcional)"
               rules={[
                 {
                   max: 500,
-                  message: "Description cannot exceed 500 characters",
+                  message: "A descrição não pode exceder 500 caracteres",
                 },
               ]}
             >
               <Input.TextArea
                 rows={2}
-                placeholder="e.g., Additional notes about this expense"
+                placeholder="Ex: Detalhes ou observações adicionais sobre o gasto"
                 maxLength={500}
               />
             </Form.Item>
@@ -215,10 +213,10 @@ export const LogExpenseModal: React.FC<LogExpenseModalProps> = ({
           <Col span={12}>
             <Form.Item
               name="categoryId"
-              label="Category"
-              rules={[{ required: true, message: "Please select a category" }]}
+              label="Categoria"
+              rules={[{ required: true, message: "Por favor, selecione uma categoria" }]}
             >
-              <Select placeholder="Select a category">
+              <Select placeholder="Selecione a categoria">
                 {categories.map((cat: ICategory) => (
                   <Option key={cat.categoryID} value={cat.categoryID}>
                     {cat.name}
@@ -230,15 +228,15 @@ export const LogExpenseModal: React.FC<LogExpenseModalProps> = ({
           <Col span={12}>
             <Form.Item
               name="paymentMethod"
-              label="Payment Method"
+              label="Forma de Pagamento"
               rules={[
                 {
                   required: true,
-                  message: "Please select payment method",
+                  message: "Por favor, selecione a forma de pagamento",
                 },
               ]}
             >
-              <Select placeholder="Select a Payment Method">
+              <Select placeholder="Selecione a forma de pagamento">
                 {paymentOptions.map((pay) => (
                   <Option key={pay.value} value={pay.value}>
                     {camelToNormalCase(pay.label)}
@@ -253,10 +251,10 @@ export const LogExpenseModal: React.FC<LogExpenseModalProps> = ({
           <Col span={12}>
             <Form.Item
               name="firstDueDate"
-              label="Due / Payment Date"
-              rules={[{ required: true, message: "Please select date" }]}
+              label="Data de Vencimento / Pagamento"
+              rules={[{ required: true, message: "Por favor, selecione a data" }]}
             >
-              <DatePicker style={{ width: "100%" }} format="YYYY-MM-DD" />
+              <DatePicker style={{ width: "100%" }} format="DD/MM/YYYY" placeholder="Selecione a data" />
             </Form.Item>
           </Col>
         </Row>
@@ -265,7 +263,7 @@ export const LogExpenseModal: React.FC<LogExpenseModalProps> = ({
           <Col span={12}>
             <Form.Item
               name="isInstallment"
-              label="Is this an Installment Purchase?"
+              label="Compra Parcelada?"
               valuePropName="checked"
             >
               <Switch disabled={isRecurrent} />
@@ -274,7 +272,7 @@ export const LogExpenseModal: React.FC<LogExpenseModalProps> = ({
           <Col span={12}>
             <Form.Item
               name="isRecurrent"
-              label="Is this a Recurring Expense?"
+              label="Despesa Recorrente / Assinatura?"
               valuePropName="checked"
             >
               <Switch disabled={isInstallment} />
@@ -289,11 +287,11 @@ export const LogExpenseModal: React.FC<LogExpenseModalProps> = ({
           >
             <Form.Item
               name="totalInstallments"
-              label="Total Number of Installments"
+              label="Número Total de Parcelas"
               rules={[
                 {
                   required: true,
-                  message: "Specify number of installments",
+                  message: "Especifique o número de parcelas",
                 },
               ]}
             >
@@ -301,7 +299,7 @@ export const LogExpenseModal: React.FC<LogExpenseModalProps> = ({
                 min={1}
                 max={360}
                 style={{ width: "100%" }}
-                placeholder="e.g., 12"
+                placeholder="Ex: 12"
               />
             </Form.Item>
           </Card>
@@ -314,15 +312,15 @@ export const LogExpenseModal: React.FC<LogExpenseModalProps> = ({
           >
             <Form.Item
               name="recurrenceInterval"
-              label="Billing Frequency"
+              label="Frequência de Cobrança"
               rules={[
                 {
                   required: true,
-                  message: "Select recurrence interval",
+                  message: "Selecione o intervalo de recorrência",
                 },
               ]}
             >
-              <Select placeholder="Select frequency">
+              <Select placeholder="Selecione a frequência">
                 {recurrenceInterval.map((rec) => (
                   <Option value={rec.value} key={rec.value}>
                     {rec.label}

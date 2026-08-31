@@ -2,24 +2,26 @@ import { NextRequest, NextResponse } from "next/server";
 
 export function proxy(request: NextRequest) {
   const token = request.cookies.get("X-Access-Token")?.value;
-
   const { pathname } = request.nextUrl;
 
-  const isLoginPage = pathname === "/login";
-  const isProtectedPage =
-    pathname.startsWith("/dashboard") || pathname.startsWith("/dashboard");
+  const isAuthPage = pathname === "/login" || pathname === "/register";
+  const isPublicPage = pathname === "/" || isAuthPage;
 
-  if (isProtectedPage && !token) {
-    return NextResponse.redirect(new URL("/", request.url));
+  // If visiting an auth page while already logged in, redirect to dashboard
+  if (isAuthPage && token) {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
-  if (isLoginPage && token) {
-    return NextResponse.redirect(new URL("/main", request.url));
+  // If trying to access protected private app pages without a token, redirect to login
+  if (!isPublicPage && !token) {
+    return NextResponse.redirect(new URL("/login", request.url));
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/", "/dashboard", "/dashboard/:path*"],
+  matcher: [
+    "/((?!api|_next/static|_next/image|favicon.ico|.*\\..*).*)"
+  ],
 };
