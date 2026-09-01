@@ -1,0 +1,57 @@
+.container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: var(--bg-canvas);
+  padding: var(--space-6);
+  font-family: var(--font-sans);
+}
+
+.card {
+  width: 100%;
+  max-width: 440px;
+
+  :global(.ant-card) {
+    border: 1px solid var(--border-subtle) !important;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    background: var(--bg-surface);
+    padding: var(--space-4);
+  }
+
+  :global(.ant-input-affix-wrapper) {
+    background-color: var(--bg-surface-subtle) !important;
+    border-color: var(--border-default);
+    border-radius: var(--radius-sm);
+
+    &:hover,
+    &:focus-within {
+      border-color: var(--color-success) !important;
+    }
+
+    input {
+      background-color: transparent !important;
+      color: var(--text-primary) !important;
+    }
+  }
+}
+
+.logoBadge {
+  width: 36px;
+  height: 36px;
+  background-color: var(--color-success);
+  color: #ffffff;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: var(--text-base);
+  margin-bottom: var(--space-4);
+  transition: transform 0.2s ease;
+
+  &:hover {
+    transform: scale(1.05);
+  }
+}

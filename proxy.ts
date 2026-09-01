@@ -4,7 +4,13 @@ export function proxy(request: NextRequest) {
   const token = request.cookies.get("X-Access-Token")?.value;
   const { pathname } = request.nextUrl;
 
-  const isAuthPage = pathname === "/login" || pathname === "/register";
+  const isAuthPage =
+    pathname === "/login" ||
+    pathname === "/register" ||
+    pathname === "/forgot-password" ||
+    pathname === "/reset-password" ||
+    pathname === "/verify-email";
+
   const isPublicPage = pathname === "/" || isAuthPage;
 
   // If visiting an auth page while already logged in, redirect to dashboard

@@ -11,6 +11,7 @@ import {
   theme,
 } from "antd";
 import { LockOutlined, MailOutlined } from "@ant-design/icons";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { api } from "@/app/lib/api";
 import styles from "./page.module.scss";
@@ -33,9 +34,14 @@ export default function Page() {
 
       messageApi.success("Login realizado com sucesso!");
       router.push("/dashboard");
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      messageApi.error("Ocorreu um erro ao tentar entrar.");
+      const serverMessage = error?.response?.data?.message;
+      if (error?.response?.data?.isEmailUnconfirmed) {
+        messageApi.warning(serverMessage || "Por favor, confirme seu e-mail antes de entrar.");
+      } else {
+        messageApi.error(serverMessage || "E-mail ou senha incorretos.");
+      }
     }
   };
 
@@ -94,6 +100,12 @@ export default function Page() {
                 />
               </Form.Item>
 
+              <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 16 }}>
+                <Link href="/forgot-password" style={{ color: "var(--color-success)", fontSize: "0.875rem" }}>
+                  Esqueceu a senha?
+                </Link>
+              </div>
+
               <Form.Item className={styles.submit}>
                 <Button
                   type="primary"
@@ -106,6 +118,15 @@ export default function Page() {
                 </Button>
               </Form.Item>
             </Form>
+
+            <div style={{ textAlign: "center", marginTop: 20 }}>
+              <Text style={{ color: "var(--text-secondary)", fontSize: "0.875rem" }}>
+                Não tem uma conta?{" "}
+                <Link href="/register" style={{ color: "var(--color-success)", fontWeight: 600 }}>
+                  Criar conta
+                </Link>
+              </Text>
+            </div>
           </Card>
         </div>
       </main>

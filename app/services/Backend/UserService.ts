@@ -34,3 +34,31 @@ export const updateUserProfile = async (data: IUpdateUserProfile): Promise<IUser
     throw err;
   }
 };
+
+export const confirmEmail = async (userId: number, token: string): Promise<{ message: string }> => {
+  const response = await api.post("/users/confirm-email", { userId, token });
+  return response.data;
+};
+
+export const resendConfirmationEmail = async (email: string): Promise<{ message: string }> => {
+  const response = await api.post("/users/resend-confirmation", { email });
+  return response.data;
+};
+
+export const requestPasswordReset = async (email: string): Promise<{ message: string }> => {
+  const response = await api.post("/users/forgot-password", { email });
+  return response.data;
+};
+
+export const resetPassword = async (
+  userId: number,
+  token: string,
+  newPassword: string
+): Promise<{ message: string }> => {
+  const response = await api.post("/users/reset-password", {
+    userId,
+    token,
+    newPassword,
+  });
+  return response.data;
+};

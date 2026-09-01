@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useState } from "react";
 import {
   ConfigProvider,
   Button,
@@ -8,12 +9,13 @@ import {
   Input,
   Typography,
   message,
-  theme,
+  Result,
 } from "antd";
-import { UserOutlined, MailOutlined, LockOutlined } from "@ant-design/icons";
+import { UserOutlined, MailOutlined, LockOutlined, CheckCircleOutlined, SendOutlined } from "@ant-design/icons";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { api } from "@/app/lib/api";
+import { resendConfirmationEmail } from "@/app/services/Backend/UserService";
 import styles from "./page.module.scss";
 import { FINTRACK_THEME } from "@/app/lib/theme";
 
@@ -30,9 +32,13 @@ export default function Page() {
   const router = useRouter();
   const [form] = Form.useForm();
   const [messageApi, contextHolder] = message.useMessage();
+  const [loading, setLoading] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState<string | null>(null);
+  const [resending, setResending] = useState(false);
 
   const onFinish = async (values: RegisterForm) => {
     try {
+      setLoading(true);
       const response = await fetch(
         "http://localhost:5066/v1/api/users/register",
         {
@@ -48,25 +54,39 @@ export default function Page() {
         },
       );
 
-      if (!response.ok) {
-        const error = await response.json();
+      const data = await response.json();
 
+      if (!response.ok) {
         const validationMessage =
-          error.errors && Object.values(error.errors).flat()[0];
+          data.errors && Object.values(data.errors).flat()[0];
 
         messageApi.error(
-          validationMessage ?? error.title ?? "Falha ao criar conta.",
+          (typeof validationMessage === "string" ? validationMessage : null) ?? data.message ?? data.title ?? "Falha ao criar conta.",
         );
         return;
       }
 
-      messageApi.success("Conta criada com sucesso!");
-      router.push("/dashboard");
-
+      setRegisteredEmail(values.email);
+      messageApi.success("Cadastro realizado com sucesso!");
       form.resetFields();
     } catch (error) {
       console.error(error);
       messageApi.error("Ocorreu um erro ao tentar cadastrar.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    if (!registeredEmail) return;
+    try {
+      setResending(true);
+      await resendConfirmationEmail(registeredEmail);
+      messageApi.success("Novo link de verificação enviado para o seu e-mail!");
+    } catch (err) {
+      messageApi.error("Não foi possível reenviar o e-mail no momento.");
+    } finally {
+      setResending(false);
     }
   };
 
@@ -79,14 +99,49 @@ export default function Page() {
           <Card variant={"borderless"}>
             <div className={styles.logoBadge} onClick={() => router.push("/")} style={{ cursor: "pointer" }}>F</div>
 
-            <div className={styles.header}>
-              <Title level={2} className={styles.title}>
-                Criar Conta
-              </Title>
-              <Text className={styles.subtitle}>Cadastre-se para começar</Text>
-            </div>
+            {registeredEmail ? (
+              <div style={{ textAlign: "center", padding: "16px 0" }}>
+                <div style={{ fontSize: 48, color: "var(--color-success)", marginBottom: 16 }}>
+                  ✉️
+                </div>
+                <Title level={3} style={{ color: "var(--text-primary)", marginBottom: 8 }}>
+                  Confirme seu E-mail
+                </Title>
+                <Text style={{ color: "var(--text-secondary)", display: "block", marginBottom: 24, fontSize: "0.95rem" }}>
+                  Enviamos um link de ativação para <strong style={{ color: "var(--text-primary)" }}>{registeredEmail}</strong>. Por favor, acerte sua caixa de entrada para ativar sua conta.
+                </Text>
 
-            <Form form={form} layout="vertical" onFinish={onFinish}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  <Button
+                    type="primary"
+                    size="large"
+                    onClick={() => router.push("/login")}
+                    block
+                  >
+                    Ir para a Página de Login
+                  </Button>
+
+                  <Button
+                    type="default"
+                    icon={<SendOutlined />}
+                    onClick={handleResend}
+                    loading={resending}
+                    block
+                  >
+                    Reenviar Link de Confirmação
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className={styles.header}>
+                  <Title level={2} className={styles.title}>
+                    Criar Conta
+                  </Title>
+                  <Text className={styles.subtitle}>Cadastre-se para começar</Text>
+                </div>
+
+                <Form form={form} layout="vertical" onFinish={onFinish}>
               <Form.Item
                 label="Nome Completo"
                 name="name"
@@ -216,9 +271,11 @@ export default function Page() {
                 </Link>
               </Text>
             </div>
-          </Card>
-        </div>
-      </main>
-    </ConfigProvider>
+          </>
+        )}
+      </Card>
+    </div>
+  </main>
+</ConfigProvider>
   );
 }

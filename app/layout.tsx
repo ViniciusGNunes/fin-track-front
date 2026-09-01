@@ -15,6 +15,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "FinTrack - Gestão e Inteligência Financeira",
   description: "Consolide investimentos, amortização de dívidas, despesas compartilhadas e fluxo de caixa em um único painel.",
+  icons: {
+    icon: "/favicon.svg",
+    shortcut: "/favicon.svg",
+    apple: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({
