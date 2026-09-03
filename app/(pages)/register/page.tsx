@@ -39,39 +39,27 @@ export default function Page() {
   const onFinish = async (values: RegisterForm) => {
     try {
       setLoading(true);
-      const response = await fetch(
-        "http://localhost:5066/v1/api/users/register",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            name: values.name,
-            email: values.email,
-            password: values.password,
-          }),
-        },
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        const validationMessage =
-          data.errors && Object.values(data.errors).flat()[0];
-
-        messageApi.error(
-          (typeof validationMessage === "string" ? validationMessage : null) ?? data.message ?? data.title ?? "Falha ao criar conta.",
-        );
-        return;
-      }
+      const response = await api.post("/users/register", {
+        name: values.name,
+        email: values.email,
+        password: values.password,
+      });
 
       setRegisteredEmail(values.email);
-      messageApi.success("Cadastro realizado com sucesso!");
+      messageApi.success(response.data?.message || "Cadastro realizado com sucesso!");
       form.resetFields();
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      messageApi.error("Ocorreu um erro ao tentar cadastrar.");
+      const serverData = error?.response?.data;
+      const validationMessage =
+        serverData?.errors && Object.values(serverData.errors).flat()[0];
+
+      messageApi.error(
+        (typeof validationMessage === "string" ? validationMessage : null) ??
+          serverData?.message ??
+          serverData?.title ??
+          "Ocorreu um erro ao tentar cadastrar."
+      );
     } finally {
       setLoading(false);
     }
