@@ -1,4 +1,5 @@
 import { useRouter } from "next/navigation";
+import Cookies from "js-cookie";
 import { api } from "../lib/api";
 
 export default function LogoutButton() {
@@ -7,9 +8,11 @@ export default function LogoutButton() {
   const handleLogout = async () => {
     try {
       await api.post("/users/logout");
-      router.push("/");
     } catch (error) {
       console.error("Logout failed", error);
+    } finally {
+      Cookies.remove("X-Access-Token");
+      router.push("/");
     }
   };
 

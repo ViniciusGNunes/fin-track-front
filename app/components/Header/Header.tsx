@@ -14,6 +14,7 @@ import { getUserFromCookiesClient } from "@/app/services/Frontend/tokenServicesC
 import { UserCookieInfo } from "@/app/interfaces/UserCookieInfo";
 import { api } from "@/app/lib/api";
 import { useRouter } from "next/navigation";
+import Cookies from "js-cookie";
 
 const { Header: AntHeader } = Layout;
 
@@ -49,10 +50,12 @@ export const Header: React.FC<HeaderProps> = ({
     try {
       setLoggingOut(true);
       await api.post("/users/logout");
+      Cookies.remove("X-Access-Token");
       message.success("Sessão encerrada com sucesso!");
       router.push("/");
     } catch (error) {
       console.error("Logout failed:", error);
+      Cookies.remove("X-Access-Token");
       // Even if backend fails, navigate back to landing page
       router.push("/");
     } finally {

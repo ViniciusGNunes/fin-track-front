@@ -13,6 +13,7 @@ import {
 import { LockOutlined, MailOutlined } from "@ant-design/icons";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import Cookies from "js-cookie";
 import { api } from "@/app/lib/api";
 import styles from "./page.module.scss";
 import { FINTRACK_THEME } from "@/app/lib/theme";
@@ -30,6 +31,15 @@ export default function Page() {
       if (!response) {
         messageApi.error("E-mail ou senha incorretos.");
         return;
+      }
+
+      if (response.data?.token) {
+        Cookies.set("X-Access-Token", response.data.token, {
+          expires: 7,
+          secure: window.location.protocol === "https:",
+          sameSite: "lax",
+          path: "/",
+        });
       }
 
       messageApi.success("Login realizado com sucesso!");
