@@ -1,9 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { GoogleLogin } from "@react-oauth/google";
-import { message, Button } from "antd";
-import { GoogleOutlined } from "@ant-design/icons";
+import { useGoogleLogin } from "@react-oauth/google";
+import { message } from "antd";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import { api } from "@/app/lib/api";
@@ -43,9 +42,7 @@ function base64UrlEncode(buffer: ArrayBuffer): string {
     .replace(/=+$/, "");
 }
 
-export const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = ({
-  text = "continue_with",
-}) => {
+export const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = () => {
   const router = useRouter();
   const [googleLoading, setGoogleLoading] = useState(false);
   const [redirectingProvider, setRedirectingProvider] = useState<string | null>(
@@ -57,43 +54,52 @@ export const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = ({
   const discordClientId = process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID;
   const twitterClientId = process.env.NEXT_PUBLIC_TWITTER_CLIENT_ID;
 
-  const handleGoogleSuccess = async (credentialResponse: any) => {
-    if (!credentialResponse?.credential) {
-      message.error("Não foi possível obter a credencial do Google.");
-      return;
-    }
-
-    try {
-      setGoogleLoading(true);
-      const res = await api.post("/users/google-login", {
-        idToken: credentialResponse.credential,
-      });
-
-      if (res.data?.token) {
-        Cookies.set("X-Access-Token", res.data.token, {
-          expires: 7,
-          secure: window.location.protocol === "https:",
-          sameSite: "lax",
-          path: "/",
+  // Custom Google Login Hook with auth-code flow
+  const triggerGoogleLogin = useGoogleLogin({
+    flow: "auth-code",
+    onSuccess: async (codeResponse) => {
+      try {
+        setGoogleLoading(true);
+        const redirectUri = window.location.origin;
+        const res = await api.post("/users/google-login", {
+          idToken: codeResponse.code,
+          code: codeResponse.code,
+          redirectUri,
         });
 
-        message.success(res.data.message || "Autenticado com sucesso!");
-        router.push("/dashboard");
-      } else {
-        message.error("Resposta de autenticação inválida.");
-      }
-    } catch (error: any) {
-      console.error("Google login failed:", error);
-      const msg =
-        error?.response?.data?.message || "Falha ao autenticar com o Google.";
-      message.error(msg);
-    } finally {
-      setGoogleLoading(false);
-    }
-  };
+        if (res.data?.token) {
+          Cookies.set("X-Access-Token", res.data.token, {
+            expires: 7,
+            secure: window.location.protocol === "https:",
+            sameSite: "lax",
+            path: "/",
+          });
 
-  const handleGoogleError = () => {
-    message.error("Falha na autenticação com o Google. Tente novamente.");
+          message.success(res.data.message || "Autenticado com sucesso!");
+          router.push("/dashboard");
+        } else {
+          message.error("Resposta de autenticação inválida.");
+        }
+      } catch (error: any) {
+        console.error("Google login failed:", error);
+        const msg =
+          error?.response?.data?.message || "Falha ao autenticar com o Google.";
+        message.error(msg);
+      } finally {
+        setGoogleLoading(false);
+      }
+    },
+    onError: () => {
+      message.error("Falha na autenticação com o Google. Tente novamente.");
+    },
+  });
+
+  const handleGoogleAuth = () => {
+    if (!googleClientId) {
+      message.info("Configure NEXT_PUBLIC_GOOGLE_CLIENT_ID no .env para ativar o login com Google.");
+      return;
+    }
+    triggerGoogleLogin();
   };
 
   const handleGitHubAuth = () => {
@@ -157,46 +163,45 @@ export const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = ({
     }
   };
 
+  const isBusy = Boolean(redirectingProvider) || googleLoading;
+
   return (
     <div className={styles.socialAuthContainer}>
-      <div className={styles.googleWrapper}>
-        {googleClientId ? (
-          <GoogleLogin
-            onSuccess={handleGoogleSuccess}
-            onError={handleGoogleError}
-            theme="filled_black"
-            size="large"
-            text={text}
-            shape="rectangular"
-            width="100%"
-          />
-        ) : (
-          <Button
-            block
-            size="large"
-            icon={<GoogleOutlined />}
-            disabled
-            style={{
-              borderRadius: "var(--radius-sm)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              backgroundColor: "rgba(255, 255, 255, 0.05)",
-              borderColor: "var(--border-subtle)",
-              color: "var(--text-muted)",
-            }}
-          >
-            Google (Client ID não configurado)
-          </Button>
-        )}
-      </div>
+      <div className={styles.oauthGrid}>
+        {/* Google Button */}
+        <button
+          type="button"
+          onClick={handleGoogleAuth}
+          disabled={isBusy}
+          className={`${styles.oauthButton} ${styles.googleBtn}`}
+          title="Entrar com Google"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              fill="#4285F4"
+              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+            />
+            <path
+              fill="#34A853"
+              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+            />
+            <path
+              fill="#FBBC05"
+              d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+            />
+            <path
+              fill="#EA4335"
+              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+            />
+          </svg>
+          <span>Google</span>
+        </button>
 
-      <div className={styles.secondaryProviders}>
         {/* GitHub Button */}
         <button
           type="button"
           onClick={handleGitHubAuth}
-          disabled={Boolean(redirectingProvider) || googleLoading}
+          disabled={isBusy}
           className={`${styles.oauthButton} ${styles.githubBtn}`}
           title="Entrar com GitHub"
         >
@@ -214,7 +219,7 @@ export const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = ({
         <button
           type="button"
           onClick={handleDiscordAuth}
-          disabled={Boolean(redirectingProvider) || googleLoading}
+          disabled={isBusy}
           className={`${styles.oauthButton} ${styles.discordBtn}`}
           title="Entrar com Discord"
         >
@@ -228,7 +233,7 @@ export const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = ({
         <button
           type="button"
           onClick={handleTwitterAuth}
-          disabled={Boolean(redirectingProvider) || googleLoading}
+          disabled={isBusy}
           className={`${styles.oauthButton} ${styles.twitterBtn}`}
           title="Entrar com X (Twitter)"
         >
@@ -241,4 +246,6 @@ export const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = ({
     </div>
   );
 };
+
 export default SocialAuthButtons;
+
