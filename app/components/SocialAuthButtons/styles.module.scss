@@ -1,0 +1,89 @@
+.socialAuthContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.googleWrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+
+  > div {
+    width: 100% !important;
+  }
+
+  iframe {
+    margin: 0 auto !important;
+  }
+}
+
+.secondaryProviders {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  width: 100%;
+}
+
+.oauthButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 42px;
+  border-radius: var(--radius-sm, 8px);
+  background: var(--bg-surface, #14171a);
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.12));
+  color: var(--text-primary, #ffffff);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  padding: 0 12px;
+
+  &:hover {
+    background: var(--bg-surface-hover, rgba(255, 255, 255, 0.08));
+    border-color: var(--border-hover, rgba(255, 255, 255, 0.25));
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+  }
+}
+
+.githubBtn:hover {
+  border-color: #f0f6fc;
+  box-shadow: 0 0 12px rgba(240, 246, 252, 0.15);
+}
+
+.discordBtn:hover {
+  border-color: #5865f2;
+  color: #7289da;
+  box-shadow: 0 0 12px rgba(88, 101, 242, 0.25);
+}
+
+.twitterBtn:hover {
+  border-color: #ffffff;
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.2);
+}
+
+@media (max-width: 480px) {
+  .secondaryProviders {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  .oauthButton {
+    padding: 0 6px;
+    font-size: 0.8rem;
+    gap: 6px;
+  }
+}

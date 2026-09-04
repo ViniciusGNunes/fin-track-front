@@ -12,11 +12,22 @@
 .content {
   margin: var(--space-6);
 
+  @media (max-width: 768px) {
+    margin: 12px 12px 84px 12px;
+  }
+
   .pageHeader {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: var(--space-6);
+
+    @media (max-width: 768px) {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
 
     h2 {
       margin: 0;
@@ -24,6 +35,10 @@
       font-weight: 700;
       font-size: var(--text-2xl);
       letter-spacing: -0.02em;
+
+      @media (max-width: 768px) {
+        font-size: 1.25rem;
+      }
     }
 
     p {
@@ -36,12 +51,22 @@
       display: flex;
       align-items: center;
       gap: var(--space-3);
+
+      @media (max-width: 768px) {
+        width: 100%;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+      }
     }
   }
 }
 
 .metricRow {
   margin-bottom: var(--space-6);
+
+  @media (max-width: 768px) {
+    margin-bottom: 16px;
+  }
 
   .subDetail {
     color: var(--text-secondary);
@@ -77,6 +102,11 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: var(--space-5);
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
 }
 
 .goalCard {

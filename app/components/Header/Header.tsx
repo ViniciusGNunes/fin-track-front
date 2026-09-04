@@ -63,14 +63,32 @@ export const Header: React.FC<HeaderProps> = ({
     }
   };
 
+  const handleToggle = () => {
+    if (typeof window !== "undefined" && window.innerWidth <= 768) {
+      window.dispatchEvent(new CustomEvent("toggle-mobile-menu"));
+    } else {
+      onToggleCollapse();
+    }
+  };
+
   return (
     <AntHeader className={styles.header}>
-      <Button
-        type="text"
-        icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-        onClick={onToggleCollapse}
-        className={styles.triggerBtn}
-      />
+      <div className={styles.leftGroup}>
+        <Button
+          type="text"
+          icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+          onClick={handleToggle}
+          className={styles.triggerBtn}
+          aria-label="Alternar menu"
+        />
+        <div
+          className={styles.mobileBrand}
+          onClick={() => router.push("/dashboard")}
+        >
+          <div className={styles.logoBadge}>F</div>
+          <span className={styles.brandTitle}>FinTrack</span>
+        </div>
+      </div>
 
       <Space size="middle" className={styles.headerActions}>
         <Tooltip title="Notificações">

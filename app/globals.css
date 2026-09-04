@@ -109,4 +109,81 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-muted);
 }
+
+/* ==============================================================================
+   MOBILE RESPONSIVENESS & TOUCH ADAPTATIONS
+   ============================================================================== */
+@media (max-width: 768px) {
+  /* Prevent horizontal screen jank & overflow */
+  html,
+  body {
+    overflow-x: hidden;
+    position: relative;
+    width: 100%;
+  }
+
+  /* Compact Ant Design Cards for Mobile */
+  .ant-card .ant-card-body {
+    padding: 14px !important;
+  }
+
+  .ant-card .ant-card-head {
+    padding: 0 14px !important;
+    min-height: 48px !important;
+  }
+
+  .ant-card .ant-card-head-title {
+    font-size: 0.95rem !important;
+  }
+
+  /* Responsive Tables with smooth touch scrolling */
+  .ant-table-wrapper {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    width: 100% !important;
+  }
+
+  .ant-table {
+    min-width: 520px;
+  }
+
+  .ant-table-cell {
+    padding: 10px 8px !important;
+    font-size: 0.8rem !important;
+  }
+
+  /* Touch-friendly Modals */
+  .ant-modal {
+    max-width: calc(100vw - 20px) !important;
+    margin: 10px auto !important;
+    top: 12px !important;
+  }
+
+  .ant-modal .ant-modal-content {
+    padding: 16px !important;
+    border-radius: var(--radius-md) !important;
+  }
+
+  /* Prevent automatic iOS Safari zoom by maintaining 16px font-size on inputs */
+  input,
+  select,
+  textarea,
+  .ant-input,
+  .ant-select-selection-item,
+  .ant-input-number-input {
+    font-size: 16px !important;
+  }
+
+  /* Comfortable touch targets for buttons */
+  .ant-btn {
+    min-height: 36px;
+  }
+
+  /* Layout content bottom clearance for the mobile Bottom Navigation Bar */
+  main[class*="content"],
+  [class*="mainLayout"] > [class*="content"] {
+    margin-bottom: calc(76px + env(safe-area-inset-bottom, 8px)) !important;
+  }
+}
+
 

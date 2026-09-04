@@ -12,11 +12,22 @@
 .content {
   margin: var(--space-6);
 
+  @media (max-width: 768px) {
+    margin: 12px 12px 84px 12px;
+  }
+
   .pageHeader {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: var(--space-6);
+
+    @media (max-width: 768px) {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
 
     h2 {
       margin: 0;
@@ -24,6 +35,10 @@
       font-weight: 700;
       font-size: var(--text-2xl);
       letter-spacing: -0.02em;
+
+      @media (max-width: 768px) {
+        font-size: 1.25rem;
+      }
     }
 
     p {
@@ -36,6 +51,12 @@
       display: flex;
       align-items: center;
       gap: var(--space-3);
+
+      @media (max-width: 768px) {
+        width: 100%;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+      }
     }
   }
 }
@@ -96,6 +117,12 @@
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
   position: relative;
   overflow: hidden;
+
+  @media (max-width: 768px) {
+    width: 100% !important;
+    min-width: 100% !important;
+    flex: 1 1 100% !important;
+  }
 
   &:hover {
     border-color: var(--border-default);
@@ -163,6 +190,12 @@
   align-items: center;
   flex-wrap: wrap;
 
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+
   .pizzaCanvasContainer {
     position: relative;
     display: flex;
@@ -170,6 +203,11 @@
     align-items: center;
     flex: 1;
     min-width: 280px;
+
+    @media (max-width: 768px) {
+      min-width: 100%;
+      width: 100%;
+    }
   }
 
   .chartLegend {
@@ -178,6 +216,11 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
+
+    @media (max-width: 768px) {
+      min-width: 100%;
+      width: 100%;
+    }
 
     .legendItem {
       display: flex;

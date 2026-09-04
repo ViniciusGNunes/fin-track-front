@@ -8,10 +8,56 @@
   height: 64px;
   line-height: 64px;
 
+  @media (max-width: 768px) {
+    padding: 0 var(--space-3);
+  }
+
+  .leftGroup {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  .mobileBrand {
+    display: none;
+    align-items: center;
+    gap: var(--space-2);
+    cursor: pointer;
+
+    @media (max-width: 768px) {
+      display: flex;
+    }
+
+    .logoBadge {
+      width: 28px;
+      height: 28px;
+      background: var(--color-success);
+      color: #ffffff;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: var(--text-sm);
+    }
+
+    .brandTitle {
+      font-size: var(--text-base);
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+    }
+  }
+
   .triggerBtn {
     font-size: var(--text-lg);
     color: var(--text-secondary);
     transition: color 0.15s ease, background-color 0.15s ease;
+    min-width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
     &:hover {
       color: var(--color-success) !important;
@@ -22,10 +68,10 @@
   .headerActions {
     display: flex;
     align-items: center;
-    gap: var(--space-3);
+    gap: var(--space-2);
 
     .profileBadge {
-      padding: var(--space-1) var(--space-3);
+      padding: var(--space-1) var(--space-2);
       border-radius: var(--radius-sm);
       transition: background-color 0.15s ease;
 
@@ -38,12 +84,21 @@
       color: var(--text-primary);
       font-weight: 500;
       font-size: var(--text-sm);
+
+      @media (max-width: 640px) {
+        display: none;
+      }
     }
 
     .logoutBtn {
       font-size: var(--text-base);
       color: var(--text-secondary);
       transition: color 0.15s ease, background-color 0.15s ease;
+      min-width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
 
       &:hover {
         color: var(--color-danger) !important;
@@ -52,5 +107,6 @@
     }
   }
 }
+
 
 

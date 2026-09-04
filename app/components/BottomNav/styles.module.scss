@@ -1,0 +1,85 @@
+.bottomNav {
+  display: none;
+
+  @media (max-width: 768px) {
+    display: block;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 999;
+    background: rgba(17, 24, 39, 0.92);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-top: 1px solid var(--border-subtle, #1e293b);
+    padding-bottom: env(safe-area-inset-bottom, 8px);
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.35);
+  }
+}
+
+.navContainer {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  height: 60px;
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 0 var(--space-2, 8px);
+}
+
+.navButton {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  background: none;
+  border: none;
+  color: var(--text-secondary, #94a3b8);
+  font-size: 0.72rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 6px 0;
+  transition: all 0.2s ease;
+  position: relative;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+
+  .icon {
+    font-size: 1.15rem;
+    transition: transform 0.2s ease, color 0.2s ease;
+  }
+
+  .label {
+    letter-spacing: -0.01em;
+  }
+
+  &:active {
+    transform: scale(0.92);
+  }
+
+  &.active {
+    color: var(--color-success, #10b981);
+
+    .icon {
+      color: var(--color-success, #10b981);
+      transform: translateY(-1px);
+    }
+
+    .label {
+      font-weight: 600;
+      color: var(--text-primary, #f8fafc);
+    }
+  }
+
+  .activeDot {
+    position: absolute;
+    bottom: 2px;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--color-success, #10b981);
+    box-shadow: 0 0 6px rgba(16, 185, 129, 0.8);
+  }
+}

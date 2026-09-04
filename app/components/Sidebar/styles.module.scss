@@ -38,3 +38,92 @@
   }
 }
 
+// Hide classical desktop sider on mobile so it doesn't take 80px or 240px
+.desktopSider {
+  @media (max-width: 768px) {
+    display: none !important;
+    width: 0 !important;
+    min-width: 0 !important;
+    max-width: 0 !important;
+    flex: 0 0 0 !important;
+  }
+}
+
+// Mobile Drawer Styling
+.mobileDrawerRoot {
+  :global(.ant-drawer-content) {
+    background: var(--bg-surface-subtle, #0f172a) !important;
+  }
+
+  :global(.ant-drawer-body) {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: var(--bg-surface-subtle, #0f172a) !important;
+  }
+}
+
+.drawerHeader {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-4);
+  border-bottom: 1px solid var(--border-subtle);
+
+  .logoContainer {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+
+    .logoBadge {
+      width: 32px;
+      height: 32px;
+      background: var(--color-success);
+      color: #ffffff;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: var(--text-base);
+    }
+
+    .logoText {
+      font-size: var(--text-lg);
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+    }
+  }
+
+  .closeBtn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    padding: 8px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease, color 0.15s ease;
+
+    &:hover,
+    &:active {
+      background: var(--bg-surface-raised);
+      color: var(--text-primary);
+    }
+  }
+}
+
+.drawerMenu {
+  border-right: none !important;
+  background: transparent !important;
+  padding: var(--space-3) var(--space-2);
+  flex: 1;
+  overflow-y: auto;
+}
+
+

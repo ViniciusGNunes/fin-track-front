@@ -8,13 +8,14 @@ import {
   Input,
   Typography,
   message,
-  theme,
+  Divider,
 } from "antd";
 import { LockOutlined, MailOutlined } from "@ant-design/icons";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import { api } from "@/app/lib/api";
+import { SocialAuthButtons } from "@/app/components/SocialAuthButtons/SocialAuthButtons";
 import styles from "./page.module.scss";
 import { FINTRACK_THEME } from "@/app/lib/theme";
 
@@ -47,11 +48,7 @@ export default function Page() {
     } catch (error: any) {
       console.error(error);
       const serverMessage = error?.response?.data?.message;
-      if (error?.response?.data?.isEmailUnconfirmed) {
-        messageApi.warning(serverMessage || "Por favor, confirme seu e-mail antes de entrar.");
-      } else {
-        messageApi.error(serverMessage || "E-mail ou senha incorretos.");
-      }
+      messageApi.error(serverMessage || "E-mail ou senha incorretos.");
     }
   };
 
@@ -128,6 +125,20 @@ export default function Page() {
                 </Button>
               </Form.Item>
             </Form>
+
+            <Divider
+              plain
+              style={{
+                borderColor: "var(--border-subtle)",
+                color: "var(--text-muted)",
+                fontSize: "0.8rem",
+                margin: "18px 0 14px",
+              }}
+            >
+              ou continue com
+            </Divider>
+
+            <SocialAuthButtons text="signin_with" />
 
             <div style={{ textAlign: "center", marginTop: 20 }}>
               <Text style={{ color: "var(--text-secondary)", fontSize: "0.875rem" }}>
