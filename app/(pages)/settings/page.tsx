@@ -301,16 +301,17 @@ export default function SettingsPage() {
                               name="name"
                               label="Nome Completo"
                               rules={[{ required: true, message: "Por favor, insira seu nome" }]}
+                              extra="Você pode atualizar seu nome de exibição a qualquer momento."
                             >
-                              <Input prefix={<UserOutlined />} />
+                              <Input prefix={<UserOutlined />} placeholder="Seu nome completo" />
                             </Form.Item>
 
                             <Form.Item
                               name="email"
-                              label="Endereço de E-mail"
-                              rules={[{ required: true, type: "email", message: "E-mail válido obrigatório" }]}
+                              label="Endereço de E-mail (Vinculado ao OAuth)"
+                              extra="O e-mail é gerenciado pelo provedor de autenticação (OAuth)."
                             >
-                              <Input />
+                              <Input disabled style={{ opacity: 0.7, cursor: "not-allowed" }} />
                             </Form.Item>
 
                             <Form.Item style={{ marginBottom: 0, textAlign: "right" }}>
