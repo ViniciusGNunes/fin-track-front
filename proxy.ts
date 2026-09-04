@@ -11,7 +11,9 @@ export function proxy(request: NextRequest) {
     pathname === "/reset-password" ||
     pathname === "/verify-email";
 
-  const isPublicPage = pathname === "/" || isAuthPage;
+  const isOAuthCallback = pathname.startsWith("/oauth");
+
+  const isPublicPage = pathname === "/" || isAuthPage || isOAuthCallback;
 
   // If visiting an auth page while already logged in, redirect to dashboard
   if (isAuthPage && token) {
