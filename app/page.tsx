@@ -91,18 +91,11 @@ export default function LandingPage() {
 
           <div className={styles.navActions}>
             <Button
-              type="text"
-              onClick={() => router.push("/login")}
-              style={{ color: "var(--text-primary)", fontWeight: 500 }}
-            >
-              Entrar
-            </Button>
-            <Button
               type="primary"
-              onClick={() => router.push("/register")}
+              onClick={() => router.push("/login")}
               style={{ fontWeight: 600 }}
             >
-              Criar Conta
+              Acessar FinTrack
             </Button>
           </div>
         </header>
@@ -130,16 +123,9 @@ export default function LandingPage() {
                 className={styles.primaryCta}
                 icon={<ArrowRightOutlined />}
                 iconPosition="end"
-                onClick={() => router.push("/register")}
-              >
-                Começar Gratuitamente
-              </Button>
-              <Button
-                size="large"
-                className={styles.secondaryCta}
                 onClick={() => router.push("/login")}
               >
-                Acessar Painel
+                Acessar Plataforma
               </Button>
             </div>
 
@@ -235,15 +221,15 @@ export default function LandingPage() {
           <section className={styles.ctaBanner} id="security">
             <h2>Assuma o Controle das Suas Finanças</h2>
             <p>
-              Crie sua conta no FinTrack e tenha visão unificada do seu patrimônio hoje mesmo.
+              Acesse o FinTrack e tenha visão unificada do seu patrimônio hoje mesmo com login em um clique.
             </p>
             <Button
               type="primary"
               size="large"
               className={styles.ctaButton}
-              onClick={() => router.push("/register")}
+              onClick={() => router.push("/login")}
             >
-              Criar Conta Gratuita
+              Acessar FinTrack
             </Button>
           </section>
 
@@ -255,10 +241,7 @@ export default function LandingPage() {
             <div className={styles.footerLinks}>
               <a href="#features">Recursos</a>
               <a onClick={() => router.push("/login")} style={{ cursor: "pointer" }}>
-                Entrar
-              </a>
-              <a onClick={() => router.push("/register")} style={{ cursor: "pointer" }}>
-                Cadastrar
+                Acessar Plataforma
               </a>
             </div>
           </footer>

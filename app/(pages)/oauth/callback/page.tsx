@@ -28,7 +28,19 @@ function OAuthCallbackContent() {
       if (errorParam) {
         if (!isMounted) return;
         setStatus("error");
-        setErrorMessage(errorDesc || `Autenticação cancelada ou recusada (${errorParam}).`);
+        let translatedError = "O usuário ou o provedor de autenticação recusou o pedido de autorização.";
+        if (errorDesc) {
+          if (errorDesc.toLowerCase().includes("denied the request") || errorDesc.toLowerCase().includes("access_denied")) {
+            translatedError = "O usuário ou o servidor de autorização recusou a solicitação de acesso.";
+          } else {
+            translatedError = errorDesc;
+          }
+        } else if (errorParam === "access_denied") {
+          translatedError = "Acesso negado: a autorização foi cancelada ou recusada.";
+        } else {
+          translatedError = `Autenticação cancelada ou recusada (${errorParam}).`;
+        }
+        setErrorMessage(translatedError);
         return;
       }
 

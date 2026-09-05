@@ -49,7 +49,7 @@ import {
 import { Sidebar } from "../../components/Sidebar/Sidebar";
 import { Header } from "../../components/Header/Header";
 import styles from "./styles.module.scss";
-import { FINTRACK_THEME } from "@/app/lib/theme";
+import { FINTRACK_THEME, FINTRACK_LOCALE } from "@/app/lib/theme";
 import { UserCookieInfo } from "../../interfaces/UserCookieInfo";
 import { getUserFromCookiesClient } from "@/app/services/Frontend/tokenServicesClient";
 import {
@@ -566,7 +566,7 @@ export default function DebtsPage() {
   ];
 
   return (
-    <ConfigProvider theme={FINTRACK_THEME}>
+    <ConfigProvider theme={FINTRACK_THEME} locale={FINTRACK_LOCALE}>
       <Layout className={styles.layout}>
         <Sidebar
           collapsed={collapsed}
@@ -689,7 +689,7 @@ export default function DebtsPage() {
                 {summary.debts.length === 0 ? (
                   <Card>
                     <Empty
-                      description="No debts or loans recorded yet"
+                      description="Nenhuma dívida ou empréstimo registrado ainda"
                       image={Empty.PRESENTED_IMAGE_SIMPLE}
                     >
                       <Button
@@ -697,7 +697,7 @@ export default function DebtsPage() {
                         icon={<PlusOutlined />}
                         onClick={() => setIsAddModalOpen(true)}
                       >
-                        Add Your First Loan
+                        Cadastrar Primeira Dívida
                       </Button>
                     </Empty>
                   </Card>

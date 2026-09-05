@@ -13,16 +13,11 @@ import {
   Tag,
   Progress,
   Empty,
-  theme,
-  Space,
-  Avatar,
-  Tooltip,
+  Skeleton,
 } from "antd";
 import {
   ArrowUpOutlined,
-  ArrowDownOutlined,
   AimOutlined,
-  DollarOutlined,
   RiseOutlined,
   AccountBookOutlined,
   TeamOutlined,
@@ -35,11 +30,11 @@ import {
 import { Sidebar } from "../../components/Sidebar/Sidebar";
 import { Header } from "../../components/Header/Header";
 import styles from "./styles.module.scss";
-import { FINTRACK_THEME } from "@/app/lib/theme";
+import { FINTRACK_THEME, FINTRACK_LOCALE } from "@/app/lib/theme";
 import { UserCookieInfo } from "../../interfaces/UserCookieInfo";
 import { getUserFromCookiesClient } from "@/app/services/Frontend/tokenServicesClient";
 import { getGoalsSummary } from "@/app/services/Backend/GoalService";
-import { IGoal, IGoalSummary } from "@/app/interfaces/Goals/IGoal";
+import { IGoalSummary } from "@/app/interfaces/Goals/IGoal";
 import { getPortfolioSummary } from "@/app/services/Backend/InvestmentService";
 import { IPortfolioSummary } from "@/app/interfaces/Investments/IInvestment";
 import { getDebtSummary } from "@/app/services/Backend/DebtService";
@@ -50,9 +45,7 @@ import { getTransactions } from "@/app/services/Backend/TransactionService";
 import { ITransactionRead } from "@/app/interfaces/Transaction/ITransaction";
 import { TimeCategory, TimePeriod } from "@/app/Enums/FinTrackEnums";
 import dayjs from "dayjs";
-
 import { useRouter } from "next/navigation";
-import { Skeleton } from "antd";
 
 const { Content } = Layout;
 
@@ -182,7 +175,7 @@ export default function DashboardPage() {
   ];
 
   return (
-    <ConfigProvider theme={FINTRACK_THEME}>
+    <ConfigProvider theme={FINTRACK_THEME} locale={FINTRACK_LOCALE}>
       <Layout className={styles.layout}>
         <Sidebar
           collapsed={collapsed}
@@ -371,7 +364,9 @@ export default function DashboardPage() {
                       {goalsSummary.goals.slice(0, 4).map((g) => {
                         const isDone = g.isCompleted;
                         const isOver = g.pacingStatus === "OverBudget";
-                        const stroke = isDone ? "#10b981" : isOver ? "#f43f5e" : "#38bdf8";
+                        let stroke = "#38bdf8";
+                        if (isDone) stroke = "#10b981";
+                        else if (isOver) stroke = "#f43f5e";
 
                         return (
                           <div key={g.goalID} className={styles.goalItem}>
@@ -424,7 +419,19 @@ export default function DashboardPage() {
                   {portfolio && portfolio.investments.length > 0 ? (
                     <div>
                       {portfolio.investments.slice(0, 3).map((inv) => (
-                        <div key={inv.investmentID} className={styles.moduleSummaryItem} onClick={() => router.push("/investments")}>
+                        <div
+                          key={inv.investmentID}
+                          className={styles.moduleSummaryItem}
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => router.push("/investments")}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              router.push("/investments");
+                            }
+                          }}
+                        >
                           <div className={styles.itemInfo}>
                             <RiseOutlined style={{ color: "#10b981" }} />
                             <span className={styles.itemTitle}>{inv.name}</span>
@@ -451,7 +458,19 @@ export default function DashboardPage() {
                   {debts && debts.debts.length > 0 ? (
                     <div>
                       {debts.debts.slice(0, 3).map((d) => (
-                        <div key={d.debtID} className={styles.moduleSummaryItem} onClick={() => router.push("/debts")}>
+                        <div
+                          key={d.debtID}
+                          className={styles.moduleSummaryItem}
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => router.push("/debts")}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              router.push("/debts");
+                            }
+                          }}
+                        >
                           <div className={styles.itemInfo}>
                             <AccountBookOutlined style={{ color: "#f59e0b" }} />
                             <span className={styles.itemTitle}>{d.name}</span>
@@ -478,7 +497,19 @@ export default function DashboardPage() {
                   {receivables && receivables.receivables.length > 0 ? (
                     <div>
                       {receivables.receivables.slice(0, 3).map((r) => (
-                        <div key={r.receivableID} className={styles.moduleSummaryItem} onClick={() => router.push("/receivables")}>
+                        <div
+                          key={r.receivableID}
+                          className={styles.moduleSummaryItem}
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => router.push("/receivables")}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              router.push("/receivables");
+                            }
+                          }}
+                        >
                           <div className={styles.itemInfo}>
                             <TeamOutlined style={{ color: "#38bdf8" }} />
                             <span className={styles.itemTitle}>{r.title}</span>

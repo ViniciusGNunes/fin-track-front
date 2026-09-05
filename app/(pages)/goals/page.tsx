@@ -44,7 +44,7 @@ import {
 import { Sidebar } from "../../components/Sidebar/Sidebar";
 import { Header } from "../../components/Header/Header";
 import styles from "./styles.module.scss";
-import { FINTRACK_THEME } from "@/app/lib/theme";
+import { FINTRACK_THEME, FINTRACK_LOCALE } from "@/app/lib/theme";
 import { UserCookieInfo } from "../../interfaces/UserCookieInfo";
 import { getUserFromCookiesClient } from "@/app/services/Frontend/tokenServicesClient";
 import {
@@ -293,7 +293,7 @@ export default function GoalsPage() {
   });
 
   return (
-    <ConfigProvider theme={FINTRACK_THEME}>
+    <ConfigProvider theme={FINTRACK_THEME} locale={FINTRACK_LOCALE}>
       <Layout className={styles.layout}>
         <Sidebar
           collapsed={collapsed}
