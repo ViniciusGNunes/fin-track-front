@@ -25,6 +25,7 @@ import { ITransactionPost } from "@/app/interfaces/Transaction/ITransaction";
 import { getCategories } from "@/app/services/Backend/CategoriesService";
 import { getUserFromCookiesClient } from "@/app/services/Frontend/tokenServicesClient";
 import { postTransaction } from "@/app/services/Backend/TransactionService";
+import dayjs from "dayjs";
 
 const { Option } = Select;
 
@@ -34,7 +35,7 @@ export interface LogExpenseFormValues {
   description?: string;
   categoryId: number;
   paymentMethod: number;
-  firstDueDate?: { toISOString: () => string };
+  firstDueDate?: dayjs.Dayjs;
   isInstallment?: boolean;
   totalInstallments?: number;
   isRecurrent?: boolean;
@@ -68,16 +69,24 @@ export const LogExpenseModal: React.FC<LogExpenseModalProps> = ({
   const isRecurrent = Form.useWatch("isRecurrent", form);
 
   useEffect(() => {
-    if (categoriesProp && categoriesProp.length > 0) {
-      setCategories(categoriesProp);
-    } else if (open) {
-      getCategories()
-        .then(setCategories)
-        .catch((err) => {
-          console.error("Failed to get categories:", err);
-        });
+    let isMounted = true;
+    if (open) {
+      if (!categoriesProp || categoriesProp.length === 0) {
+        getCategories()
+          .then((cats) => {
+            if (isMounted) setCategories(cats);
+          })
+          .catch((err) => {
+            console.error("Failed to get categories:", err);
+          });
+      }
     }
+    return () => {
+      isMounted = false;
+    };
   }, [open, categoriesProp]);
+
+  const displayedCategories = categoriesProp && categoriesProp.length > 0 ? categoriesProp : categories;
 
   const handleCreateExpense = async (values: LogExpenseFormValues) => {
     const userInfo = getUserFromCookiesClient();
@@ -88,17 +97,16 @@ export const LogExpenseModal: React.FC<LogExpenseModalProps> = ({
     }
 
     const formattedDate = values.firstDueDate
-      ? values.firstDueDate.toISOString()
-      : new Date().toISOString();
+      ? dayjs(values.firstDueDate).hour(12).minute(0).second(0).toISOString()
+      : dayjs().hour(12).minute(0).second(0).toISOString();
 
-    const payload: any = {
+    const payload: ITransactionPost = {
       userId: Number(userInfo.id),
       name: values.name,
       description: values.description || null,
       totalAmount: Number(values.totalAmount),
       type: TransactionType.Expense,
       categoryId: Number(values.categoryId),
-      categoryID: Number(values.categoryId),
       paymentMethod: Number(values.paymentMethod),
       firstDueDate: formattedDate,
       isInstallment: Boolean(values.isInstallment),
@@ -148,7 +156,7 @@ export const LogExpenseModal: React.FC<LogExpenseModalProps> = ({
           isInstallment: false,
           totalInstallments: 1,
           isRecurrent: false,
-          recurrenceInterval: RecurrenceInterval.None,
+          recurrenceInterval: RecurrenceInterval.Monthly,
           paymentMethod: paymentOptions[0]?.value,
         }}
       >
@@ -217,7 +225,7 @@ export const LogExpenseModal: React.FC<LogExpenseModalProps> = ({
               rules={[{ required: true, message: "Por favor, selecione uma categoria" }]}
             >
               <Select placeholder="Selecione a categoria">
-                {categories.map((cat: ICategory) => (
+                {displayedCategories.map((cat: ICategory) => (
                   <Option key={cat.categoryID} value={cat.categoryID}>
                     {cat.name}
                   </Option>

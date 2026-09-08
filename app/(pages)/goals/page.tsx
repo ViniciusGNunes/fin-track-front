@@ -22,13 +22,11 @@ import {
   Popconfirm,
   message,
   Empty,
-  theme,
   Progress,
   Checkbox,
 } from "antd";
 import {
   PlusOutlined,
-  DollarOutlined,
   RocketOutlined,
   CheckCircleOutlined,
   EditOutlined,

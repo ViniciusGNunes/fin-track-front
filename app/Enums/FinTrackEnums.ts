@@ -69,6 +69,8 @@ export enum InvestmentTransactionType {
   Liquidate = 2,
   Dividend = 3,
   StockSplit = 4,
+  Deposit = 5,
+  Withdrawal = 6,
 }
 
 export enum DebtType {

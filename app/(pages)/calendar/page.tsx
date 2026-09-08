@@ -20,10 +20,9 @@ import {
   Popconfirm,
   Tag,
   message,
-  theme,
 } from "antd";
+
 import {
-  DollarOutlined,
   CreditCardOutlined,
   CalendarOutlined,
   EditOutlined,
@@ -36,8 +35,6 @@ import { Header } from "../../components/Header/Header";
 import { LogExpenseButton, LogExpenseModal } from "../../components/LogExpense";
 import styles from "./styles.module.scss";
 import { FINTRACK_THEME, FINTRACK_LOCALE } from "@/app/lib/theme";
-import { UserCookieInfo } from "../../interfaces/UserCookieInfo";
-import { getUserFromCookiesClient } from "@/app/services/Frontend/tokenServicesClient";
 import ICategory from "../../interfaces/ICategory";
 import { getCategories } from "@/app/services/Backend/CategoriesService";
 import { ITransactionRead } from "../../interfaces/Transaction/ITransaction";
@@ -246,15 +243,6 @@ function buildDayCells(timeCat: TimeCategory, timePer: TimePeriod): DayCell[] {
   return cells;
 }
 
-/* ─── Custom TimePeriod labels ──────────────────────────────────── */
-const PERIOD_LABELS: Partial<Record<TimePeriod, string>> = {
-  [TimePeriod.TwoWeeks]: "Half Month",
-};
-
-function periodLabel(tp: TimePeriod, raw: string): string {
-  return PERIOD_LABELS[tp] ?? camelToNormalCase(raw);
-}
-
 /* ─── Map transactions → flat items ─────────────────────────────── */
 function mapToCalendarItems(txs: ITransactionRead[]): CalendarExpenseItem[] {
   const items: CalendarExpenseItem[] = [];
@@ -331,7 +319,6 @@ function statusTagColor(status: ExpenseStatus): string {
 export default function CalendarPage() {
   const [collapsed, setCollapsed] = useState(false);
 
-  const [userInfo, setUserInfo] = useState<UserCookieInfo | null>(null);
   const [transactions, setTransactions] = useState<ITransactionRead[]>([]);
   const [categories, setCategories] = useState<ICategory[]>([]);
   const [loadingTable, setLoadingTable] = useState(false);
@@ -355,7 +342,7 @@ export default function CalendarPage() {
     [timeCategoryOptions]
   );
   const initialPeriod: IEnumOptions = useMemo(
-    () => timePeriodOptions.find((p) => p.value === TimePeriod.Week) || { label: "Week", value: TimePeriod.Week },
+    () => timePeriodOptions.find((p) => p.value === TimePeriod.Month) || { label: "Month", value: TimePeriod.Month },
     [timePeriodOptions]
   );
 
@@ -377,11 +364,9 @@ export default function CalendarPage() {
   }, []); // no state deps — callers always pass values explicitly
 
   useEffect(() => {
-    try { setUserInfo(getUserFromCookiesClient()); } catch { /* noop */ }
     getCategories().then(setCategories).catch(() => { });
-    fetchData(TimeCategory.Current, TimePeriod.Week);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // run only once on mount — fetchData is stable
+    fetchData(TimeCategory.Current, TimePeriod.Month);
+  }, [fetchData]); // run only once on mount — fetchData is stable
 
   /* ── Derived data ──────────────────────────────────────────────── */
   const calendarItems = useMemo(() => mapToCalendarItems(transactions), [transactions]);
@@ -677,10 +662,14 @@ export default function CalendarPage() {
                       value: selectedPeriod.value,
                       label: getTimePeriodLabel(selectedPeriod.value),
                     }}
-                    onChange={(val) => {
-                      const opt = val as IEnumOptions;
+                    onChange={(val: any) => {
+                      const numVal = typeof val === "object" && val !== null ? Number(val.value) : Number(val);
+                      const opt = timePeriodOptions.find((p) => Number(p.value) === numVal) || {
+                        label: getTimePeriodLabel(numVal),
+                        value: numVal,
+                      };
                       setSelectedPeriod(opt);
-                      fetchData(Number(selectedCategory.value), Number(opt.value));
+                      fetchData(Number(selectedCategory.value), numVal);
                     }}
                   >
                     {timePeriodOptions.map((tp) => (
@@ -697,10 +686,14 @@ export default function CalendarPage() {
                       value: selectedCategory.value,
                       label: getTimeCategoryLabel(selectedCategory.value, selectedPeriod.value),
                     }}
-                    onChange={(val) => {
-                      const opt = val as IEnumOptions;
+                    onChange={(val: any) => {
+                      const numVal = typeof val === "object" && val !== null ? Number(val.value) : Number(val);
+                      const opt = timeCategoryOptions.find((c) => Number(c.value) === numVal) || {
+                        label: getTimeCategoryLabel(numVal, selectedPeriod.value),
+                        value: numVal,
+                      };
                       setSelectedCategory(opt);
-                      fetchData(Number(opt.value), Number(selectedPeriod.value));
+                      fetchData(numVal, Number(selectedPeriod.value));
                     }}
                   >
                     {timeCategoryOptions.map((tc) => (

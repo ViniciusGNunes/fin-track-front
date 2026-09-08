@@ -83,11 +83,12 @@ function OAuthCallbackContent() {
           setStatus("error");
           setErrorMessage("Resposta do servidor não continha um token válido.");
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         if (!isMounted) return;
         console.error("OAuth exchange error:", err);
+        const axiosErr = err as { response?: { data?: { message?: string } } };
         const backendMsg =
-          err?.response?.data?.message ||
+          axiosErr?.response?.data?.message ||
           "Não foi possível concluir a autenticação com o provedor selecionado.";
         setStatus("error");
         setErrorMessage(backendMsg);

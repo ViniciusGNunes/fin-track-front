@@ -5,7 +5,7 @@ declare module 'js-cookie' {
     domain?: string;
     secure?: boolean;
     sameSite?: 'strict' | 'Strict' | 'lax' | 'Lax' | 'none' | 'None';
-    [property: string]: any;
+    [property: string]: unknown;
   }
 
   interface CookiesStatic {

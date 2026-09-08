@@ -15,23 +15,18 @@ import {
   Form,
   Input,
   InputNumber,
-  Select,
   DatePicker,
   Segmented,
   Space,
-  Tooltip,
   Popconfirm,
   message,
   Empty,
-  theme,
   Progress,
   Avatar,
 } from "antd";
 import {
   PlusOutlined,
-  DollarOutlined,
   UnorderedListOutlined,
-  AppstoreOutlined,
   EditOutlined,
   DeleteOutlined,
   UserOutlined,
@@ -192,8 +187,7 @@ export default function ReceivablesPage() {
     }
   };
 
-  const handleToggleItemPaid = async (
-    receivableId: number,
+  const handleTogglePaid = async (
     itemId: number,
     currentPaidStatus: boolean
   ) => {
@@ -285,21 +279,6 @@ export default function ReceivablesPage() {
       currency: r.currency,
     }))
   );
-
-  const handleTogglePaid = async (itemId: number, currentPaidStatus: boolean) => {
-    try {
-      await toggleReceivableItemPaid(
-        itemId,
-        { isPaid: !currentPaidStatus },
-        userInfo?.id ? Number(userInfo.id) : undefined
-      );
-      message.success(!currentPaidStatus ? "Pagamento marcado como recebido! 🎉" : "Marcado como pendente.");
-      await fetchSummary();
-    } catch (err) {
-      console.error("Failed to update payment status", err);
-      message.error("Não foi possível atualizar o status de pagamento.");
-    }
-  };
 
   const tableColumns = [
     {

@@ -8,7 +8,6 @@ import {
   Button,
   Typography,
   Spin,
-  Result,
   Input,
   message,
 } from "antd";
@@ -16,6 +15,7 @@ import { CheckCircleFilled, CloseCircleFilled, MailOutlined, SendOutlined } from
 import { confirmEmail, resendConfirmationEmail } from "@/app/services/Backend/UserService";
 import { FINTRACK_THEME } from "@/app/lib/theme";
 import styles from "./page.module.scss";
+import { AxiosError } from "axios";
 
 const { Title, Text } = Typography;
 
@@ -26,32 +26,41 @@ function VerifyEmailContent() {
   const userIdParam = searchParams.get("userId");
   const tokenParam = searchParams.get("token");
 
-  const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
-  const [errorMessage, setErrorMessage] = useState<string>("");
+  const [status, setStatus] = useState<"loading" | "success" | "error">(
+    !userIdParam || !tokenParam ? "error" : "loading"
+  );
+  const [errorMessage, setErrorMessage] = useState<string>(
+    !userIdParam || !tokenParam ? "Parâmetros de verificação ausentes no link." : ""
+  );
   const [resendEmail, setResendEmail] = useState<string>("");
   const [resending, setResending] = useState<boolean>(false);
   const [messageApi, contextHolder] = message.useMessage();
 
   useEffect(() => {
     if (!userIdParam || !tokenParam) {
-      setStatus("error");
-      setErrorMessage("Parâmetros de verificação ausentes no link.");
       return;
     }
 
+    let isMounted = true;
     const verify = async () => {
       try {
         await confirmEmail(Number(userIdParam), tokenParam);
-        setStatus("success");
-      } catch (err: any) {
-        setStatus("error");
-        setErrorMessage(
-          err?.response?.data?.message || "Link de confirmação inválido ou expirado."
-        );
+        if (isMounted) setStatus("success");
+      } catch (err: unknown) {
+        if (isMounted) {
+          const axiosErr = err as AxiosError<{ message?: string }>;
+          setStatus("error");
+          setErrorMessage(
+            axiosErr?.response?.data?.message || "Link de confirmação inválido ou expirado."
+          );
+        }
       }
     };
 
     verify();
+    return () => {
+      isMounted = false;
+    };
   }, [userIdParam, tokenParam]);
 
   const handleResend = async () => {
@@ -63,7 +72,7 @@ function VerifyEmailContent() {
       setResending(true);
       await resendConfirmationEmail(resendEmail);
       messageApi.success("Se o e-mail existir, um novo link de confirmação foi enviado!");
-    } catch (err) {
+    } catch {
       messageApi.error("Erro ao reenviar confirmação. Tente novamente.");
     } finally {
       setResending(false);

@@ -32,7 +32,7 @@ export default function ForgotPasswordPage() {
       await requestPasswordReset(values.email);
       setSentEmail(values.email);
       messageApi.success("Instruções de redefinição enviadas!");
-    } catch (err) {
+    } catch {
       messageApi.error("Não foi possível enviar a solicitação. Tente novamente.");
     } finally {
       setLoading(false);

@@ -69,15 +69,20 @@ export const getTransactions = async (params?: {
   userId?: number;
   timeCategory?: TimeCategory;
   timePeriod?: TimePeriod;
+  timezoneOffset?: number;
 }) => {
   try {
     const userInfo = getUserFromCookiesClient();
     const userId = params?.userId ?? (userInfo?.id ? Number(userInfo.id) : undefined);
+    const timezoneOffset =
+      params?.timezoneOffset ??
+      (typeof window !== "undefined" ? new Date().getTimezoneOffset() : 0);
 
     const query = new URLSearchParams();
     if (userId) query.append("userId", String(userId));
     if (params?.timeCategory !== undefined) query.append("timeCategory", String(params.timeCategory));
     if (params?.timePeriod !== undefined) query.append("timePeriod", String(params.timePeriod));
+    query.append("timezoneOffset", String(timezoneOffset));
 
     const queryString = query.toString() ? `?${query.toString()}` : "";
     const response = await api.get(`/transactions${queryString}`);

@@ -19,7 +19,6 @@ import {
   Popconfirm,
   Modal,
   Tag,
-  theme,
   Divider,
 } from "antd";
 import {
@@ -33,9 +32,7 @@ import {
   DeleteOutlined,
   ReloadOutlined,
   SaveOutlined,
-  LockOutlined,
   GlobalOutlined,
-  CalendarOutlined,
   SafetyOutlined,
   WarningOutlined,
 } from "@ant-design/icons";
@@ -147,7 +144,7 @@ export default function SettingsPage() {
       });
       message.success("Profile details updated successfully!");
       await loadData();
-    } catch (err) {
+    } catch {
       message.error("Failed to update profile.");
     } finally {
       setLoading(false);
@@ -185,7 +182,7 @@ export default function SettingsPage() {
       catForm.resetFields();
       setEditingCategory(null);
       await loadData();
-    } catch (err) {
+    } catch {
       message.error("Não foi possível salvar a categoria.");
     } finally {
       setLoading(false);
@@ -198,7 +195,7 @@ export default function SettingsPage() {
       await deleteCategory(id);
       message.success("Categoria excluída com sucesso!");
       await loadData();
-    } catch (err) {
+    } catch {
       message.error("Não foi possível excluir a categoria (ela pode estar em uso por transações).");
     } finally {
       setLoading(false);
@@ -211,7 +208,7 @@ export default function SettingsPage() {
       await seedDefaultCategories();
       message.success("Categorias padrão restauradas com sucesso!");
       await loadData();
-    } catch (err) {
+    } catch {
       message.error("Não foi possível restaurar as categorias padrão.");
     } finally {
       setLoading(false);
@@ -247,7 +244,7 @@ export default function SettingsPage() {
       downloadAnchor.remove();
 
       message.success({ content: "Backup financeiro exportado com sucesso!", key: "export" });
-    } catch (err) {
+    } catch {
       message.error({ content: "Não foi possível exportar os dados.", key: "export" });
     }
   };

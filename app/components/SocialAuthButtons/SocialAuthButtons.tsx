@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useGoogleLogin } from "@react-oauth/google";
 import { message } from "antd";
 import { useRouter } from "next/navigation";
@@ -49,6 +49,19 @@ export const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = () => {
     null
   );
 
+  // Reset busy states when navigating back via browser history / bfcache
+  useEffect(() => {
+    const handlePageShow = () => {
+      setRedirectingProvider(null);
+      setGoogleLoading(false);
+    };
+
+    window.addEventListener("pageshow", handlePageShow);
+    return () => {
+      window.removeEventListener("pageshow", handlePageShow);
+    };
+  }, []);
+
   const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
   const githubClientId = process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID;
   const discordClientId = process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID;
@@ -80,10 +93,11 @@ export const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = () => {
         } else {
           message.error("Resposta de autenticação inválida.");
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error("Google login failed:", error);
+        const err = error as { response?: { data?: { message?: string } } };
         const msg =
-          error?.response?.data?.message || "Falha ao autenticar com o Google.";
+          err?.response?.data?.message || "Falha ao autenticar com o Google.";
         message.error(msg);
       } finally {
         setGoogleLoading(false);

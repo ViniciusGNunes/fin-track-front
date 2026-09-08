@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   ConfigProvider,
   Layout,
@@ -24,7 +24,9 @@ import {
   message,
   Tabs,
   Empty,
-  theme,
+  Radio,
+  Switch,
+  Alert,
 } from "antd";
 import {
   PlusOutlined,
@@ -36,10 +38,13 @@ import {
   AppstoreOutlined,
   EditOutlined,
   DeleteOutlined,
-  SwapOutlined,
   CheckCircleOutlined,
   StockOutlined,
   BankOutlined,
+  WalletOutlined,
+  ArrowDownOutlined,
+  ArrowUpOutlined,
+  InfoCircleOutlined,
 } from "@ant-design/icons";
 import { Sidebar } from "../../components/Sidebar/Sidebar";
 import { Header } from "../../components/Header/Header";
@@ -57,10 +62,11 @@ import {
   getPortfolioSummary,
   getInvestmentGrowthHistory,
   createInvestment,
-  updateInvestment,
   addInvestmentTransaction,
   liquidateInvestment,
   deleteInvestment,
+  depositPortfolioCash,
+  withdrawPortfolioCash,
 } from "@/app/services/Backend/InvestmentService";
 import {
   FixedRateType,
@@ -76,6 +82,7 @@ export default function InvestmentsPage() {
   const [collapsed, setCollapsed] = useState(false);
   const [selectedKey, setSelectedKey] = useState("investments");
   const [viewMode, setViewMode] = useState<"list" | "treemap" | "pie">("treemap");
+  const [currencyFilter, setCurrencyFilter] = useState<"ALL" | "BRL" | "USD" | "EUR">("ALL");
 
   const [userInfo] = useState<UserCookieInfo | null>(() => {
     if (typeof window !== "undefined") {
@@ -93,6 +100,10 @@ export default function InvestmentsPage() {
     totalCurrentValue: 0,
     totalProfitLossAmount: 0,
     totalProfitLossPercentage: 0,
+    unallocatedCash: 0,
+    cashBalances: { BRL: 0 },
+    usdExchangeRate: 5.60,
+    eurExchangeRate: 6.10,
     investments: [],
   });
   const [loading, setLoading] = useState(false);
@@ -100,6 +111,9 @@ export default function InvestmentsPage() {
   // Modals state
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [isCashModalOpen, setIsCashModalOpen] = useState(false);
+  const [cashModalType, setCashModalType] = useState<"deposit" | "withdraw">("deposit");
+
   const [selectedInvestment, setSelectedInvestment] = useState<IInvestment | null>(null);
   const [growthPoints, setGrowthPoints] = useState<IInvestmentGrowthPoint[]>([]);
   const [loadingGrowth, setLoadingGrowth] = useState(false);
@@ -107,6 +121,11 @@ export default function InvestmentsPage() {
   const [addForm] = Form.useForm();
   const [transForm] = Form.useForm();
   const [editForm] = Form.useForm();
+  const [cashForm] = Form.useForm();
+
+  // Watch selected currency in modals
+  const selectedCashCurrency = Form.useWatch("currency", cashForm) || "BRL";
+  const selectedAddCurrency = Form.useWatch("currency", addForm) || "BRL";
 
   const fetchPortfolio = useCallback(async () => {
     try {
@@ -125,6 +144,56 @@ export default function InvestmentsPage() {
   useEffect(() => {
     fetchPortfolio();
   }, [fetchPortfolio]);
+
+  // Derived filtered investments and summary based on selected currency tab
+  const filteredInvestments = portfolio.investments.filter((inv) => {
+    if (currencyFilter === "ALL") return true;
+    return (inv.currency || "BRL").toUpperCase() === currencyFilter;
+  });
+
+  const activeCashBalance =
+    currencyFilter === "ALL"
+      ? (portfolio.cashBalances?.["BRL"] || portfolio.unallocatedCash || 0)
+      : (portfolio.cashBalances?.[currencyFilter] || 0);
+
+  const displayedMetrics = (() => {
+    if (currencyFilter === "ALL") {
+      return {
+        currencySymbol: "R$",
+        totalCurrentValue: portfolio.totalCurrentValue,
+        totalInvested: portfolio.totalInvested,
+        totalProfitLossAmount: portfolio.totalProfitLossAmount,
+        totalProfitLossPercentage: portfolio.totalProfitLossPercentage,
+        cash: portfolio.totalCurrentValue - portfolio.investments.reduce((sum, i) => {
+          const rate = (i.currency === "USD" ? portfolio.usdExchangeRate || 5.60 : i.currency === "EUR" ? portfolio.eurExchangeRate || 6.10 : 1);
+          return sum + (i.currentValue * rate);
+        }, 0),
+        isConverted: true,
+      };
+    }
+
+    const cur = currencyFilter;
+    const symbol = cur === "USD" ? "$" : cur === "EUR" ? "€" : "R$";
+    const curInvestments = portfolio.investments.filter(
+      (i) => (i.currency || "BRL").toUpperCase() === cur
+    );
+    const cash = portfolio.cashBalances?.[cur] || 0;
+    const totalInvested = curInvestments.reduce((sum, i) => sum + i.totalInvested, 0);
+    const totalInvestmentsVal = curInvestments.reduce((sum, i) => sum + i.currentValue, 0);
+    const totalCurrentValue = totalInvestmentsVal + cash;
+    const pnl = totalCurrentValue - totalInvested;
+    const pnlPct = totalInvested > 0 ? Number(((pnl / totalInvested) * 100).toFixed(2)) : 0;
+
+    return {
+      currencySymbol: symbol,
+      totalCurrentValue,
+      totalInvested,
+      totalProfitLossAmount: pnl,
+      totalProfitLossPercentage: pnlPct,
+      cash,
+      isConverted: false,
+    };
+  })();
 
   const handleOpenDetailModal = async (investment: IInvestment) => {
     setSelectedInvestment(investment);
@@ -169,6 +238,7 @@ export default function InvestmentsPage() {
         isTaxExempt: values.isTaxExempt || false,
         startDate: values.startDate ? values.startDate.toISOString() : new Date().toISOString(),
         maturityDate: values.maturityDate ? values.maturityDate.toISOString() : null,
+        fromCashBalance: values.fundingSource === "cash",
         userID: userInfo?.id ? Number(userInfo.id) : 1,
       };
 
@@ -177,9 +247,9 @@ export default function InvestmentsPage() {
       setIsAddModalOpen(false);
       addForm.resetFields();
       await fetchPortfolio();
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to add investment", err);
-      message.error("Não foi possível cadastrar o investimento.");
+      message.error(err?.response?.data?.message || err.message || "Não foi possível cadastrar o investimento.");
     } finally {
       setLoading(false);
     }
@@ -196,6 +266,7 @@ export default function InvestmentsPage() {
           amount: Number(values.amount),
           quantity: values.quantity ? Number(values.quantity) : null,
           unitPrice: values.unitPrice ? Number(values.unitPrice) : null,
+          fromCashBalance: values.fundingSource === "cash",
           transactionDate: values.transactionDate ? values.transactionDate.toISOString() : new Date().toISOString(),
           notes: values.notes || null,
         },
@@ -206,9 +277,9 @@ export default function InvestmentsPage() {
       transForm.resetFields();
       setIsDetailModalOpen(false);
       await fetchPortfolio();
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to record transaction", err);
-      message.error("Não foi possível registrar a transação.");
+      message.error(err?.response?.data?.message || err.message || "Não foi possível registrar a transação.");
     } finally {
       setLoading(false);
     }
@@ -218,7 +289,7 @@ export default function InvestmentsPage() {
     try {
       setLoading(true);
       await liquidateInvestment(investmentId, userInfo?.id ? Number(userInfo.id) : undefined);
-      message.success("Investimento resgatado/liquidado com sucesso!");
+      message.success("Investimento liquidado! O valor foi creditado no seu Caixa Livre.");
       setIsDetailModalOpen(false);
       await fetchPortfolio();
     } catch (err) {
@@ -244,6 +315,49 @@ export default function InvestmentsPage() {
     }
   };
 
+  const handleCashMovement = async (values: any) => {
+    try {
+      setLoading(true);
+      const chosenCurrency = values.currency || "BRL";
+      if (cashModalType === "deposit") {
+        await depositPortfolioCash(
+          {
+            amount: Number(values.amount),
+            currency: chosenCurrency,
+            notes: values.notes || "Depósito no Caixa da Carteira",
+          },
+          userInfo?.id ? Number(userInfo.id) : undefined
+        );
+        message.success(`Depósito no Caixa Livre (${chosenCurrency}) realizado com sucesso!`);
+      } else {
+        await withdrawPortfolioCash(
+          {
+            amount: Number(values.amount),
+            currency: chosenCurrency,
+            notes: values.notes || "Saque do Caixa da Carteira",
+          },
+          userInfo?.id ? Number(userInfo.id) : undefined
+        );
+        message.success(`Saque do Caixa Livre (${chosenCurrency}) realizado com sucesso!`);
+      }
+      setIsCashModalOpen(false);
+      cashForm.resetFields();
+      await fetchPortfolio();
+    } catch (err: any) {
+      console.error("Failed cash movement", err);
+      message.error(err?.response?.data?.message || err.message || "Não foi possível processar a movimentação.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getCurrencySymbol = (cur?: string) => {
+    const c = (cur || "BRL").toUpperCase();
+    if (c === "USD") return "$";
+    if (c === "EUR") return "€";
+    return "R$";
+  };
+
   // Table columns for list view
   const columns = [
     {
@@ -266,6 +380,9 @@ export default function InvestmentsPage() {
                 ({record.ticker})
               </span>
             )}
+            <Tag color={record.currency === "USD" ? "green" : record.currency === "EUR" ? "gold" : "blue"} style={{ marginLeft: 6, fontSize: 11 }}>
+              {record.currency || "BRL"}
+            </Tag>
           </div>
         </div>
       ),
@@ -274,14 +391,28 @@ export default function InvestmentsPage() {
       title: "Tipo",
       dataIndex: "investmentType",
       key: "investmentType",
-      render: (type: InvestmentType) => {
+      render: (type: InvestmentType, record: IInvestment) => {
         if (type === InvestmentType.Crypto) {
           return <Tag color="purple">Cripto</Tag>;
         }
         if (type === InvestmentType.VariableIncome) {
-          return <Tag color="blue">Renda Variável (Ação/FII)</Tag>;
+          return <Tag color="blue">Renda Variável</Tag>;
         }
-        return <Tag color="gold">Renda Fixa</Tag>;
+        const rateLabel =
+          record.rateType === FixedRateType.Selic_CDI
+            ? `${record.annualRate ?? 100}% CDI`
+            : record.rateType === FixedRateType.IPCA_Plus
+            ? `IPCA + ${record.annualRate ?? 0}%`
+            : record.annualRate
+            ? `${record.annualRate}% a.a.`
+            : null;
+
+        return (
+          <Space orientation="horizontal" size={4}>
+            <Tag color="gold">Renda Fixa</Tag>
+            {rateLabel && <Tag color="cyan">{rateLabel}</Tag>}
+          </Space>
+        );
       },
     },
     {
@@ -289,7 +420,7 @@ export default function InvestmentsPage() {
       dataIndex: "totalInvested",
       key: "totalInvested",
       render: (val: number, record: IInvestment) =>
-        `${record.currency === "USD" ? "$" : "R$"} ${Number(val).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
+        `${getCurrencySymbol(record.currency)} ${Number(val).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
     },
     {
       title: "Saldo Atual",
@@ -297,7 +428,7 @@ export default function InvestmentsPage() {
       key: "currentValue",
       render: (val: number, record: IInvestment) => (
         <strong style={{ fontVariantNumeric: "tabular-nums" }}>
-          {record.currency === "USD" ? "$" : "R$"}{" "}
+          {getCurrencySymbol(record.currency)}{" "}
           {Number(val).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
         </strong>
       ),
@@ -311,7 +442,7 @@ export default function InvestmentsPage() {
         return (
           <span className={isPos ? styles.positiveText : styles.negativeText} style={{ fontVariantNumeric: "tabular-nums" }}>
             {isPos ? "+" : ""}
-            {record.currency === "USD" ? "$" : "R$"}{" "}
+            {getCurrencySymbol(record.currency)}{" "}
             {Number(val).toLocaleString("pt-BR", { minimumFractionDigits: 2 })} ({isPos ? "+" : ""}
             {record.profitLossPercentage}%)
           </span>
@@ -388,7 +519,18 @@ export default function InvestmentsPage() {
                 </p>
               </div>
 
-              <div className={styles.headerControls}>
+              <div className={styles.headerControls} style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+                <Segmented
+                  value={currencyFilter}
+                  onChange={(val) => setCurrencyFilter(val as any)}
+                  options={[
+                    { value: "ALL", label: "Consolidado (R$)" },
+                    { value: "BRL", label: "🇧🇷 BRL (R$)" },
+                    { value: "USD", label: "🇺🇸 USD ($)" },
+                    { value: "EUR", label: "🇪🇺 EUR (€)" },
+                  ]}
+                />
+
                 <Segmented
                   value={viewMode}
                   onChange={(val) => setViewMode(val as any)}
@@ -410,56 +552,118 @@ export default function InvestmentsPage() {
 
             {/* Metrics Overview */}
             <Row gutter={[16, 16]} className={styles.metricRow}>
-              <Col xs={24} sm={8}>
+              <Col xs={24} sm={12} md={6}>
                 <Card variant="borderless">
                   <Statistic
-                    title="Patrimônio Total Investido"
-                    value={portfolio.totalCurrentValue}
+                    title={
+                      displayedMetrics.isConverted
+                        ? "Patrimônio Total (Consolidado)"
+                        : `Patrimônio Total (${currencyFilter})`
+                    }
+                    value={displayedMetrics.totalCurrentValue}
                     precision={2}
-                    prefix="R$ "
+                    prefix={`${displayedMetrics.currencySymbol} `}
                     styles={{ value: { color: "#38bdf8", fontVariantNumeric: "tabular-nums" } }}
                   />
+                  <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>
+                    {displayedMetrics.isConverted
+                      ? `Ativos + Caixa (USD: R$ ${portfolio.usdExchangeRate?.toFixed(2) || "5.60"})`
+                      : "Ativos + Caixa nesta moeda"}
+                  </span>
                 </Card>
               </Col>
-              <Col xs={24} sm={8}>
+              <Col xs={24} sm={12} md={6}>
+                <Card variant="borderless">
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                    <Statistic
+                      title={`Caixa Livre (${currencyFilter === "ALL" ? "BRL" : currencyFilter})`}
+                      value={activeCashBalance}
+                      precision={2}
+                      prefix={`${currencyFilter === "USD" ? "$" : currencyFilter === "EUR" ? "€" : "R$"} `}
+                      styles={{ value: { color: "#10b981", fontVariantNumeric: "tabular-nums" } }}
+                    />
+                    <Space size={4}>
+                      <Tooltip title="Depositar no Caixa">
+                        <Button
+                          size="small"
+                          type="primary"
+                          icon={<ArrowDownOutlined />}
+                          onClick={() => {
+                            setCashModalType("deposit");
+                            cashForm.setFieldsValue({
+                              currency: currencyFilter === "ALL" ? "BRL" : currencyFilter,
+                            });
+                            setIsCashModalOpen(true);
+                          }}
+                        />
+                      </Tooltip>
+                      <Tooltip title="Sacar do Caixa">
+                        <Button
+                          size="small"
+                          icon={<ArrowUpOutlined />}
+                          disabled={activeCashBalance <= 0}
+                          onClick={() => {
+                            setCashModalType("withdraw");
+                            cashForm.setFieldsValue({
+                              currency: currencyFilter === "ALL" ? "BRL" : currencyFilter,
+                            });
+                            setIsCashModalOpen(true);
+                          }}
+                        />
+                      </Tooltip>
+                    </Space>
+                  </div>
+                  <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>
+                    Vendas, dividendos e saldo livre
+                  </span>
+                </Card>
+              </Col>
+              <Col xs={24} sm={12} md={6}>
                 <Card variant="borderless">
                   <Statistic
                     title="Total de Aportes Realizados"
-                    value={portfolio.totalInvested}
+                    value={displayedMetrics.totalInvested}
                     precision={2}
-                    prefix="R$ "
+                    prefix={`${displayedMetrics.currencySymbol} `}
                     styles={{ value: { fontVariantNumeric: "tabular-nums" } }}
                   />
+                  <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>
+                    Capital externo investido
+                  </span>
                 </Card>
               </Col>
-              <Col xs={24} sm={8}>
+              <Col xs={24} sm={12} md={6}>
                 <Card variant="borderless">
                   <Statistic
-                    title="Rentabilidade Total (Lucro / Prejuízo)"
-                    value={portfolio.totalProfitLossAmount}
+                    title="Rentabilidade Total (L/P)"
+                    value={displayedMetrics.totalProfitLossAmount}
                     precision={2}
-                    prefix={portfolio.totalProfitLossAmount >= 0 ? "+R$ " : "R$ "}
+                    prefix={
+                      displayedMetrics.totalProfitLossAmount >= 0
+                        ? `+${displayedMetrics.currencySymbol} `
+                        : `${displayedMetrics.currencySymbol} `
+                    }
                     styles={{
                       value: {
                         color:
-                          portfolio.totalProfitLossAmount >= 0 ? "#10b981" : "#f43f5e",
+                          displayedMetrics.totalProfitLossAmount >= 0 ? "#10b981" : "#f43f5e",
                         fontVariantNumeric: "tabular-nums",
                       },
                     }}
                   />
                   <span
                     className={
-                      portfolio.totalProfitLossAmount >= 0
+                      displayedMetrics.totalProfitLossAmount >= 0
                         ? styles.trendUp
                         : styles.trendDown
                     }
                   >
-                    {portfolio.totalProfitLossAmount >= 0 ? (
+                    {displayedMetrics.totalProfitLossAmount >= 0 ? (
                       <RiseOutlined />
                     ) : (
                       <FallOutlined />
                     )}{" "}
-                    {portfolio.totalProfitLossPercentage}% Rendimento Global
+                    {displayedMetrics.totalProfitLossPercentage}% Rendimento
                   </span>
                 </Card>
               </Col>
@@ -468,16 +672,64 @@ export default function InvestmentsPage() {
             {/* Views Section */}
             {viewMode === "treemap" && (
               <Card variant="borderless" title="Mosaico da Carteira (Proporção pelo Saldo)">
-                {portfolio.investments.length === 0 ? (
-                  <Empty description="Nenhum investimento cadastrado. Adicione seu primeiro ativo!" />
+                {filteredInvestments.length === 0 && activeCashBalance <= 0 ? (
+                  <Empty description="Nenhum investimento encontrado para o filtro selecionado." />
                 ) : (
                   <div className={styles.treemapContainer}>
-                    {portfolio.investments.map((inv) => {
+                    {/* Render Cash Tile if positive */}
+                    {activeCashBalance > 0 && (
+                      <div
+                        className={`${styles.treemapTile} ${styles.profitTile}`}
+                        style={{
+                          flex: `${Math.max(1, (activeCashBalance / (displayedMetrics.totalCurrentValue || 1)) * 100)} 1 200px`,
+                          borderLeft: "4px solid #10b981",
+                        }}
+                        onClick={() => {
+                          setCashModalType("deposit");
+                          cashForm.setFieldsValue({
+                            currency: currencyFilter === "ALL" ? "BRL" : currencyFilter,
+                          });
+                          setIsCashModalOpen(true);
+                        }}
+                      >
+                        <div className={styles.tileHeader}>
+                          <div>
+                            <span className={styles.tileTitle}>Caixa Livre / Dinheiro Parado</span>
+                            <Tag color="green" style={{ marginLeft: 6 }}>
+                              {currencyFilter === "ALL" ? "BRL" : currencyFilter}
+                            </Tag>
+                          </div>
+                          <span className={styles.tilePercentage}>
+                            {(
+                              (activeCashBalance / (displayedMetrics.totalCurrentValue || 1)) *
+                              100
+                            ).toFixed(1)}
+                            %
+                          </span>
+                        </div>
+                        <div className={styles.tileBody}>
+                          <div className={styles.tileValue} style={{ color: "#10b981" }}>
+                            {displayedMetrics.currencySymbol}{" "}
+                            {Number(activeCashBalance).toLocaleString("pt-BR", {
+                              minimumFractionDigits: 2,
+                            })}
+                          </div>
+                          <div className={styles.tilePerformance} style={{ color: "#10b981" }}>
+                            Saldo disponível para compras
+                          </div>
+                        </div>
+                        <div className={styles.tileFooter}>
+                          <span>Liquidez imediata</span>
+                          <span>+ Depositar / Sacar</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {filteredInvestments.map((inv) => {
                       const sharePct =
-                        portfolio.totalCurrentValue > 0
-                          ? (inv.currentValue / portfolio.totalCurrentValue) * 100
+                        displayedMetrics.totalCurrentValue > 0
+                          ? ((inv.currentValue * (currencyFilter === "ALL" && inv.currency === "USD" ? portfolio.usdExchangeRate || 5.60 : currencyFilter === "ALL" && inv.currency === "EUR" ? portfolio.eurExchangeRate || 6.10 : 1)) / displayedMetrics.totalCurrentValue) * 100
                           : 0;
-                      // Dynamic width flex-basis based on share of portfolio
                       const flexBasis = Math.max(220, Math.min(600, (sharePct / 100) * 900));
 
                       return (
@@ -497,6 +749,9 @@ export default function InvestmentsPage() {
                                   {inv.ticker}
                                 </Tag>
                               )}
+                              <Tag color={inv.currency === "USD" ? "green" : inv.currency === "EUR" ? "gold" : "blue"} style={{ marginLeft: 4 }}>
+                                {inv.currency || "BRL"}
+                              </Tag>
                             </div>
                             <span className={styles.tilePercentage}>
                               {sharePct.toFixed(1)}% of total
@@ -505,8 +760,8 @@ export default function InvestmentsPage() {
 
                           <div className={styles.tileBody}>
                             <div className={styles.tileValue}>
-                              {inv.currency === "USD" ? "$" : "R$"}{" "}
-                              {Number(inv.currentValue).toLocaleString(undefined, {
+                              {getCurrencySymbol(inv.currency)}{" "}
+                              {Number(inv.currentValue).toLocaleString("pt-BR", {
                                 minimumFractionDigits: 2,
                               })}
                             </div>
@@ -518,7 +773,7 @@ export default function InvestmentsPage() {
                               }`}
                             >
                               {inv.profitLossAmount >= 0 ? "+" : ""}
-                              {inv.currency === "USD" ? "$" : "R$"}{" "}
+                              {getCurrencySymbol(inv.currency)}{" "}
                               {Number(inv.profitLossAmount).toFixed(2)} (
                               {inv.profitLossAmount >= 0 ? "+" : ""}
                               {inv.profitLossPercentage}%)
@@ -527,7 +782,7 @@ export default function InvestmentsPage() {
 
                           <div className={styles.tileFooter}>
                             <span>
-                              Aportado: {inv.currency === "USD" ? "$" : "R$"}{" "}
+                              Aportado: {getCurrencySymbol(inv.currency)}{" "}
                               {Number(inv.totalInvested).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                             </span>
                             <span>
@@ -535,6 +790,10 @@ export default function InvestmentsPage() {
                                 ? `${inv.quantity ?? 0} unidades`
                                 : inv.investmentType === InvestmentType.VariableIncome
                                 ? `${inv.quantity ?? 0} cotas`
+                                : inv.rateType === FixedRateType.Selic_CDI
+                                ? `${inv.annualRate ?? 100}% do CDI`
+                                : inv.rateType === FixedRateType.IPCA_Plus
+                                ? `IPCA + ${inv.annualRate ?? 0}% a.a.`
                                 : inv.annualRate
                                 ? `${inv.annualRate}% a.a.`
                                 : "Renda Fixa"}
@@ -550,32 +809,56 @@ export default function InvestmentsPage() {
 
             {viewMode === "pie" && (
               <Card variant="borderless" title="Alocação da Carteira (Distribuição de Ativos)">
-                {portfolio.investments.length === 0 ? (
+                {filteredInvestments.length === 0 && activeCashBalance <= 0 ? (
                   <Empty description="Nenhum investimento encontrado" />
                 ) : (
                   <div className={styles.chartLayout}>
                     <div className={styles.pizzaCanvasContainer}>
-                      {/* SVG Pizza / Donut Visualization */}
                       <svg width="240" height="240" viewBox="0 0 42 42">
                         {(() => {
                           let accumulatedPercent = 0;
-                          return portfolio.investments.map((inv, idx) => {
-                            const pct =
-                              portfolio.totalCurrentValue > 0
-                                ? (inv.currentValue / portfolio.totalCurrentValue) * 100
-                                : 0;
-                            const dashArray = `${pct} ${100 - pct}`;
+                          const totalVal = displayedMetrics.totalCurrentValue || 1;
+
+                          const slices = [
+                            ...(activeCashBalance > 0
+                              ? [
+                                  {
+                                    id: -1,
+                                    name: "Caixa Livre",
+                                    value: activeCashBalance,
+                                    pct: (activeCashBalance / totalVal) * 100,
+                                    color: "#10b981",
+                                    currency: currencyFilter === "ALL" ? "BRL" : currencyFilter,
+                                  },
+                                ]
+                              : []),
+                            ...filteredInvestments.map((inv, idx) => {
+                              const convertedVal = inv.currentValue * (currencyFilter === "ALL" && inv.currency === "USD" ? portfolio.usdExchangeRate || 5.60 : currencyFilter === "ALL" && inv.currency === "EUR" ? portfolio.eurExchangeRate || 6.10 : 1);
+                              return {
+                                id: inv.investmentID,
+                                name: inv.name,
+                                value: inv.currentValue,
+                                pct: (convertedVal / totalVal) * 100,
+                                color: chartColors[idx % chartColors.length],
+                                currency: inv.currency || "BRL",
+                                rawInv: inv,
+                              };
+                            }),
+                          ];
+
+                          return slices.map((slice) => {
+                            const dashArray = `${slice.pct} ${100 - slice.pct}`;
                             const dashOffset = 100 - accumulatedPercent + 25;
-                            accumulatedPercent += pct;
+                            accumulatedPercent += slice.pct;
 
                             return (
                               <circle
-                                key={inv.investmentID}
+                                key={slice.id}
                                 cx="21"
                                 cy="21"
                                 r="15.91549430918954"
                                 fill="transparent"
-                                stroke={chartColors[idx % chartColors.length]}
+                                stroke={slice.color}
                                 strokeWidth="5"
                                 strokeDasharray={dashArray}
                                 strokeDashoffset={dashOffset}
@@ -587,10 +870,33 @@ export default function InvestmentsPage() {
                     </div>
 
                     <div className={styles.chartLegend}>
-                      {portfolio.investments.map((inv, idx) => {
+                      {activeCashBalance > 0 && (
+                        <div
+                          className={styles.legendItem}
+                          onClick={() => {
+                            setCashModalType("deposit");
+                            cashForm.setFieldsValue({
+                              currency: currencyFilter === "ALL" ? "BRL" : currencyFilter,
+                            });
+                            setIsCashModalOpen(true);
+                          }}
+                        >
+                          <div className={styles.legendLabel}>
+                            <span className={styles.colorDot} style={{ backgroundColor: "#10b981" }} />
+                            <span>Caixa Livre ({currencyFilter === "ALL" ? "BRL" : currencyFilter})</span>
+                          </div>
+                          <span className={styles.legendValue} style={{ color: "#10b981" }}>
+                            {displayedMetrics.currencySymbol} {Number(activeCashBalance).toLocaleString("pt-BR", { minimumFractionDigits: 2 })} (
+                            {((activeCashBalance / (displayedMetrics.totalCurrentValue || 1)) * 100).toFixed(1)}%)
+                          </span>
+                        </div>
+                      )}
+
+                      {filteredInvestments.map((inv, idx) => {
+                        const convertedVal = inv.currentValue * (currencyFilter === "ALL" && inv.currency === "USD" ? portfolio.usdExchangeRate || 5.60 : currencyFilter === "ALL" && inv.currency === "EUR" ? portfolio.eurExchangeRate || 6.10 : 1);
                         const pct =
-                          portfolio.totalCurrentValue > 0
-                            ? ((inv.currentValue / portfolio.totalCurrentValue) * 100).toFixed(1)
+                          displayedMetrics.totalCurrentValue > 0
+                            ? ((convertedVal / displayedMetrics.totalCurrentValue) * 100).toFixed(1)
                             : "0.0";
                         return (
                           <div
@@ -606,10 +912,13 @@ export default function InvestmentsPage() {
                                 }}
                               />
                               <span>{inv.name}</span>
+                              <Tag color={inv.currency === "USD" ? "green" : inv.currency === "EUR" ? "gold" : "blue"} style={{ marginLeft: 4, fontSize: 10 }}>
+                                {inv.currency || "BRL"}
+                              </Tag>
                             </div>
                             <span className={styles.legendValue}>
-                              {inv.currency === "USD" ? "$" : "R$"}{" "}
-                              {Number(inv.currentValue).toLocaleString()} ({pct}%)
+                              {getCurrencySymbol(inv.currency)}{" "}
+                              {Number(inv.currentValue).toLocaleString("pt-BR", { minimumFractionDigits: 2 })} ({pct}%)
                             </span>
                           </div>
                         );
@@ -623,7 +932,7 @@ export default function InvestmentsPage() {
             {viewMode === "list" && (
               <Card variant="borderless" title="Todos os Investimentos">
                 <Table
-                  dataSource={portfolio.investments}
+                  dataSource={filteredInvestments}
                   columns={columns}
                   rowKey="investmentID"
                   pagination={{ pageSize: 8 }}
@@ -651,9 +960,34 @@ export default function InvestmentsPage() {
                   investmentType: InvestmentType.VariableIncome,
                   currency: "BRL",
                   startDate: dayjs(),
+                  fundingSource: "external",
                 }}
                 onFinish={handleCreateInvestment}
               >
+                <Form.Item name="fundingSource" label="Origem do Recurso">
+                  <Radio.Group style={{ width: "100%" }}>
+                    <Radio.Button value="external" style={{ width: "50%", textAlign: "center" }}>
+                      Aporte Externo (Novo Capital)
+                    </Radio.Button>
+                    <Radio.Button
+                      value="cash"
+                      style={{ width: "50%", textAlign: "center" }}
+                      disabled={
+                        (portfolio.cashBalances?.[selectedAddCurrency] ??
+                          (selectedAddCurrency === "BRL" ? portfolio.unallocatedCash : 0)) <= 0
+                      }
+                    >
+                      Debitar do Caixa (
+                      {getCurrencySymbol(selectedAddCurrency)}{" "}
+                      {Number(
+                        portfolio.cashBalances?.[selectedAddCurrency] ??
+                          (selectedAddCurrency === "BRL" ? portfolio.unallocatedCash : 0)
+                      ).toFixed(2)}
+                      )
+                    </Radio.Button>
+                  </Radio.Group>
+                </Form.Item>
+
                 <Row gutter={16}>
                   <Col span={16}>
                     <Form.Item
@@ -723,6 +1057,19 @@ export default function InvestmentsPage() {
                                 step={isCrypto ? 0.00000001 : 1}
                                 precision={isCrypto ? 8 : 4}
                                 placeholder={isCrypto ? "0,00000000" : "0"}
+                                onChange={(qty) => {
+                                  const price = addForm.getFieldValue("purchasePricePerUnit");
+                                  const total = addForm.getFieldValue("totalInvested");
+                                  if (qty && price) {
+                                    addForm.setFieldsValue({
+                                      totalInvested: Number((Number(qty) * Number(price)).toFixed(2)),
+                                    });
+                                  } else if (qty && total) {
+                                    addForm.setFieldsValue({
+                                      purchasePricePerUnit: Number((Number(total) / Number(qty)).toFixed(2)),
+                                    });
+                                  }
+                                }}
                               />
                             </Form.Item>
                           </Col>
@@ -733,6 +1080,14 @@ export default function InvestmentsPage() {
                                 min={0.00000001}
                                 precision={2}
                                 prefix="R$"
+                                onChange={(price) => {
+                                  const qty = addForm.getFieldValue("quantity");
+                                  if (price && qty) {
+                                    addForm.setFieldsValue({
+                                      totalInvested: Number((Number(qty) * Number(price)).toFixed(2)),
+                                    });
+                                  }
+                                }}
                               />
                             </Form.Item>
                           </Col>
@@ -743,21 +1098,44 @@ export default function InvestmentsPage() {
                     return (
                       <Row gutter={16}>
                         <Col span={12}>
-                          <Form.Item name="rateType" label="Indexador / Taxa">
+                          <Form.Item name="rateType" label="Indexador / Taxa" rules={[{ required: true, message: "Selecione o indexador" }]}>
                             <Select placeholder="Selecione o indexador">
                               <Option value={FixedRateType.Selic_CDI}>% do CDI / Selic</Option>
-                              <Option value={FixedRateType.Prefixado}>Pré-fixado (Taxa Fixa)</Option>
-                              <Option value={FixedRateType.IPCA_Plus}>IPCA + Taxa Fixa</Option>
+                              <Option value={FixedRateType.Prefixado}>Pré-fixado (% a.a.)</Option>
+                              <Option value={FixedRateType.IPCA_Plus}>IPCA + Taxa Fixa (% a.a.)</Option>
                             </Select>
                           </Form.Item>
                         </Col>
                         <Col span={12}>
-                          <Form.Item name="annualRate" label="Rentabilidade Contratada (%)">
-                            <InputNumber
-                              style={{ width: "100%" }}
-                              placeholder="Ex: 110 (para 110% CDI) ou 12.5"
-                              suffix="%"
-                            />
+                          <Form.Item
+                            noStyle
+                            shouldUpdate={(prev, curr) => prev.rateType !== curr.rateType}
+                          >
+                            {({ getFieldValue: getRateField }) => {
+                              const selectedRate = getRateField("rateType");
+                              const isCdi = selectedRate === FixedRateType.Selic_CDI;
+                              const isIpca = selectedRate === FixedRateType.IPCA_Plus;
+
+                              return (
+                                <Form.Item
+                                  name="annualRate"
+                                  label={
+                                    isCdi
+                                      ? "Percentual do CDI (%)"
+                                      : isIpca
+                                      ? "Taxa Adicional ao IPCA (% a.a.)"
+                                      : "Taxa Pré-fixada (% a.a.)"
+                                  }
+                                  rules={[{ required: true, message: "Insira a rentabilidade contratada" }]}
+                                >
+                                  <InputNumber
+                                    style={{ width: "100%" }}
+                                    placeholder={isCdi ? "Ex: 110 (para 110% do CDI)" : "Ex: 12.5"}
+                                    suffix={isCdi ? "% CDI" : "% a.a."}
+                                  />
+                                </Form.Item>
+                              );
+                            }}
                           </Form.Item>
                         </Col>
                       </Row>
@@ -772,7 +1150,20 @@ export default function InvestmentsPage() {
                       label="Valor Total Aportado"
                       rules={[{ required: true, message: "Insira o valor investido" }]}
                     >
-                      <InputNumber style={{ width: "100%" }} min={0.01} precision={2} prefix="R$" />
+                      <InputNumber
+                        style={{ width: "100%" }}
+                        min={0.01}
+                        precision={2}
+                        prefix="R$"
+                        onChange={(total) => {
+                          const qty = addForm.getFieldValue("quantity");
+                          if (total && qty && Number(qty) > 0) {
+                            addForm.setFieldsValue({
+                              purchasePricePerUnit: Number((Number(total) / Number(qty)).toFixed(2)),
+                            });
+                          }
+                        }}
+                      />
                     </Form.Item>
                   </Col>
                   <Col span={12}>
@@ -976,34 +1367,213 @@ export default function InvestmentsPage() {
                             </Select>
                           </Form.Item>
 
-                          <Row gutter={16}>
-                            <Col span={12}>
-                              <Form.Item
-                                name="amount"
-                                label="Valor Financeiro (R$)"
-                                rules={[{ required: true, message: "Insira o valor" }]}
-                              >
-                                <InputNumber style={{ width: "100%" }} min={0} precision={2} prefix="R$" />
-                              </Form.Item>
-                            </Col>
-                            <Col span={12}>
-                              <Form.Item
-                                name="quantity"
-                                label={
-                                  selectedInvestment?.investmentType === InvestmentType.Crypto
-                                    ? "Quantidade de Moedas"
-                                    : "Quantidade de Cotas"
-                                }
-                              >
-                                <InputNumber
-                                  style={{ width: "100%" }}
-                                  min={0.00000001}
-                                  step={selectedInvestment?.investmentType === InvestmentType.Crypto ? 0.00000001 : 1}
-                                  precision={selectedInvestment?.investmentType === InvestmentType.Crypto ? 8 : 4}
-                                />
-                              </Form.Item>
-                            </Col>
-                          </Row>
+                          <Form.Item
+                            noStyle
+                            shouldUpdate={(prev, curr) => prev.transactionType !== curr.transactionType}
+                          >
+                            {({ getFieldValue }) => {
+                              const opType = getFieldValue("transactionType");
+                              const isSell = opType === InvestmentTransactionType.Sell;
+                              const availableQty = selectedInvestment?.quantity ?? 0;
+                              const availableVal = selectedInvestment?.currentValue ?? 0;
+
+                              // Use live/actual current price per unit if available, fallback to computed current value / qty, then purchase price
+                              const effectiveCurrentPrice =
+                                selectedInvestment?.currentPricePerUnit && selectedInvestment.currentPricePerUnit > 0
+                                  ? selectedInvestment.currentPricePerUnit
+                                  : selectedInvestment?.quantity && selectedInvestment.quantity > 0
+                                  ? selectedInvestment.currentValue / selectedInvestment.quantity
+                                  : selectedInvestment?.purchasePricePerUnit ?? 0;
+
+                              return (
+                                <Row gutter={16}>
+                                  <Col span={12}>
+                                    <Form.Item
+                                      name="amount"
+                                      label="Valor Financeiro (R$)"
+                                      rules={[
+                                        { required: true, message: "Insira o valor" },
+                                        ...(isSell
+                                          ? [
+                                              {
+                                                validator: async (_: any, value: number) => {
+                                                  if (value && value > availableVal) {
+                                                    return Promise.reject(
+                                                      new Error(
+                                                        `Valor máximo para resgate é R$ ${Number(availableVal).toFixed(2)}`
+                                                      )
+                                                    );
+                                                  }
+                                                  return Promise.resolve();
+                                                },
+                                              },
+                                            ]
+                                          : []),
+                                      ]}
+                                    >
+                                      <InputNumber
+                                        style={{ width: "100%" }}
+                                        min={0}
+                                        max={isSell ? availableVal : undefined}
+                                        precision={2}
+                                        prefix="R$"
+                                        onChange={(amt) => {
+                                          if (!amt || Number(amt) <= 0) {
+                                            transForm.setFieldsValue({
+                                              quantity: undefined,
+                                              unitPrice: Number(effectiveCurrentPrice.toFixed(2)),
+                                            });
+                                            return;
+                                          }
+
+                                          let finalAmt = Number(amt);
+                                          if (isSell && finalAmt > availableVal) {
+                                            finalAmt = availableVal;
+                                            transForm.setFieldsValue({ amount: finalAmt });
+                                          }
+
+                                          if (effectiveCurrentPrice > 0) {
+                                            let computedQty = finalAmt / effectiveCurrentPrice;
+                                            if (isSell && computedQty > availableQty) {
+                                              computedQty = availableQty;
+                                            }
+                                            transForm.setFieldsValue({
+                                              quantity: Number(
+                                                computedQty.toFixed(
+                                                  selectedInvestment?.investmentType === InvestmentType.Crypto ? 8 : 4
+                                                )
+                                              ),
+                                              unitPrice: Number(effectiveCurrentPrice.toFixed(2)),
+                                            });
+                                          }
+                                        }}
+                                      />
+                                    </Form.Item>
+                                  </Col>
+                                  <Col span={12}>
+                                    <Form.Item
+                                      name="quantity"
+                                      label={
+                                        selectedInvestment?.investmentType === InvestmentType.Crypto
+                                          ? `Quantidade de Moedas${isSell ? ` (Máx: ${availableQty})` : ""}`
+                                          : `Quantidade de Cotas${isSell ? ` (Máx: ${availableQty})` : ""}`
+                                      }
+                                      rules={[
+                                        ...(isSell
+                                          ? [
+                                              {
+                                                validator: async (_: any, value: number) => {
+                                                  if (value && value > availableQty) {
+                                                    return Promise.reject(
+                                                      new Error(
+                                                        `Você possui apenas ${availableQty} ${
+                                                          selectedInvestment?.investmentType === InvestmentType.Crypto
+                                                            ? "moedas"
+                                                            : "cotas"
+                                                        } disponíveis para venda.`
+                                                      )
+                                                    );
+                                                  }
+                                                  return Promise.resolve();
+                                                },
+                                              },
+                                            ]
+                                          : []),
+                                      ]}
+                                    >
+                                      <InputNumber
+                                        style={{ width: "100%" }}
+                                        min={0.00000001}
+                                        max={isSell ? availableQty : undefined}
+                                        step={selectedInvestment?.investmentType === InvestmentType.Crypto ? 0.00000001 : 1}
+                                        precision={selectedInvestment?.investmentType === InvestmentType.Crypto ? 8 : 4}
+                                        onChange={(qty) => {
+                                          if (!qty || Number(qty) <= 0) {
+                                            transForm.setFieldsValue({
+                                              amount: undefined,
+                                              unitPrice: Number(effectiveCurrentPrice.toFixed(2)),
+                                            });
+                                            return;
+                                          }
+
+                                          let finalQty = Number(qty);
+                                          if (isSell && finalQty > availableQty) {
+                                            finalQty = availableQty;
+                                            transForm.setFieldsValue({ quantity: finalQty });
+                                          }
+
+                                          if (effectiveCurrentPrice > 0) {
+                                            let totalAmt = finalQty * effectiveCurrentPrice;
+                                            if (isSell && totalAmt > availableVal) {
+                                              totalAmt = availableVal;
+                                            }
+                                            transForm.setFieldsValue({
+                                              amount: Number(totalAmt.toFixed(2)),
+                                              unitPrice: Number(effectiveCurrentPrice.toFixed(2)),
+                                            });
+                                          }
+                                        }}
+                                      />
+                                    </Form.Item>
+                                  </Col>
+                                </Row>
+                              );
+                            }}
+                          </Form.Item>
+
+                          <Form.Item
+                            noStyle
+                            shouldUpdate={(prev, curr) => prev.transactionType !== curr.transactionType}
+                          >
+                            {({ getFieldValue }) => {
+                              const opType = getFieldValue("transactionType");
+                              const isBuy = opType === InvestmentTransactionType.Buy;
+                              const isSell = opType === InvestmentTransactionType.Sell;
+                              const isDividend = opType === InvestmentTransactionType.Dividend;
+
+                              if (isBuy) {
+                                const invCur = (selectedInvestment?.currency || "BRL").toUpperCase();
+                                const invCashBal =
+                                  portfolio.cashBalances?.[invCur] ??
+                                  (invCur === "BRL" ? portfolio.unallocatedCash : 0);
+
+                                return (
+                                  <Form.Item name="fundingSource" label="Origem do Recurso">
+                                    <Radio.Group style={{ width: "100%" }}>
+                                      <Radio.Button value="external" style={{ width: "50%", textAlign: "center" }}>
+                                        Aporte Externo (Novo)
+                                      </Radio.Button>
+                                      <Radio.Button
+                                        value="cash"
+                                        style={{ width: "50%", textAlign: "center" }}
+                                        disabled={invCashBal <= 0}
+                                      >
+                                        Debitar do Caixa ({getCurrencySymbol(invCur)} {Number(invCashBal).toFixed(2)})
+                                      </Radio.Button>
+                                    </Radio.Group>
+                                  </Form.Item>
+                                );
+                              }
+
+                              if (isSell || isDividend) {
+                                return (
+                                  <Alert
+                                    type="info"
+                                    showIcon
+                                    icon={<WalletOutlined />}
+                                    message={
+                                      isSell
+                                        ? "O valor desta venda será creditado no seu Caixa Livre da Carteira."
+                                        : "Os proventos serão depositados automaticamente no seu Caixa Livre da Carteira."
+                                    }
+                                    style={{ marginBottom: 16 }}
+                                  />
+                                );
+                              }
+
+                              return null;
+                            }}
+                          </Form.Item>
 
                           <Form.Item name="notes" label="Observações">
                             <Input placeholder="Ex: Aporte mensal, reinvestimento de dividendos" />
@@ -1018,6 +1588,107 @@ export default function InvestmentsPage() {
                   ]}
                 />
               )}
+            </Modal>
+
+            {/* Modal: Portfolio Cash Movement (Deposit / Withdraw) */}
+            {/* Modal: Cash Deposit / Withdraw */}
+            <Modal
+              title={cashModalType === "deposit" ? "Depositar no Caixa Livre" : "Sacar do Caixa Livre"}
+              open={isCashModalOpen}
+              onCancel={() => {
+                setIsCashModalOpen(false);
+                cashForm.resetFields();
+              }}
+              onOk={() => cashForm.submit()}
+              okText={cashModalType === "deposit" ? "Confirmar Depósito" : "Confirmar Saque"}
+              cancelText="Cancelar"
+              confirmLoading={loading}
+              destroyOnHidden
+            >
+              <Alert
+                type="info"
+                showIcon
+                message={
+                  cashModalType === "deposit"
+                    ? "Adicione capital livre à sua carteira para aproveitar oportunidades e comprar ativos quando desejar."
+                    : `Saldo disponível para saque (${selectedCashCurrency}): ${getCurrencySymbol(selectedCashCurrency)} ${Number(
+                        portfolio.cashBalances?.[selectedCashCurrency] ?? (selectedCashCurrency === "BRL" ? portfolio.unallocatedCash : 0)
+                      ).toFixed(2)}`
+                }
+                style={{ marginBottom: 16 }}
+              />
+
+              <Form
+                form={cashForm}
+                layout="vertical"
+                initialValues={{
+                  amount: undefined,
+                  currency: currencyFilter === "ALL" ? "BRL" : currencyFilter,
+                }}
+                onFinish={handleCashMovement}
+              >
+                <Row gutter={16}>
+                  <Col span={10}>
+                    <Form.Item name="currency" label="Moeda do Caixa" rules={[{ required: true }]}>
+                      <Select
+                        onChange={() => {
+                          cashForm.validateFields(["amount"]);
+                        }}
+                      >
+                        <Option value="BRL">🇧🇷 BRL (R$)</Option>
+                        <Option value="USD">🇺🇸 USD ($)</Option>
+                        <Option value="EUR">🇪🇺 EUR (€)</Option>
+                      </Select>
+                    </Form.Item>
+                  </Col>
+                  <Col span={14}>
+                    <Form.Item
+                      name="amount"
+                      label={`Valor (${getCurrencySymbol(selectedCashCurrency)})`}
+                      rules={[
+                        { required: true, message: "Insira o valor" },
+                        ...(cashModalType === "withdraw"
+                          ? [
+                              {
+                                validator: async (_: any, value: number) => {
+                                  const currentBal =
+                                    portfolio.cashBalances?.[selectedCashCurrency] ??
+                                    (selectedCashCurrency === "BRL" ? portfolio.unallocatedCash : 0);
+                                  if (value && value > currentBal) {
+                                    return Promise.reject(
+                                      new Error(
+                                        `Valor máximo para saque é ${getCurrencySymbol(selectedCashCurrency)} ${Number(currentBal).toFixed(2)}`
+                                      )
+                                    );
+                                  }
+                                  return Promise.resolve();
+                                },
+                              },
+                            ]
+                          : []),
+                      ]}
+                    >
+                      <InputNumber
+                        style={{ width: "100%" }}
+                        min={0.01}
+                        precision={2}
+                        prefix={getCurrencySymbol(selectedCashCurrency)}
+                        placeholder="0,00"
+                      />
+                    </Form.Item>
+                  </Col>
+                </Row>
+
+                <Form.Item name="notes" label="Descrição / Finalidade">
+                  <Input
+                    placeholder={
+                      cashModalType === "deposit"
+                        ? "Ex: Aporte para reserva de oportunidade"
+                        : "Ex: Retirada de lucros para conta bancária"
+                    }
+                  />
+                </Form.Item>
+              </Form>
             </Modal>
           </Content>
         </Layout>

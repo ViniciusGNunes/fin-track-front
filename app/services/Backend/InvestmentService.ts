@@ -7,6 +7,7 @@ import {
   IInvestmentTransactionCreate,
   IInvestmentGrowthPoint,
   IPortfolioSummary,
+  IPortfolioCashMovement,
 } from "@/app/interfaces/Investments/IInvestment";
 
 export const getPortfolioSummary = async (userId?: number): Promise<IPortfolioSummary> => {
@@ -23,6 +24,10 @@ export const getPortfolioSummary = async (userId?: number): Promise<IPortfolioSu
       totalCurrentValue: 0,
       totalProfitLossAmount: 0,
       totalProfitLossPercentage: 0,
+      unallocatedCash: 0,
+      cashBalances: { BRL: 0 },
+      usdExchangeRate: 5.60,
+      eurExchangeRate: 6.10,
       investments: [],
     };
   }
@@ -107,6 +112,36 @@ export const liquidateInvestment = async (id: number, userId?: number): Promise<
     await api.post(`/investments/${id}/liquidate?userId=${uid}`);
   } catch (err) {
     console.error(`Failed to liquidate investment ${id}`, err);
+    throw err;
+  }
+};
+
+export const depositPortfolioCash = async (
+  data: IPortfolioCashMovement,
+  userId?: number
+): Promise<void> => {
+  try {
+    const userInfo = getUserFromCookiesClient();
+    const uid = userId ?? (userInfo?.id ? Number(userInfo.id) : 1);
+
+    await api.post(`/investments/cash/deposit?userId=${uid}`, data);
+  } catch (err) {
+    console.error("Failed to deposit portfolio cash", err);
+    throw err;
+  }
+};
+
+export const withdrawPortfolioCash = async (
+  data: IPortfolioCashMovement,
+  userId?: number
+): Promise<void> => {
+  try {
+    const userInfo = getUserFromCookiesClient();
+    const uid = userId ?? (userInfo?.id ? Number(userInfo.id) : 1);
+
+    await api.post(`/investments/cash/withdraw?userId=${uid}`, data);
+  } catch (err) {
+    console.error("Failed to withdraw portfolio cash", err);
     throw err;
   }
 };

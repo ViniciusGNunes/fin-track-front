@@ -10,7 +10,6 @@ import {
   CalendarOutlined,
   SafetyCertificateOutlined,
   ArrowRightOutlined,
-  CheckCircleOutlined,
   ThunderboltOutlined,
 } from "@ant-design/icons";
 import { useRouter } from "next/navigation";

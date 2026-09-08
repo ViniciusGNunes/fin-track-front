@@ -52,6 +52,7 @@ export interface IInvestmentCreate {
   isTaxExempt?: boolean;
   startDate?: string;
   maturityDate?: string | null;
+  fromCashBalance?: boolean;
   userID: number;
 }
 
@@ -73,6 +74,7 @@ export interface IInvestmentTransactionCreate {
   amount: number;
   quantity?: number | null;
   unitPrice?: number | null;
+  fromCashBalance?: boolean;
   transactionDate?: string;
   notes?: string | null;
 }
@@ -85,10 +87,20 @@ export interface IInvestmentGrowthPoint {
   profitLossPercentage: number;
 }
 
+export interface IPortfolioCashMovement {
+  amount: number;
+  currency?: string;
+  notes?: string | null;
+}
+
 export interface IPortfolioSummary {
   totalInvested: number;
   totalCurrentValue: number;
   totalProfitLossAmount: number;
   totalProfitLossPercentage: number;
+  unallocatedCash: number;
+  cashBalances?: Record<string, number>;
+  usdExchangeRate?: number;
+  eurExchangeRate?: number;
   investments: IInvestment[];
 }

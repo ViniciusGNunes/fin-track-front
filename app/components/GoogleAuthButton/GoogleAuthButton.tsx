@@ -1,12 +1,13 @@
 "use client";
 
 import React, { useState } from "react";
-import { GoogleLogin } from "@react-oauth/google";
-import { message, Button } from "antd";
+import { CredentialResponse, GoogleLogin } from "@react-oauth/google";
+import { message, Button, Spin } from "antd";
 import { GoogleOutlined } from "@ant-design/icons";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import { api } from "@/app/lib/api";
+import { AxiosError } from "axios";
 
 interface GoogleAuthButtonProps {
   text?: "signin_with" | "signup_with" | "continue_with";
@@ -19,7 +20,7 @@ export const GoogleAuthButton: React.FC<GoogleAuthButtonProps> = ({
   const [loading, setLoading] = useState(false);
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
-  const handleSuccess = async (credentialResponse: any) => {
+  const handleSuccess = async (credentialResponse: CredentialResponse) => {
     if (!credentialResponse?.credential) {
       message.error("Não foi possível obter a credencial do Google.");
       return;
@@ -44,10 +45,11 @@ export const GoogleAuthButton: React.FC<GoogleAuthButtonProps> = ({
       } else {
         message.error("Resposta de autenticação inválida.");
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Google login failed:", error);
+      const err = error as AxiosError<{ message?: string }>;
       const msg =
-        error?.response?.data?.message || "Falha ao autenticar com o Google.";
+        err?.response?.data?.message || "Falha ao autenticar com o Google.";
       message.error(msg);
     } finally {
       setLoading(false);
@@ -83,15 +85,17 @@ export const GoogleAuthButton: React.FC<GoogleAuthButtonProps> = ({
 
   return (
     <div style={{ display: "flex", justifyContent: "center", width: "100%" }}>
-      <GoogleLogin
-        onSuccess={handleSuccess}
-        onError={handleError}
-        theme="filled_black"
-        shape="rectangular"
-        size="large"
-        width="100%"
-        text={text}
-      />
+      <Spin spinning={loading}>
+        <GoogleLogin
+          onSuccess={handleSuccess}
+          onError={handleError}
+          theme="filled_black"
+          shape="rectangular"
+          size="large"
+          width="100%"
+          text={text}
+        />
+      </Spin>
     </div>
   );
 };

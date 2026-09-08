@@ -24,13 +24,11 @@ import {
   message,
   Tabs,
   Empty,
-  theme,
   Progress,
   Checkbox,
 } from "antd";
 import {
   PlusOutlined,
-  DollarOutlined,
   PieChartOutlined,
   UnorderedListOutlined,
   AppstoreOutlined,
@@ -40,11 +38,9 @@ import {
   AccountBookOutlined,
   CheckCircleOutlined,
   PercentageOutlined,
-  CalendarOutlined,
   PayCircleOutlined,
   HistoryOutlined,
   ScheduleOutlined,
-  SafetyCertificateOutlined,
 } from "@ant-design/icons";
 import { Sidebar } from "../../components/Sidebar/Sidebar";
 import { Header } from "../../components/Header/Header";
@@ -186,7 +182,7 @@ export default function DebtsPage() {
       setIsAddModalOpen(false);
       addForm.resetFields();
       await fetchSummary();
-    } catch (err) {
+    } catch {
       message.error("Failed to create debt.");
     } finally {
       setLoading(false);
@@ -222,7 +218,7 @@ export default function DebtsPage() {
       message.success("Debt updated successfully!");
       setIsDetailModalOpen(false);
       await fetchSummary();
-    } catch (err) {
+    } catch {
       message.error("Failed to update debt.");
     } finally {
       setLoading(false);
@@ -259,7 +255,7 @@ export default function DebtsPage() {
         );
         if (updated) setSelectedDebt(updated);
       }
-    } catch (err) {
+    } catch {
       message.error("Failed to record payment.");
     } finally {
       setLoading(false);
@@ -273,7 +269,7 @@ export default function DebtsPage() {
       message.success("Loan marked as fully paid off! 🎉");
       setIsDetailModalOpen(false);
       await fetchSummary();
-    } catch (err) {
+    } catch {
       message.error("Failed to payoff debt.");
     } finally {
       setLoading(false);
@@ -287,7 +283,7 @@ export default function DebtsPage() {
       message.success("Debt deleted.");
       setIsDetailModalOpen(false);
       await fetchSummary();
-    } catch (err) {
+    } catch {
       message.error("Failed to delete debt.");
     } finally {
       setLoading(false);

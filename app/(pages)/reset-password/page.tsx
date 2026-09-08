@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
   ConfigProvider,
@@ -10,13 +10,12 @@ import {
   Input,
   Typography,
   message,
-  Spin,
 } from "antd";
 import { LockOutlined, CheckCircleFilled, CloseCircleFilled, KeyOutlined } from "@ant-design/icons";
-import Link from "next/link";
 import { resetPassword } from "@/app/services/Backend/UserService";
 import { FINTRACK_THEME } from "@/app/lib/theme";
 import styles from "./page.module.scss";
+import { AxiosError } from "axios";
 
 const { Title, Text } = Typography;
 
@@ -30,15 +29,12 @@ function ResetPasswordContent() {
   const tokenParam = searchParams.get("token");
 
   const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState<"form" | "success" | "invalid">("form");
-  const [errorMessage, setErrorMessage] = useState<string>("");
-
-  useEffect(() => {
-    if (!userIdParam || !tokenParam) {
-      setStatus("invalid");
-      setErrorMessage("Parâmetros de redefinição ausentes no link.");
-    }
-  }, [userIdParam, tokenParam]);
+  const [status, setStatus] = useState<"form" | "success" | "invalid">(
+    !userIdParam || !tokenParam ? "invalid" : "form"
+  );
+  const [errorMessage, setErrorMessage] = useState<string>(
+    !userIdParam || !tokenParam ? "Parâmetros de redefinição ausentes no link." : ""
+  );
 
   const onFinish = async (values: { password: string; confirmPassword: string }) => {
     if (!userIdParam || !tokenParam) return;
@@ -48,8 +44,9 @@ function ResetPasswordContent() {
       await resetPassword(Number(userIdParam), tokenParam, values.password);
       setStatus("success");
       messageApi.success("Senha redefinida com sucesso!");
-    } catch (err: any) {
-      const msg = err?.response?.data?.message || "Não foi possível redefinir a senha. O link pode ter expirado.";
+    } catch (err: unknown) {
+      const axiosErr = err as AxiosError<{ message?: string }>;
+      const msg = axiosErr?.response?.data?.message || "Não foi possível redefinir a senha. O link pode ter expirado.";
       messageApi.error(msg);
       setErrorMessage(msg);
     } finally {

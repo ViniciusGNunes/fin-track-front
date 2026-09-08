@@ -16,19 +16,13 @@ import {
   Input,
   InputNumber,
   Select,
-  DatePicker,
-  Switch,
   Space,
   Tooltip,
   Popconfirm,
   message,
-  theme,
 } from "antd";
 import {
-  PlusOutlined,
-  DollarOutlined,
   CreditCardOutlined,
-  CalendarOutlined,
   EditOutlined,
   DeleteOutlined,
   StopOutlined,
@@ -39,8 +33,6 @@ import { Header } from "../../components/Header/Header";
 import { LogExpenseButton, LogExpenseModal } from "../../components/LogExpense";
 import styles from "./styles.module.scss";
 import { FINTRACK_THEME, FINTRACK_LOCALE } from "@/app/lib/theme";
-import { UserCookieInfo } from "../../interfaces/UserCookieInfo";
-import { getUserFromCookiesClient } from "@/app/services/Frontend/tokenServicesClient";
 import ICategory from "../../interfaces/ICategory";
 import { getCategories } from "@/app/services/Backend/CategoriesService";
 import {
@@ -171,17 +163,6 @@ export default function ExpensesPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<ExpenseTableItem | null>(null);
 
-  const [userInfo] = useState<UserCookieInfo | null>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        return getUserFromCookiesClient();
-      } catch {
-        return null;
-      }
-    }
-    return null;
-  });
-
   const [transactions, setTransactions] = useState<ITransactionRead[]>([]);
   const [categories, setCategories] = useState<ICategory[]>([]);
   const [loading, setLoading] = useState(false);
@@ -204,9 +185,9 @@ export default function ExpensesPage() {
 
   const initialPeriod: IEnumOptions = useMemo(
     () =>
-      timePeriod.find((p) => p.value === TimePeriod.Week) || {
-        label: "Week",
-        value: TimePeriod.Week,
+      timePeriod.find((p) => p.value === TimePeriod.Month) || {
+        label: "Month",
+        value: TimePeriod.Month,
       },
     [timePeriod]
   );
@@ -247,7 +228,7 @@ export default function ExpensesPage() {
       }
 
       if (isMounted) {
-        await fetchTransactionsData(TimeCategory.Current, TimePeriod.Week);
+        await fetchTransactionsData(TimeCategory.Current, TimePeriod.Month);
       }
     };
 
@@ -609,12 +590,16 @@ export default function ExpensesPage() {
                           value: selectedPeriod.value,
                           label: getTimePeriodLabel(selectedPeriod.value),
                         }}
-                        onChange={(val) => {
-                          const opt = val as IEnumOptions;
+                        onChange={(val: any) => {
+                          const numVal = typeof val === "object" && val !== null ? Number(val.value) : Number(val);
+                          const opt = timePeriod.find((p) => Number(p.value) === numVal) || {
+                            label: getTimePeriodLabel(numVal),
+                            value: numVal,
+                          };
                           setSelectedPeriod(opt);
                           fetchTransactionsData(
                             Number(selectedCategory.value),
-                            Number(opt.value)
+                            numVal
                           );
                         }}
                       >
@@ -631,11 +616,15 @@ export default function ExpensesPage() {
                           value: selectedCategory.value,
                           label: getTimeCategoryLabel(selectedCategory.value, selectedPeriod.value),
                         }}
-                        onChange={(val) => {
-                          const opt = val as IEnumOptions;
+                        onChange={(val: any) => {
+                          const numVal = typeof val === "object" && val !== null ? Number(val.value) : Number(val);
+                          const opt = timeCategory.find((c) => Number(c.value) === numVal) || {
+                            label: getTimeCategoryLabel(numVal, selectedPeriod.value),
+                            value: numVal,
+                          };
                           setSelectedCategory(opt);
                           fetchTransactionsData(
-                            Number(opt.value),
+                            numVal,
                             Number(selectedPeriod.value)
                           );
                         }}
