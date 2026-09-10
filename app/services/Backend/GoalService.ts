@@ -17,17 +17,7 @@ export const getGoalsSummary = async (userId?: number): Promise<IGoalSummary> =>
     return response.data;
   } catch (err) {
     console.error("Failed to fetch goals summary", err);
-    return {
-      totalGoalsCount: 0,
-      activeGoalsCount: 0,
-      completedGoalsCount: 0,
-      monthlyInvestmentTarget: 0,
-      monthlyInvestmentActual: 0,
-      monthlyDebtReductionTarget: 0,
-      monthlyDebtReductionActual: 0,
-      overallProgressPercentage: 0,
-      goals: [],
-    };
+    throw err;
   }
 };
 

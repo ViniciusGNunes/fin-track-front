@@ -1,16 +1,15 @@
 .layout {
   min-height: 100vh;
-  background-color: var(--bg-canvas);
-  color: var(--text-primary);
-  font-family: var(--font-sans);
+  background-color: var(--bg-canvas, #090d16);
+  color: var(--text-primary, #f8fafc);
 }
 
 .mainLayout {
-  background: var(--bg-canvas);
+  background: var(--bg-canvas, #090d16);
 }
 
 .content {
-  margin: var(--space-6);
+  margin: 24px;
 
   @media (max-width: 768px) {
     margin: 12px 12px 84px 12px;
@@ -20,7 +19,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: var(--space-6);
+    margin-bottom: 24px;
 
     @media (max-width: 768px) {
       flex-direction: column;
@@ -31,9 +30,9 @@
 
     h2 {
       margin: 0;
-      color: var(--text-primary);
-      font-weight: 700;
-      font-size: var(--text-2xl);
+      color: var(--text-primary, #f8fafc);
+      font-weight: 600;
+      font-size: 1.5rem;
       letter-spacing: -0.02em;
 
       @media (max-width: 768px) {
@@ -42,15 +41,15 @@
     }
 
     p {
-      margin: var(--space-1) 0 0;
-      color: var(--text-secondary);
-      font-size: var(--text-sm);
+      margin: 4px 0 0;
+      color: var(--text-secondary, #94a3b8);
+      font-size: 0.875rem;
     }
 
     .headerControls {
       display: flex;
       align-items: center;
-      gap: var(--space-3);
+      gap: 12px;
 
       @media (max-width: 768px) {
         width: 100%;
@@ -62,140 +61,247 @@
 }
 
 .metricRow {
-  margin-bottom: var(--space-6);
+  margin-bottom: 24px;
 
   @media (max-width: 768px) {
     margin-bottom: 16px;
   }
 
   .subDetail {
-    color: var(--text-secondary);
-    font-size: var(--text-xs);
+    color: var(--text-secondary, #94a3b8);
+    font-size: 0.8rem;
     display: block;
-    margin-top: var(--space-2);
+    margin-top: 8px;
     font-weight: 400;
   }
 
   .trendGood {
-    color: var(--color-success);
-    font-size: var(--text-xs);
+    color: var(--color-success, #10b981);
+    font-size: 0.8rem;
     display: block;
-    margin-top: var(--space-2);
+    margin-top: 8px;
     font-weight: 500;
   }
 
   .trendWarning {
-    color: var(--color-warning);
-    font-size: var(--text-xs);
+    color: var(--color-warning, #f59e0b);
+    font-size: 0.8rem;
     display: block;
-    margin-top: var(--space-2);
+    margin-top: 8px;
     font-weight: 500;
   }
 }
 
 .viewToggleCard {
-  margin-bottom: var(--space-5);
+  margin-bottom: 20px;
 }
 
-// Shared Bills Cards Grid
+// ─── Shared Bills Cards Grid ────────────────────────────────────────────────
 .billsGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: var(--space-5);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  width: 100%;
+  padding: 8px 0;
+
+  @media (max-width: 768px) {
+    gap: 12px;
+  }
 }
 
 .billCard {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  padding: var(--space-5);
+  background: var(--bg-surface, #111827);
+  border: 1px solid var(--border-subtle, #1e293b);
+  border-radius: 10px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  width: calc(50% - 8px);
+  min-width: 320px;
+
+  @media (max-width: 768px) {
+    width: 100% !important;
+    min-width: 100% !important;
+    padding: 14px;
+  }
 
   &:hover {
-    border-color: var(--border-default);
-    box-shadow: var(--shadow-md);
+    transform: translateY(-3px);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+    border-color: var(--border-default, #26354a);
   }
 
   &.settledCard {
-    border-left: 4px solid var(--color-success);
+    border-left: 4px solid var(--color-success, #10b981);
+    background: linear-gradient(135deg, var(--bg-surface, #111827) 0%, rgba(16, 185, 129, 0.08) 100%);
+    opacity: 0.9;
   }
 
   &.pendingCard {
-    border-left: 4px solid var(--color-warning);
-  }
-
-  .billHeader {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: var(--space-2);
-
-    .billTitle {
-      font-weight: 600;
-      color: var(--text-primary);
-      font-size: var(--text-lg);
-    }
-
-    .billDate {
-      font-size: var(--text-xs);
-      color: var(--text-secondary);
-      margin-top: var(--space-1);
-    }
-  }
-
-  .billBody {
-    margin: var(--space-4) 0;
-
-    .amountRow {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      margin-bottom: var(--space-2);
-
-      .totalAmount {
-        font-size: var(--text-xl);
-        font-weight: 700;
-        color: var(--text-primary);
-        font-variant-numeric: tabular-nums;
-      }
-
-      .myShare {
-        font-size: var(--text-xs);
-        color: var(--text-secondary);
-        font-variant-numeric: tabular-nums;
-      }
-    }
-  }
-
-  .billFooter {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: var(--text-xs);
-    color: var(--text-secondary);
-    border-top: 1px solid var(--border-subtle);
-    padding-top: var(--space-3);
+    border-left: 4px solid var(--color-warning, #f59e0b);
+    background: linear-gradient(135deg, var(--bg-surface, #111827) 0%, rgba(245, 158, 11, 0.06) 100%);
   }
 }
 
-// Debtor Summary Cards
+.tileHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.tileTitleGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tileTitle {
+  font-weight: 600;
+  color: var(--text-primary, #f8fafc);
+  font-size: 1.1rem;
+}
+
+.tileSubtitle {
+  font-size: 0.8rem;
+  color: var(--text-secondary, #94a3b8);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tileBody {
+  margin: 16px 0;
+}
+
+.balanceLabel {
+  font-size: 0.78rem;
+  color: var(--text-secondary, #94a3b8);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.tileValue {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary, #f8fafc);
+  margin-top: 2px;
+  font-variant-numeric: tabular-nums;
+}
+
+.progressMeta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: var(--text-secondary, #94a3b8);
+  margin-top: 4px;
+}
+
+// ─── Participants Section ───────────────────────────────────────────────────
+.participantsSection {
+  margin-top: 4px;
+}
+
+.sectionTitle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.82rem;
+  color: var(--text-secondary, #94a3b8);
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.participantsList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.participantRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: var(--bg-surface-raised, #182234);
+  border: 1px solid var(--border-subtle, #1e293b);
+  border-radius: 8px;
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.04);
+  }
+}
+
+.personInfo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.personName {
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: var(--text-primary, #f8fafc);
+}
+
+.personAmount {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+
+// ─── Card Footer ────────────────────────────────────────────────────────────
+.cardFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.82rem;
+  color: var(--text-secondary, #94a3b8);
+  border-top: 1px solid var(--border-subtle, #1e293b);
+  padding-top: 12px;
+  margin-top: 4px;
+}
+
+// ─── Debtor Summary Cards ───────────────────────────────────────────────────
 .debtorsGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 16px;
+  padding: 8px 0;
 }
 
 .debtorCard {
-  background: #161b22;
-  border: 1px solid #30363d;
-  border-radius: 8px;
-  padding: 16px;
+  background: var(--bg-surface, #111827);
+  border: 1px solid var(--border-subtle, #1e293b);
+  border-radius: 10px;
+  padding: 18px;
   display: flex;
   flex-direction: column;
   gap: 12px;
+  width: calc(33.333% - 11px);
+  min-width: 260px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+
+  @media (max-width: 768px) {
+    width: 100%;
+    min-width: 100%;
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    border-color: var(--border-default, #26354a);
+  }
 
   .debtorHeader {
     display: flex;
@@ -204,7 +310,7 @@
 
     .debtorName {
       font-weight: 600;
-      color: #f0f6fc;
+      color: var(--text-primary, #f8fafc);
       font-size: 1.05rem;
     }
   }
@@ -212,29 +318,32 @@
   .debtorStats {
     display: flex;
     justify-content: space-between;
-    background: #0d1117;
+    background: var(--bg-surface-raised, #182234);
     padding: 10px 14px;
-    border-radius: 6px;
-    border: 1px solid #21262d;
+    border-radius: 8px;
+    border: 1px solid var(--border-subtle, #1e293b);
 
     .debtorStatItem {
       .label {
         font-size: 0.75rem;
-        color: #8b949e;
+        color: var(--text-secondary, #94a3b8);
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
       }
       .val {
         font-size: 1rem;
         font-weight: 700;
         margin-top: 2px;
+        font-variant-numeric: tabular-nums;
       }
     }
   }
 }
 
-// Split Equal helper bar in modal
+// ─── Split Helper Bar (Modal) ───────────────────────────────────────────────
 .splitHelperBar {
-  background: #0d1117;
-  border: 1px dashed #30363d;
+  background: var(--bg-surface-raised, #182234);
+  border: 1px dashed var(--border-subtle, #1e293b);
   border-radius: 8px;
   padding: 12px 16px;
   margin-bottom: 16px;

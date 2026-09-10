@@ -479,6 +479,7 @@ export default function ReceivablesPage() {
                   <div className={styles.billsGrid}>
                     {summary.receivables.map((rec) => {
                       const isSettled = rec.isSettled;
+                      const paidCount = rec.items.filter((i) => i.isPaid).length;
                       return (
                         <div
                           key={rec.receivableID}
@@ -487,52 +488,51 @@ export default function ReceivablesPage() {
                           }`}
                         >
                           <div>
-                            <div className={styles.cardHeader}>
-                              <div className={styles.titleGroup}>
-                                <div className={styles.billTitle}>{rec.title}</div>
-                                <div className={styles.billDate}>
-                                  {dayjs(rec.createdAtUtc).format("MMM DD, YYYY")}
+                            {/* Header */}
+                            <div className={styles.tileHeader}>
+                              <div className={styles.tileTitleGroup}>
+                                <div className={styles.tileTitle}>{rec.title}</div>
+                                <div className={styles.tileSubtitle}>
+                                  {dayjs(rec.createdAtUtc).format("DD/MM/YYYY")}
                                   {rec.description ? ` • ${rec.description}` : ""}
                                 </div>
                               </div>
                               {isSettled ? (
                                 <Tag color="success" icon={<CheckCircleOutlined />}>
-                                  Fully Settled
+                                  Quitado
                                 </Tag>
                               ) : (
-                                <Tag color="warning">
-                                  Pending R$ {rec.totalPending.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                                <Tag color="warning" icon={<ClockCircleOutlined />}>
+                                  R$ {rec.totalPending.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} pendente
                                 </Tag>
                               )}
                             </div>
 
-                            <div className={styles.cardStats}>
-                              <div className={styles.statBox}>
-                                <div className={styles.statLabel}>Total Bill</div>
-                                <div className={styles.statNum}>
-                                  {rec.currency} {rec.totalAmount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                                </div>
+                            {/* Body */}
+                            <div className={styles.tileBody}>
+                              <div className={styles.balanceLabel}>Valor Total</div>
+                              <div className={styles.tileValue}>
+                                {rec.currency} {rec.totalAmount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                               </div>
-                              <div className={styles.statBox}>
-                                <div className={styles.statLabel}>My Share</div>
-                                <div className={styles.statNum} style={{ color: "#58a6ff" }}>
-                                  {rec.currency} {rec.myShareAmount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                                </div>
+
+                              <div style={{ marginTop: 12 }}>
+                                <Progress
+                                  percent={rec.progressPercentage}
+                                  size="small"
+                                  strokeColor={isSettled ? "var(--color-success, #10b981)" : "var(--color-warning, #f59e0b)"}
+                                />
+                              </div>
+                              <div className={styles.progressMeta}>
+                                <span>Minha parte: {rec.currency} {rec.myShareAmount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+                                <span>{paidCount} de {rec.items.length} pagos</span>
                               </div>
                             </div>
 
-                            <div style={{ marginBottom: 14 }}>
-                              <Progress
-                                percent={rec.progressPercentage}
-                                size="small"
-                                strokeColor={isSettled ? "#008d0a" : "#f59e0b"}
-                              />
-                            </div>
-
+                            {/* Participants */}
                             <div className={styles.participantsSection}>
                               <div className={styles.sectionTitle}>
-                                <span>Participants ({rec.items.length})</span>
-                                <span style={{ fontSize: "0.75rem" }}>Click to toggle paid</span>
+                                <span>Participantes ({rec.items.length})</span>
+                                <span style={{ fontSize: "0.75rem", fontWeight: 400 }}>Clique para alternar status</span>
                               </div>
                               <div className={styles.participantsList}>
                                 {rec.items.map((item) => (
@@ -542,7 +542,9 @@ export default function ReceivablesPage() {
                                         size={24}
                                         icon={<UserOutlined />}
                                         style={{
-                                          backgroundColor: item.isPaid ? "#008d0a" : "#fa8c16",
+                                          backgroundColor: item.isPaid
+                                            ? "var(--color-success, #10b981)"
+                                            : "var(--color-warning, #f59e0b)",
                                         }}
                                       />
                                       <span className={styles.personName}>{item.personName}</span>
@@ -550,7 +552,9 @@ export default function ReceivablesPage() {
                                     <div className={styles.personAmount}>
                                       <span
                                         style={{
-                                          color: item.isPaid ? "#008d0a" : "#f59e0b",
+                                          color: item.isPaid
+                                            ? "var(--color-success, #10b981)"
+                                            : "var(--color-warning, #f59e0b)",
                                         }}
                                       >
                                         R$ {item.amountOwed.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
@@ -560,7 +564,7 @@ export default function ReceivablesPage() {
                                         type={item.isPaid ? "default" : "primary"}
                                         onClick={() => handleTogglePaid(item.receivableItemID, item.isPaid)}
                                       >
-                                        {item.isPaid ? "Paid" : "Mark Paid"}
+                                        {item.isPaid ? "Pago ✓" : "Marcar Pago"}
                                       </Button>
                                     </div>
                                   </div>
@@ -569,9 +573,10 @@ export default function ReceivablesPage() {
                             </div>
                           </div>
 
+                          {/* Footer */}
                           <div className={styles.cardFooter}>
                             <span>
-                              {rec.items.filter((i) => i.isPaid).length} of {rec.items.length} paid
+                              {paidCount} de {rec.items.length} pagos
                             </span>
                             <Space size="small">
                               <Button
@@ -580,10 +585,11 @@ export default function ReceivablesPage() {
                                 onClick={() => openEditModal(rec)}
                               />
                               <Popconfirm
-                                title="Delete this shared expenditure?"
+                                title="Excluir este rateio?"
+                                description="Essa ação não pode ser desfeita."
                                 onConfirm={() => handleDeleteReceivable(rec.receivableID)}
-                                okText="Yes"
-                                cancelText="No"
+                                okText="Sim, excluir"
+                                cancelText="Cancelar"
                               >
                                 <Button size="small" danger icon={<DeleteOutlined />} />
                               </Popconfirm>
@@ -603,7 +609,7 @@ export default function ReceivablesPage() {
                 {summary.debtors.length === 0 ? (
                   <Card>
                     <Empty
-                      description="No participants recorded yet"
+                      description="Nenhum participante registrado ainda"
                       image={Empty.PRESENTED_IMAGE_SIMPLE}
                     />
                   </Card>
@@ -616,40 +622,44 @@ export default function ReceivablesPage() {
                             size={42}
                             icon={<UserOutlined />}
                             style={{
-                              backgroundColor: debtor.totalPending > 0 ? "#fa8c16" : "#008d0a",
+                              backgroundColor: debtor.totalPending > 0
+                                ? "var(--color-warning, #f59e0b)"
+                                : "var(--color-success, #10b981)",
                             }}
                           />
                           <div>
                             <div className={styles.debtorName}>{debtor.personName}</div>
-                            <span style={{ fontSize: "0.8rem", color: "#8b949e" }}>
+                            <span style={{ fontSize: "0.8rem", color: "var(--text-secondary, #94a3b8)" }}>
                               {debtor.activeSharedBillsCount > 0
-                                ? `${debtor.activeSharedBillsCount} active pending bill(s)`
-                                : "All settled up!"}
+                                ? `${debtor.activeSharedBillsCount} conta(s) pendente(s)`
+                                : "Tudo acertado! ✓"}
                             </span>
                           </div>
                         </div>
 
                         <div className={styles.debtorStats}>
                           <div className={styles.debtorStatItem}>
-                            <div className={styles.label}>Pending</div>
+                            <div className={styles.label}>Pendente</div>
                             <div
                               className={styles.val}
                               style={{
-                                color: debtor.totalPending > 0 ? "#f59e0b" : "#008d0a",
+                                color: debtor.totalPending > 0
+                                  ? "var(--color-warning, #f59e0b)"
+                                  : "var(--color-success, #10b981)",
                               }}
                             >
                               R$ {debtor.totalPending.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                             </div>
                           </div>
                           <div className={styles.debtorStatItem}>
-                            <div className={styles.label}>Total Paid</div>
-                            <div className={styles.val} style={{ color: "#008d0a" }}>
+                            <div className={styles.label}>Total Pago</div>
+                            <div className={styles.val} style={{ color: "var(--color-success, #10b981)" }}>
                               R$ {debtor.totalPaid.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                             </div>
                           </div>
                           <div className={styles.debtorStatItem}>
-                            <div className={styles.label}>Total Owed</div>
-                            <div className={styles.val} style={{ color: "#f0f6fc" }}>
+                            <div className={styles.label}>Total Devido</div>
+                            <div className={styles.val} style={{ color: "var(--text-primary, #f8fafc)" }}>
                               R$ {debtor.totalOwed.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                             </div>
                           </div>
@@ -676,7 +686,7 @@ export default function ReceivablesPage() {
 
             {/* Add Shared Expense Modal */}
             <Modal
-              title="Create Shared Expense"
+              title="Criar Rateio / Despesa"
               open={isAddModalOpen}
               onCancel={() => setIsAddModalOpen(false)}
               footer={null}
@@ -696,15 +706,15 @@ export default function ReceivablesPage() {
                   <Col span={14}>
                     <Form.Item
                       name="title"
-                      label="Event / Purchase Name"
-                      rules={[{ required: true, message: "Please specify title (e.g. Pizza Night)" }]}
+                      label="Título / Nome do Evento"
+                      rules={[{ required: true, message: "Insira o título (ex: Pizza com amigos)" }]}
                     >
-                      <Input placeholder="e.g. Pizza Night with Friends, Weekend Airbnb" />
+                      <Input placeholder="ex: Pizza com amigos, Airbnb do fim de semana" />
                     </Form.Item>
                   </Col>
                   <Col span={10}>
-                    <Form.Item name="dueDate" label="Due Date (Optional)">
-                      <DatePicker style={{ width: "100%" }} />
+                    <Form.Item name="dueDate" label="Data de Vencimento (Opcional)">
+                      <DatePicker style={{ width: "100%" }} format="DD/MM/YYYY" placeholder="Selecione a data" />
                     </Form.Item>
                   </Col>
                 </Row>
@@ -713,30 +723,30 @@ export default function ReceivablesPage() {
                   <Col span={12}>
                     <Form.Item
                       name="totalAmount"
-                      label="Total Bill Amount"
-                      rules={[{ required: true, message: "Enter total bill amount" }]}
+                      label="Valor Total da Conta"
+                      rules={[{ required: true, message: "Insira o valor total" }]}
                     >
                       <InputNumber
                         style={{ width: "100%" }}
                         min={0.01}
                         precision={2}
                         prefix="R$"
-                        placeholder="0.00"
+                        placeholder="0,00"
                       />
                     </Form.Item>
                   </Col>
                   <Col span={12}>
                     <Form.Item
                       name="myShareAmount"
-                      label="My Portion (You Pay)"
-                      tooltip="How much of the total is your own expense (not to be collected from others)"
+                      label="Minha Parte (Você Paga)"
+                      tooltip="Quanto do total é sua própria despesa (não será cobrado dos outros)"
                     >
                       <InputNumber
                         style={{ width: "100%" }}
                         min={0}
                         precision={2}
                         prefix="R$"
-                        placeholder="0.00"
+                        placeholder="0,00"
                       />
                     </Form.Item>
                   </Col>
@@ -809,6 +819,15 @@ export default function ReceivablesPage() {
                     </div>
                   )}
                 </Form.List>
+
+                <Form.Item style={{ marginTop: 24, marginBottom: 0, textAlign: "right" }}>
+                  <Space>
+                    <Button onClick={() => setIsAddModalOpen(false)}>Cancelar</Button>
+                    <Button type="primary" htmlType="submit" loading={loading}>
+                      Criar Rateio
+                    </Button>
+                  </Space>
+                </Form.Item>
               </Form>
             </Modal>
 
@@ -913,22 +932,22 @@ export default function ReceivablesPage() {
                           block
                           icon={<PlusOutlined />}
                         >
-                          Add Person
+                          Adicionar Participante
                         </Button>
                       </Form.Item>
                     </div>
                   )}
                 </Form.List>
 
-                <Form.Item name="description" label="Notes">
-                  <Input.TextArea rows={2} />
+                <Form.Item name="description" label="Observações">
+                  <Input.TextArea rows={2} placeholder="Detalhes adicionais (opcional)" />
                 </Form.Item>
 
                 <Form.Item style={{ marginBottom: 0, textAlign: "right" }}>
                   <Space>
-                    <Button onClick={() => setIsEditModalOpen(false)}>Cancel</Button>
+                    <Button onClick={() => setIsEditModalOpen(false)}>Cancelar</Button>
                     <Button type="primary" htmlType="submit" loading={loading}>
-                      Update Bill
+                      Salvar Alterações
                     </Button>
                   </Space>
                 </Form.Item>

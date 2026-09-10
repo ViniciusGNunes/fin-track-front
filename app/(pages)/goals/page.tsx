@@ -58,6 +58,10 @@ import {
   logGoalProgress,
   deleteGoal,
 } from "@/app/services/Backend/GoalService";
+import { getCategories } from "@/app/services/Backend/CategoriesService";
+import { getDebtSummary } from "@/app/services/Backend/DebtService";
+import ICategory from "../../interfaces/ICategory";
+import { IDebt } from "../../interfaces/Debts/IDebt";
 import { GoalCategory, GoalFrequency } from "@/app/Enums/FinTrackEnums";
 import dayjs from "dayjs";
 
@@ -91,6 +95,8 @@ export default function GoalsPage() {
     overallProgressPercentage: 0,
     goals: [],
   });
+  const [categories, setCategories] = useState<ICategory[]>([]);
+  const [debts, setDebts] = useState<IDebt[]>([]);
   const [loading, setLoading] = useState(false);
 
   // Modals state
@@ -103,6 +109,9 @@ export default function GoalsPage() {
   const [editForm] = Form.useForm();
   const [progressForm] = Form.useForm();
 
+  const addCategory = Form.useWatch("category", addForm);
+  const editCategory = Form.useWatch("category", editForm);
+
   const fetchSummary = useCallback(async () => {
     try {
       setLoading(true);
@@ -112,7 +121,7 @@ export default function GoalsPage() {
       setSummary(data);
     } catch (err) {
       console.error("Failed to load goals summary", err);
-      message.error("Failed to load goals.");
+      message.error("Não foi possível carregar as metas.");
     } finally {
       setLoading(false);
     }
@@ -120,7 +129,11 @@ export default function GoalsPage() {
 
   useEffect(() => {
     fetchSummary();
-  }, [fetchSummary]);
+    getCategories().then(setCategories).catch(() => {});
+    getDebtSummary(userInfo?.id ? Number(userInfo.id) : undefined)
+      .then((res) => setDebts(res.debts || []))
+      .catch(() => {});
+  }, [fetchSummary, userInfo?.id]);
 
   const handleCreateGoal = async (values: any) => {
     try {
@@ -131,10 +144,12 @@ export default function GoalsPage() {
         description: values.description,
         category: values.category,
         frequency: values.frequency ?? GoalFrequency.Monthly,
-        targetAmount: values.targetAmount,
-        initialAmount: values.initialAmount || 0,
+        targetAmount: Number(values.targetAmount),
+        initialAmount: values.initialAmount ? Number(values.initialAmount) : 0,
         currency: values.currency || "BRL",
-        targetDate: values.targetDate ? values.targetDate.toISOString() : undefined,
+        linkedDebtID: values.linkedDebtID ?? null,
+        linkedCategoryID: values.linkedCategoryID ?? null,
+        targetDate: values.targetDate ? dayjs(values.targetDate).toISOString() : undefined,
         autoTrack: values.autoTrack ?? true,
       };
 
@@ -160,9 +175,14 @@ export default function GoalsPage() {
         description: values.description,
         category: values.category,
         frequency: values.frequency,
-        targetAmount: values.targetAmount,
+        targetAmount: Number(values.targetAmount),
+        currentAmount: values.currentAmount !== undefined && values.currentAmount !== null
+          ? Number(values.currentAmount)
+          : selectedGoal.currentAmount,
         currency: values.currency || "BRL",
-        targetDate: values.targetDate ? values.targetDate.toISOString() : undefined,
+        linkedDebtID: values.linkedDebtID ?? selectedGoal.linkedDebtID,
+        linkedCategoryID: values.linkedCategoryID ?? selectedGoal.linkedCategoryID,
+        targetDate: values.targetDate ? dayjs(values.targetDate).toISOString() : undefined,
         autoTrack: values.autoTrack ?? true,
         isCompleted: values.isCompleted ?? false,
       };
@@ -524,6 +544,8 @@ export default function GoalsPage() {
                                 targetAmount: goal.targetAmount,
                                 currentAmount: goal.currentAmount,
                                 currency: goal.currency,
+                                linkedCategoryID: goal.linkedCategoryID ?? undefined,
+                                linkedDebtID: goal.linkedDebtID ?? undefined,
                                 targetDate: goal.targetDate ? dayjs(goal.targetDate) : undefined,
                                 autoTrack: goal.autoTrack,
                                 isCompleted: goal.isCompleted,
@@ -599,8 +621,40 @@ export default function GoalsPage() {
                   </Col>
                 </Row>
 
+                {addCategory === GoalCategory.ExpenseCap && (
+                  <Form.Item
+                    name="linkedCategoryID"
+                    label="Categoria Vinculada (Opcional)"
+                    tooltip="Se selecionada, rastreará apenas gastos desta categoria. Se vazia, acompanhará o total geral de despesas."
+                  >
+                    <Select allowClear placeholder="Selecione uma categoria (ex: Alimentação, Lazer)">
+                      {categories.map((c) => (
+                        <Option key={c.categoryID} value={c.categoryID}>
+                          {c.name}
+                        </Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                )}
+
+                {addCategory === GoalCategory.MonthlyDebtReduction && (
+                  <Form.Item
+                    name="linkedDebtID"
+                    label="Dívida Vinculada (Opcional)"
+                    tooltip="Se selecionada, rastreará amortizações apenas desta dívida. Se vazia, acompanhará o total de dívidas amortizadas."
+                  >
+                    <Select allowClear placeholder="Selecione uma dívida cadastrada">
+                      {debts.map((d) => (
+                        <Option key={d.debtID} value={d.debtID}>
+                          {d.name} ({d.issuer})
+                        </Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                )}
+
                 <Row gutter={16}>
-                  <Col span={12}>
+                  <Col span={addCategory === GoalCategory.TargetSavings ? 8 : 12}>
                     <Form.Item
                       name="targetAmount"
                       label="Valor Alvo"
@@ -609,7 +663,14 @@ export default function GoalsPage() {
                       <InputNumber style={{ width: "100%" }} min={0.01} precision={2} prefix="R$" placeholder="0,00" />
                     </Form.Item>
                   </Col>
-                  <Col span={12}>
+                  {addCategory === GoalCategory.TargetSavings && (
+                    <Col span={8}>
+                      <Form.Item name="initialAmount" label="Saldo Inicial">
+                        <InputNumber style={{ width: "100%" }} min={0} precision={2} prefix="R$" placeholder="0,00" />
+                      </Form.Item>
+                    </Col>
+                  )}
+                  <Col span={addCategory === GoalCategory.TargetSavings ? 8 : 12}>
                     <Form.Item name="targetDate" label="Prazo Final (Opcional)">
                       <DatePicker style={{ width: "100%" }} format="DD/MM/YYYY" placeholder="Selecione a data" />
                     </Form.Item>
@@ -674,6 +735,38 @@ export default function GoalsPage() {
                     </Form.Item>
                   </Col>
                 </Row>
+
+                {editCategory === GoalCategory.ExpenseCap && (
+                  <Form.Item
+                    name="linkedCategoryID"
+                    label="Categoria Vinculada (Opcional)"
+                    tooltip="Se selecionada, rastreará apenas gastos desta categoria."
+                  >
+                    <Select allowClear placeholder="Selecione uma categoria (ex: Alimentação, Lazer)">
+                      {categories.map((c) => (
+                        <Option key={c.categoryID} value={c.categoryID}>
+                          {c.name}
+                        </Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                )}
+
+                {editCategory === GoalCategory.MonthlyDebtReduction && (
+                  <Form.Item
+                    name="linkedDebtID"
+                    label="Dívida Vinculada (Opcional)"
+                    tooltip="Se selecionada, rastreará amortizações apenas desta dívida."
+                  >
+                    <Select allowClear placeholder="Selecione uma dívida cadastrada">
+                      {debts.map((d) => (
+                        <Option key={d.debtID} value={d.debtID}>
+                          {d.name} ({d.issuer})
+                        </Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                )}
 
                 <Row gutter={16}>
                   <Col span={12}>

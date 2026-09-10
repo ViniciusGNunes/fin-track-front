@@ -1,18 +1,17 @@
 /* ─── Layout shell ─────────────────────────────────────────────── */
 .layout {
   min-height: 100vh;
-  background-color: var(--bg-canvas);
-  color: var(--text-primary);
-  font-family: var(--font-sans);
+  background-color: var(--bg-canvas, #090d16);
+  color: var(--text-primary, #f8fafc);
 }
 
 .mainLayout {
-  background: var(--bg-canvas);
+  background: var(--bg-canvas, #090d16);
 }
 
 /* ─── Page header ──────────────────────────────────────────────── */
 .content {
-  margin: var(--space-6);
+  margin: 24px;
 
   @media (max-width: 768px) {
     margin: 12px 12px 84px 12px;
@@ -20,7 +19,7 @@
 }
 
 .pageHeader {
-  margin-bottom: var(--space-6);
+  margin-bottom: 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -34,9 +33,9 @@
 
   h2 {
     margin: 0;
-    color: var(--text-primary);
-    font-weight: 700;
-    font-size: var(--text-2xl);
+    color: var(--text-primary, #f8fafc);
+    font-weight: 600;
+    font-size: 1.5rem;
     letter-spacing: -0.02em;
 
     @media (max-width: 768px) {
@@ -45,144 +44,180 @@
   }
 
   p {
-    margin: var(--space-1) 0 0;
-    color: var(--text-secondary);
-    font-size: var(--text-sm);
+    margin: 4px 0 0;
+    color: var(--text-secondary, #94a3b8);
+    font-size: 0.875rem;
   }
 }
 
 /* ─── Metrics row ──────────────────────────────────────────────── */
 .metricRow {
-  margin-bottom: var(--space-6);
+  margin-bottom: 24px;
 }
 
 /* ─── Controls bar ─────────────────────────────────────────────── */
 .titleSelect {
   min-width: 140px;
-  margin-right: var(--space-2);
+  margin-right: 8px;
 }
 
 .titleButton {
-  margin-right: var(--space-2);
+  margin-right: 8px;
+}
+
+.titleSwitchWrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--text-secondary, #94a3b8);
+  font-weight: 500;
+  margin-left: 8px;
+  cursor: pointer;
+  user-select: none;
 }
 
 /* ─── Calendar card wrapper ────────────────────────────────────── */
 .calendarCard {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
+  background: var(--bg-surface, #111827);
+  border: 1px solid #26354a;
+  border-radius: 10px;
 }
 
 /* ─── Period header (e.g. "Aug 2026") ──────────────────────────── */
 .periodLabel {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-  margin-bottom: var(--space-5);
-  color: var(--text-primary);
-  font-size: var(--text-base);
+  gap: 8px;
+  margin-bottom: 20px;
+  color: var(--text-primary, #f8fafc);
+  font-size: 1rem;
   font-weight: 600;
 
   span {
-    color: var(--text-secondary);
-    font-size: var(--text-sm);
+    color: var(--text-secondary, #94a3b8);
+    font-size: 0.875rem;
     font-weight: 400;
   }
 }
 
-/* ─── Calendar grid ────────────────────────────────────────────── */
-.calendarGrid {
-  display: grid;
-  gap: var(--space-2);
-  grid-template-columns: repeat(7, 1fr);
+/* ─── Year view: month section divider ─────────────────────────── */
+.yearMonthBlock {
+  margin-bottom: 28px;
 }
 
-/* Single-day variant */
-.calendarGridSingle {
-  grid-template-columns: 1fr;
-  max-width: 420px;
+.yearMonthTitle {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary, #f8fafc);
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-subtle, #1e293b);
 }
 
-
-/* Month variant: let them wrap freely */
-.calendarGridMonth {
-  grid-template-columns: repeat(7, 1fr);
-}
-
-/* ─── Day cell ─────────────────────────────────────────────────── */
-.dayCell {
-  background: #0d1117;
-  border: 1px solid #21262d;
+/* ─── Day card (masonry item) ──────────────────────────────────── */
+.dayCard {
+  background: var(--bg-surface, #111827);
+  border: 1px solid #2d3f56;
   border-radius: 10px;
-  padding: 10px 10px 8px;
-  min-height: 120px;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-  position: relative;
-  overflow: hidden;
+  padding: 14px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 
   &:hover {
-    border-color: #388bfd44;
-    box-shadow: 0 0 0 1px #388bfd22;
+    border-color: #3b82f6;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+    transform: translateY(-2px);
   }
 }
 
-/* Today gets a subtle green glow */
-.dayCell.today {
-  border-color: #1a7f3755;
-  box-shadow: 0 0 12px 0 #1a7f3722, inset 0 0 20px 0 #1a7f3708;
+/* Today gets a clean green border without glow using project standard green */
+.dayCardToday {
+  border-color: var(--color-success, #10b981);
 
-  .dayCellNumber {
-    background: #1a7f37;
-    color: #fff;
-    border-radius: 50%;
-    width: 26px;
-    height: 26px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  &:hover {
+    border-color: var(--color-success, #10b981);
   }
 }
 
-/* Empty / filler cell (days outside the real range for month view) */
-.dayCell.empty {
-  background: transparent;
-  border-color: transparent;
-  pointer-events: none;
-}
-
-/* ─── Day-cell header ──────────────────────────────────────────── */
-.dayCellHeader {
+/* ─── Day card header ──────────────────────────────────────────── */
+.dayCardHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
-.dayCellNumber {
-  font-size: 0.8rem;
+.dayNumber {
+  font-size: 1.1rem;
   font-weight: 700;
-  color: #8b949e;
+  color: var(--text-primary, #f8fafc);
   line-height: 1;
-  min-width: 22px;
-  text-align: center;
+  min-width: 28px;
 }
 
-.dayCellWeekday {
-  font-size: 0.65rem;
-  color: #484f58;
+.dayNumberToday {
+  background: var(--color-success, #10b981);
+  color: #fff;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+}
+
+.dayWeekday {
+  font-size: 0.72rem;
+  color: var(--text-secondary, #94a3b8);
   text-transform: uppercase;
   letter-spacing: 0.06em;
+  font-weight: 500;
 }
 
-/* total badge shown when day has multiple expenses */
-.dayCellTotal {
-  font-size: 0.65rem;
+.dayHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* total badge */
+.dayTotal {
+  font-size: 0.72rem;
   font-weight: 700;
-  color: #ff6b6b;
-  background: #ff4d4f18;
-  border: 1px solid #ff4d4f33;
+  color: #f43f5e;
+  background: rgba(244, 63, 94, 0.12);
+  border: 1px solid rgba(244, 63, 94, 0.35);
   border-radius: 6px;
-  padding: 1px 5px;
+  padding: 2px 8px;
+  font-variant-numeric: tabular-nums;
+}
+
+.dayTotalEmpty {
+  color: var(--text-secondary, #94a3b8);
+  background: rgba(100, 116, 139, 0.15);
+  border-color: rgba(100, 116, 139, 0.35);
+  font-weight: 500;
+}
+
+.dayCardEmpty {
+  opacity: 0.8;
+  background: rgba(17, 24, 39, 0.65);
+  border: 1px dashed #33455c;
+
+  &:hover {
+    opacity: 1;
+    border-color: #475d79;
+  }
+}
+
+.dayEmptyNotice {
+  font-size: 0.76rem;
+  color: var(--text-secondary, #94a3b8);
+  font-style: italic;
+  padding: 8px 4px 4px 4px;
+  text-align: center;
 }
 
 /* ─── Expense chip ─────────────────────────────────────────────── */
@@ -190,20 +225,25 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 4px;
-  padding: 5px 7px;
-  border-radius: 6px;
-  font-size: 0.72rem;
+  gap: 6px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  font-size: 0.78rem;
   line-height: 1.3;
   cursor: pointer;
-  margin-bottom: 4px;
-  border-left: 3px solid transparent;
-  transition: opacity 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+  margin-bottom: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-left-width: 3px;
+  transition: opacity 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
 
   &:hover {
-    opacity: 0.9;
+    opacity: 1;
     transform: translateY(-1px);
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.45);
   }
 
   &:active {
@@ -212,37 +252,43 @@
 
   /* status colour variants */
   &.statusPending {
-    background: #faad1415;
+    background: rgba(250, 173, 20, 0.1);
+    border-color: rgba(250, 173, 20, 0.25);
     border-left-color: #faad14;
     color: #ffd666;
   }
 
   &.statusPaid {
-    background: #52c41a15;
+    background: rgba(82, 196, 26, 0.1);
+    border-color: rgba(82, 196, 26, 0.25);
     border-left-color: #52c41a;
     color: #95de64;
   }
 
   &.statusOverdue {
-    background: #ff4d4f15;
+    background: rgba(255, 77, 79, 0.1);
+    border-color: rgba(255, 77, 79, 0.25);
     border-left-color: #ff4d4f;
     color: #ff7875;
   }
 
   &.statusPartiallyPaid {
-    background: #1890ff15;
+    background: rgba(24, 144, 255, 0.1);
+    border-color: rgba(24, 144, 255, 0.25);
     border-left-color: #1890ff;
     color: #69c0ff;
   }
 
   &.statusCancelled {
-    background: #8b949e15;
-    border-left-color: #484f58;
-    color: #484f58;
+    background: rgba(139, 148, 88, 0.1);
+    border-color: rgba(139, 148, 88, 0.25);
+    border-left-color: #6e7681;
+    color: #8b949e;
   }
 
   &.statusRefunded {
-    background: #b37feb15;
+    background: rgba(179, 127, 235, 0.1);
+    border-color: rgba(179, 127, 235, 0.25);
     border-left-color: #b37feb;
     color: #d3adf7;
   }
@@ -260,43 +306,7 @@
   flex-shrink: 0;
   font-weight: 700;
   letter-spacing: -0.02em;
-}
-
-/* overflow indicator when more than N chips */
-.moreChips {
-  font-size: 0.65rem;
-  color: #484f58;
-  padding: 2px 4px;
-  cursor: pointer;
-  text-align: center;
-  border-radius: 4px;
-  transition: color 0.15s;
-
-  &:hover {
-    color: #8b949e;
-  }
-}
-
-/* ─── Empty state inside a day cell ───────────────────────────── */
-.emptyCellMsg {
-  font-size: 0.65rem;
-  color: #21262d;
-  text-align: center;
-  margin-top: 24px;
-}
-
-/* ─── Year view: month block ───────────────────────────────────── */
-.yearMonthBlock {
-  margin-bottom: 32px;
-}
-
-.yearMonthTitle {
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: #c9d1d9;
-  margin-bottom: 10px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid #21262d;
+  font-variant-numeric: tabular-nums;
 }
 
 /* ─── Modal overrides ──────────────────────────────────────────── */
@@ -304,11 +314,11 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 12px;
+  padding: 12px 14px;
   border-radius: 8px;
   margin-bottom: 18px;
-  background: #0d1117;
-  border: 1px solid #21262d;
+  background: var(--bg-surface-raised, #182234);
+  border: 1px solid var(--border-subtle, #1e293b);
 
   .chipPreviewIcon {
     font-size: 1.2rem;
@@ -319,13 +329,13 @@
 
     .chipPreviewName {
       font-weight: 600;
-      color: #f0f6fc;
+      color: var(--text-primary, #f8fafc);
       font-size: 0.95rem;
     }
 
     .chipPreviewMeta {
       font-size: 0.78rem;
-      color: #8b949e;
+      color: var(--text-secondary, #94a3b8);
     }
   }
 }
@@ -333,21 +343,4 @@
 .negativeText {
   color: #ff4d4f;
   font-weight: 600;
-}
-
-/* ─── Responsive ───────────────────────────────────────────────── */
-@media (max-width: 900px) {
-  .calendarGrid {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}
-
-@media (max-width: 600px) {
-  .calendarGrid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .dayCell {
-    min-height: 80px;
-  }
 }

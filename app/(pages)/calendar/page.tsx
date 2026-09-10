@@ -19,7 +19,9 @@ import {
   Tooltip,
   Popconfirm,
   Tag,
+  Masonry,
   message,
+  Switch,
 } from "antd";
 
 import {
@@ -64,7 +66,7 @@ const MONTH_NAMES = [
   "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
   "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
 ];
-const MAX_CHIPS_PER_CELL = 3;
+// Masonry column config per view
 
 /* ─── Types ─────────────────────────────────────────────────────── */
 interface CalendarExpenseItem {
@@ -83,11 +85,11 @@ interface CalendarExpenseItem {
   description?: string | null;
 }
 
-interface DayCell {
+interface RealDay {
   date: Date;
   dateStr: string;
-  isFiller: boolean;
-  isToday?: boolean;
+  isToday: boolean;
+  items: CalendarExpenseItem[];
 }
 
 /* ─── Date helpers ───────────────────────────────────────────────── */
@@ -110,14 +112,7 @@ function today(): Date {
 
 /**
  * Returns the exact [start, end] date window for the given
- * TimeCategory × TimePeriod combination using true calendar semantics:
- *
- *  Day        → the exact calendar day (today / yesterday / tomorrow)
- *  Week       → the full Sun→Sat week containing that reference day
- *  TwoWeeks   → "Half Month": first half (1–15) or second half (16–end)
- *                of the relevant month
- *  Month      → the complete calendar month
- *  Year       → the complete calendar year (Jan 1 – Dec 31)
+ * TimeCategory × TimePeriod combination.
  */
 function getPeriodWindow(
   timeCat: TimeCategory,
@@ -128,23 +123,19 @@ function getPeriodWindow(
   const mo = t.getMonth();
   const d = t.getDate();
 
-  /* ── Day ──────────────────────────────────────────────────────── */
   if (timePer === TimePeriod.Day) {
     const offset = timeCat === TimeCategory.Last ? -1 : timeCat === TimeCategory.Next ? 1 : 0;
     const day = addDays(t, offset);
     return { start: day, end: day };
   }
 
-  /* ── Week (Sun → Sat) ─────────────────────────────────────────── */
   if (timePer === TimePeriod.Week) {
-    // Sunday of the current week
     const thisSunday = addDays(t, -t.getDay());
     const offset = timeCat === TimeCategory.Last ? -7 : timeCat === TimeCategory.Next ? 7 : 0;
     const start = addDays(thisSunday, offset);
     return { start, end: addDays(start, 6) };
   }
 
-  /* ── Half Month ───────────────────────────────────────────────── */
   if (timePer === TimePeriod.TwoWeeks) {
     const inFirstHalf = d <= 15;
     const lastDayOfMonth = new Date(y, mo + 1, 0).getDate();
@@ -156,27 +147,21 @@ function getPeriodWindow(
     }
     if (timeCat === TimeCategory.Last) {
       if (inFirstHalf) {
-        // previous half = second half of previous month
         const prevMo = mo === 0 ? 11 : mo - 1;
         const prevY = mo === 0 ? y - 1 : y;
         const lastDayPrev = new Date(prevY, prevMo + 1, 0).getDate();
         return { start: new Date(prevY, prevMo, 16), end: new Date(prevY, prevMo, lastDayPrev) };
       }
-      // previous half = first half of current month
       return { start: new Date(y, mo, 1), end: new Date(y, mo, 15) };
     }
-    // Next
     if (inFirstHalf) {
-      // next half = second half of current month
       return { start: new Date(y, mo, 16), end: new Date(y, mo, lastDayOfMonth) };
     }
-    // next half = first half of next month
     const nextMo = mo === 11 ? 0 : mo + 1;
     const nextY = mo === 11 ? y + 1 : y;
     return { start: new Date(nextY, nextMo, 1), end: new Date(nextY, nextMo, 15) };
   }
 
-  /* ── Month ────────────────────────────────────────────────────── */
   if (timePer === TimePeriod.Month) {
     let ry = y, rmo = mo;
     if (timeCat === TimeCategory.Last) { rmo -= 1; if (rmo < 0) { rmo = 11; ry -= 1; } }
@@ -185,7 +170,6 @@ function getPeriodWindow(
     return { start: new Date(ry, rmo, 1), end: new Date(ry, rmo, lastDay) };
   }
 
-  /* ── Year ─────────────────────────────────────────────────────── */
   {
     let ry = y;
     if (timeCat === TimeCategory.Last) ry -= 1;
@@ -195,52 +179,34 @@ function getPeriodWindow(
 }
 
 /**
- * Builds an ordered array of DayCell objects for the calendar grid.
- * Month-like views (HalfMonth, Month, Year) are Sunday-aligned with
- * filler cells so every row is a complete week.
+ * Builds an array of days within the period window.
+ * If hideEmptyDays is false (default), all days in the period are returned.
+ * If hideEmptyDays is true, only days with at least one expense item are returned.
  */
-function buildDayCells(timeCat: TimeCategory, timePer: TimePeriod): DayCell[] {
+function buildRealDays(
+  timeCat: TimeCategory,
+  timePer: TimePeriod,
+  itemsByDate: Map<string, CalendarExpenseItem[]>,
+  hideEmptyDays: boolean = false
+): RealDay[] {
   const { start, end } = getPeriodWindow(timeCat, timePer);
   const t = today();
   const todayStr = toDateStr(t);
-  const cells: DayCell[] = [];
+  const days: RealDay[] = [];
 
-  const needsAlignment =
-    timePer === TimePeriod.TwoWeeks ||
-    timePer === TimePeriod.Month ||
-    timePer === TimePeriod.Year;
-
-  // Leading fillers to align first real day to Sunday column
-  if (needsAlignment) {
-    const dowOffset = start.getDay(); // 0=Sun
-    for (let i = dowOffset - 1; i >= 0; i--) {
-      const d = addDays(start, -i - 1);
-      cells.push({ date: d, dateStr: toDateStr(d), isFiller: true });
-    }
-  }
-
-  // Real days
   let cur = new Date(start);
   while (cur <= end) {
     const ds = toDateStr(cur);
-    cells.push({ date: new Date(cur), dateStr: ds, isFiller: false, isToday: ds === todayStr });
+    const isToday = ds === todayStr;
+    const items = itemsByDate.get(ds) || [];
+    // Always include today or days with expenses when hideEmptyDays is on
+    if (!hideEmptyDays || items.length > 0 || isToday) {
+      days.push({ date: new Date(cur), dateStr: ds, isToday, items });
+    }
     cur = addDays(cur, 1);
   }
 
-  // Trailing fillers
-  if (needsAlignment) {
-    const remainder = cells.length % 7;
-    if (remainder !== 0) {
-      const extra = 7 - remainder;
-      const last = cells[cells.length - 1].date;
-      for (let i = 1; i <= extra; i++) {
-        const d = addDays(last, i);
-        cells.push({ date: d, dateStr: toDateStr(d), isFiller: true });
-      }
-    }
-  }
-
-  return cells;
+  return days;
 }
 
 /* ─── Map transactions → flat items ─────────────────────────────── */
@@ -348,6 +314,7 @@ export default function CalendarPage() {
 
   const [selectedCategory, setSelectedCategory] = useState<IEnumOptions>(initialCategory);
   const [selectedPeriod, setSelectedPeriod] = useState<IEnumOptions>(initialPeriod);
+  const [hideEmptyDays, setHideEmptyDays] = useState(false);
 
   /* ── Fetch ─────────────────────────────────────────────────────── */
   const fetchData = useCallback(async (catVal: number, perVal: number) => {
@@ -381,13 +348,22 @@ export default function CalendarPage() {
     return map;
   }, [calendarItems]);
 
-  const dayCells = useMemo(
-    () => buildDayCells(
+  const realDays = useMemo(
+    () => buildRealDays(
       Number(selectedCategory.value) as TimeCategory,
-      Number(selectedPeriod.value) as TimePeriod
+      Number(selectedPeriod.value) as TimePeriod,
+      itemsByDate,
+      hideEmptyDays
     ),
-    [selectedCategory.value, selectedPeriod.value]
+    [selectedCategory.value, selectedPeriod.value, itemsByDate, hideEmptyDays]
   );
+
+  const masonryColumns = useMemo(() => {
+    const period = Number(selectedPeriod.value) as TimePeriod;
+    if (period === TimePeriod.Day) return { xs: 1, sm: 1, md: 1, lg: 1 };
+    if (period === TimePeriod.Week) return { xs: 1, sm: 2, md: 3, lg: 4 };
+    return { xs: 1, sm: 2, md: 3, lg: 4, xl: 5 };
+  }, [selectedPeriod.value]);
 
   /* Stats */
   const totalPeriodExpenses = useMemo(() =>
@@ -491,30 +467,33 @@ export default function CalendarPage() {
 
   /* ── Period label ─────────────────────────────────────────────── */
   const periodRangeLabel = useMemo(() => {
-    const real = dayCells.filter((c) => !c.isFiller);
-    if (!real.length) return "";
+    const { start, end } = getPeriodWindow(
+      Number(selectedCategory.value) as TimeCategory,
+      Number(selectedPeriod.value) as TimePeriod
+    );
     const fmt = (d: Date) =>
       d.toLocaleDateString("pt-BR", { month: "short", day: "numeric" });
     const fmtFull = (d: Date) =>
       d.toLocaleDateString("pt-BR", { month: "short", day: "numeric", year: "numeric" });
-    return real.length === 1 ? fmtFull(real[0].date) : `${fmt(real[0].date)} – ${fmtFull(real[real.length - 1].date)}`;
-  }, [dayCells]);
+    if (toDateStr(start) === toDateStr(end)) return fmtFull(start);
+    return `${fmt(start)} – ${fmtFull(end)}`;
+  }, [selectedCategory.value, selectedPeriod.value]);
 
-  const realDayCount = useMemo(() => dayCells.filter((c) => !c.isFiller).length, [dayCells]);
+  const realDayCount = realDays.length;
 
   /* ── Year view: group by month ───────────────────────────────── */
   const yearMonthGroups = useMemo(() => {
     if (Number(selectedPeriod.value) !== TimePeriod.Year) return null;
-    type Group = { label: string; cells: DayCell[] };
+    type Group = { label: string; days: RealDay[] };
     const groups: Group[] = [];
-    for (const cell of dayCells) {
-      const label = `${MONTH_NAMES[cell.date.getMonth()]} ${cell.date.getFullYear()}`;
+    for (const day of realDays) {
+      const label = `${MONTH_NAMES[day.date.getMonth()]} ${day.date.getFullYear()}`;
       let g = groups.find((x) => x.label === label);
-      if (!g) { g = { label, cells: [] }; groups.push(g); }
-      g.cells.push(cell);
+      if (!g) { g = { label, days: [] }; groups.push(g); }
+      g.days.push(day);
     }
     return groups;
-  }, [dayCells, selectedPeriod.value]);
+  }, [realDays, selectedPeriod.value]);
 
   /* ── Render chip ─────────────────────────────────────────────── */
   const renderChip = (item: CalendarExpenseItem) => (
@@ -522,74 +501,81 @@ export default function CalendarPage() {
       key={item.key}
       className={`${styles.expenseChip} ${statusChipClass(item.status)}`}
       onClick={() => openEditModal(item)}
-      title={`${item.transactionName} — $${item.rawAmount.toFixed(2)}`}
+      title={`${item.transactionName} — R$ ${item.rawAmount.toFixed(2)}`}
     >
       <span className={styles.chipName}>{item.transactionName}</span>
-      <span className={styles.chipAmount}>${item.rawAmount.toFixed(2)}</span>
+      <span className={styles.chipAmount}>R$ {item.rawAmount.toFixed(2)}</span>
     </div>
   );
 
-  /* ── Render day cell ─────────────────────────────────────────── */
-  const renderDayCell = (cell: DayCell) => {
-    if (cell.isFiller) {
-      return <div key={cell.dateStr + "-filler"} className={`${styles.dayCell} ${styles.empty}`} />;
-    }
-
-    const items = itemsByDate.get(cell.dateStr) || [];
-    const dayTotal = items.reduce((s, i) => s + i.rawAmount, 0);
-    const visible = items.slice(0, MAX_CHIPS_PER_CELL);
-    const overflow = items.length - MAX_CHIPS_PER_CELL;
+  /* ── Render day card (masonry item) ──────────────────────────── */
+  const renderDayCard = (day: RealDay) => {
+    const hasExpenses = day.items.length > 0;
+    const dayTotal = day.items.reduce((s, i) => s + i.rawAmount, 0);
 
     return (
       <div
-        key={cell.dateStr}
-        className={`${styles.dayCell} ${cell.isToday ? styles.today : ""}`}
+        key={day.dateStr}
+        className={`${styles.dayCard} ${day.isToday ? styles.dayCardToday : ""} ${!hasExpenses ? styles.dayCardEmpty : ""}`}
       >
-        <div className={styles.dayCellHeader}>
-          <span className={styles.dayCellNumber}>{cell.date.getDate()}</span>
-          <span className={styles.dayCellWeekday}>{WEEKDAYS[cell.date.getDay()]}</span>
-          {items.length > 0 && (
-            <span className={styles.dayCellTotal}>-${dayTotal.toFixed(2)}</span>
-          )}
+        <div className={styles.dayCardHeader}>
+          <div className={styles.dayHeaderLeft}>
+            <span className={day.isToday ? styles.dayNumberToday : styles.dayNumber}>
+              {day.date.getDate()}
+            </span>
+            <span className={styles.dayWeekday}>{WEEKDAYS[day.date.getDay()]}</span>
+          </div>
+          <span className={`${styles.dayTotal} ${!hasExpenses ? styles.dayTotalEmpty : ""}`}>
+            {hasExpenses
+              ? `-R$ ${dayTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`
+              : "R$ 0,00"}
+          </span>
         </div>
 
-        {visible.map(renderChip)}
-
-        {overflow > 0 && (
-          <div
-            className={styles.moreChips}
-            onClick={() => openEditModal(items[MAX_CHIPS_PER_CELL])}
-          >
-            +{overflow} more
-          </div>
+        {hasExpenses ? (
+          day.items.map(renderChip)
+        ) : (
+          <div className={styles.dayEmptyNotice}>Sem despesas</div>
         )}
-
-        {items.length === 0 && <div className={styles.emptyCellMsg}>—</div>}
       </div>
     );
   };
 
-  /* ── Render grid ─────────────────────────────────────────────── */
-  const renderGrid = () => {
-    if (yearMonthGroups) {
-      return yearMonthGroups.map((g) => (
-        <div key={g.label} className={styles.yearMonthBlock}>
-          <div className={styles.yearMonthTitle}>{g.label}</div>
-          <div className={styles.calendarGrid} style={{ gridTemplateColumns: "repeat(7, 1fr)" }}>
-            {g.cells.map(renderDayCell)}
-          </div>
+  /* ── Render masonry ─────────────────────────────────────────── */
+  const renderMasonry = () => {
+    if (realDays.length === 0) {
+      return (
+        <div style={{ textAlign: "center", padding: "48px 0", color: "var(--text-secondary, #94a3b8)" }}>
+          Nenhuma despesa encontrada neste período.
         </div>
-      ));
+      );
     }
 
-    const cols = Number(selectedPeriod.value) === TimePeriod.Day ? 1 : 7;
+    if (yearMonthGroups) {
+      return yearMonthGroups.map((g) => {
+        const masonryItems = g.days.map((day) => ({
+          key: day.dateStr,
+          data: day,
+          children: renderDayCard(day),
+        }));
+
+        return (
+          <div key={g.label} className={styles.yearMonthBlock}>
+            <div className={styles.yearMonthTitle}>{g.label}</div>
+            <Masonry columns={masonryColumns} gutter={12} items={masonryItems} />
+          </div>
+        );
+      });
+    }
+
+    const masonryItems = realDays.map((day) => ({
+      key: day.dateStr,
+      data: day,
+      children: renderDayCard(day),
+    }));
+
     return (
-      <div
-        className={styles.calendarGrid}
-        style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}
-      >
-        {dayCells.map(renderDayCell)}
-      </div>
+      <Masonry columns={masonryColumns} gutter={12} items={masonryItems} />
     );
   };
 
@@ -711,6 +697,15 @@ export default function CalendarPage() {
                   >
                     Filtrar
                   </Button>
+
+                  <label className={styles.titleSwitchWrapper}>
+                    <Switch
+                      size="small"
+                      checked={hideEmptyDays}
+                      onChange={(checked) => setHideEmptyDays(checked)}
+                    />
+                    <span>Ocultar dias vazios</span>
+                  </label>
                 </>
               }
               variant="borderless"
@@ -719,10 +714,13 @@ export default function CalendarPage() {
               <div className={styles.periodLabel}>
                 <CalendarOutlined />
                 {periodRangeLabel}
-                <span>({realDayCount} {realDayCount === 1 ? "dia" : "dias"})</span>
+                <span>
+                  ({realDayCount} {realDayCount === 1 ? "dia exibido" : "dias exibidos"}
+                  {hideEmptyDays ? " com despesas" : ""})
+                </span>
               </div>
 
-              {renderGrid()}
+              {renderMasonry()}
             </Card>
           </Content>
         </Layout>
