@@ -49,12 +49,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     </ConfigProvider>
   );
 
-  if (!googleClientId) {
-    return content;
-  }
-
   return (
-    <GoogleOAuthProvider clientId={googleClientId}>
+    <GoogleOAuthProvider clientId={googleClientId || "placeholder-client-id"}>
       {content}
     </GoogleOAuthProvider>
   );
