@@ -1,5 +1,6 @@
 "use client";
 
+//test
 import React, { useCallback, useEffect, useState } from "react";
 import {
   ConfigProvider,
@@ -483,9 +484,8 @@ export default function ReceivablesPage() {
                       return (
                         <div
                           key={rec.receivableID}
-                          className={`${styles.billCard} ${
-                            isSettled ? styles.settledCard : styles.pendingCard
-                          }`}
+                          className={`${styles.billCard} ${isSettled ? styles.settledCard : styles.pendingCard
+                            }`}
                         >
                           <div>
                             {/* Header */}
