@@ -10,7 +10,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
 
   React.useEffect(() => {
-    // Intercept input on number / decimal fields to transparently support both comma and dot
     const handleInput = (e: Event) => {
       const target = e.target as HTMLInputElement;
       if (
@@ -20,8 +19,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           target.getAttribute("role") === "spinbutton")
       ) {
         if (target.value && target.value.includes(",")) {
-          // Ant Design InputNumber works best with dot for its internal value representation
-          // but users in pt-BR locale frequently type comma
           const curPos = target.selectionStart;
           const oldVal = target.value;
           const newVal = target.value.replace(",", ".");
@@ -30,7 +27,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (curPos !== null) {
               target.setSelectionRange(curPos, curPos);
             }
-            // Dispatch input event so React / AntD form state syncs immediately
             target.dispatchEvent(new Event("input", { bubbles: true }));
           }
         }

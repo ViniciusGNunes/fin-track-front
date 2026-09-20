@@ -108,7 +108,6 @@ export default function InvestmentsPage() {
   });
   const [loading, setLoading] = useState(false);
 
-  // Modals state
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isCashModalOpen, setIsCashModalOpen] = useState(false);
@@ -123,7 +122,6 @@ export default function InvestmentsPage() {
   const [editForm] = Form.useForm();
   const [cashForm] = Form.useForm();
 
-  // Watch selected currency in modals
   const selectedCashCurrency = Form.useWatch("currency", cashForm) || "BRL";
   const selectedAddCurrency = Form.useWatch("currency", addForm) || "BRL";
 
@@ -145,7 +143,6 @@ export default function InvestmentsPage() {
     fetchPortfolio();
   }, [fetchPortfolio]);
 
-  // Derived filtered investments and summary based on selected currency tab
   const filteredInvestments = portfolio.investments.filter((inv) => {
     if (currencyFilter === "ALL") return true;
     return (inv.currency || "BRL").toUpperCase() === currencyFilter;
@@ -358,7 +355,6 @@ export default function InvestmentsPage() {
     return "R$";
   };
 
-  // Table columns for list view
   const columns = [
     {
       title: "Ativo",
@@ -481,7 +477,6 @@ export default function InvestmentsPage() {
     },
   ];
 
-  // Palette for chart items
   const chartColors = [
     "#008d0a",
     "#1f6feb",
@@ -513,7 +508,7 @@ export default function InvestmentsPage() {
           <Content className={styles.content}>
             <div className={styles.pageHeader}>
               <div>
-                <h2>Carteira de Investimentos</h2>
+                <h1>Carteira de Investimentos</h1>
                 <p>
                   Acompanhe alocação de ativos, rentabilidade da carteira, taxas e evolução patrimonial.
                 </p>
@@ -550,7 +545,6 @@ export default function InvestmentsPage() {
               </div>
             </div>
 
-            {/* Metrics Overview */}
             <Row gutter={[16, 16]} className={styles.metricRow}>
               <Col xs={24} sm={12} md={6}>
                 <Card variant="borderless">
@@ -669,14 +663,12 @@ export default function InvestmentsPage() {
               </Col>
             </Row>
 
-            {/* Views Section */}
             {viewMode === "treemap" && (
               <Card variant="borderless" title="Mosaico da Carteira (Proporção pelo Saldo)">
                 {filteredInvestments.length === 0 && activeCashBalance <= 0 ? (
                   <Empty description="Nenhum investimento encontrado para o filtro selecionado." />
                 ) : (
                   <div className={styles.treemapContainer}>
-                    {/* Render Cash Tile if positive */}
                     {activeCashBalance > 0 && (
                       <div
                         className={`${styles.treemapTile} ${styles.profitTile}`}
@@ -941,7 +933,6 @@ export default function InvestmentsPage() {
               </Card>
             )}
 
-            {/* Modal: Create New Investment */}
             <Modal
               title="Adicionar Novo Investimento"
               open={isAddModalOpen}
@@ -1175,7 +1166,6 @@ export default function InvestmentsPage() {
               </Form>
             </Modal>
 
-            {/* Modal: Detail, Growth Graph & Manage (Add/Remove/Liquidate) */}
             <Modal
               title={`Gerenciar Ativo: ${selectedInvestment?.name || ""}`}
               open={isDetailModalOpen}
@@ -1244,7 +1234,6 @@ export default function InvestmentsPage() {
                             </Col>
                           </Row>
 
-                          {/* Historical Growth SVG Graph */}
                           <div className={styles.growthChartContainer}>
                             <div className={styles.chartHeader}>
                               <h4>Linha do Tempo da Rentabilidade</h4>
@@ -1377,7 +1366,6 @@ export default function InvestmentsPage() {
                               const availableQty = selectedInvestment?.quantity ?? 0;
                               const availableVal = selectedInvestment?.currentValue ?? 0;
 
-                              // Use live/actual current price per unit if available, fallback to computed current value / qty, then purchase price
                               const effectiveCurrentPrice =
                                 selectedInvestment?.currentPricePerUnit && selectedInvestment.currentPricePerUnit > 0
                                   ? selectedInvestment.currentPricePerUnit
@@ -1590,8 +1578,6 @@ export default function InvestmentsPage() {
               )}
             </Modal>
 
-            {/* Modal: Portfolio Cash Movement (Deposit / Withdraw) */}
-            {/* Modal: Cash Deposit / Withdraw */}
             <Modal
               title={cashModalType === "deposit" ? "Depositar no Caixa Livre" : "Sacar do Caixa Livre"}
               open={isCashModalOpen}

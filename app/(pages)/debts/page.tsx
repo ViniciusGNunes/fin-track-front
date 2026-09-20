@@ -105,7 +105,6 @@ export default function DebtsPage() {
   });
   const [loading, setLoading] = useState(false);
 
-  // Modals state
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
@@ -247,7 +246,6 @@ export default function DebtsPage() {
       paymentForm.resetFields();
       await fetchSummary();
 
-      // Refresh opened detail modal if active
       if (selectedDebt) {
         const updated = await getDebtById(
           selectedDebt.debtID,
@@ -337,7 +335,6 @@ export default function DebtsPage() {
     }
   };
 
-  // Pie chart calculation
   const distributionData = useMemo(() => {
     const active = summary.debts.filter((d) => !d.isPaidOff && d.remainingBalance > 0);
     const total = active.reduce((sum, d) => sum + d.remainingBalance, 0);
@@ -378,7 +375,6 @@ export default function DebtsPage() {
     return { items, total };
   }, [summary.debts]);
 
-  // SVG helper for Pie chart slices
   const describeArc = (
     x: number,
     y: number,
@@ -575,10 +571,9 @@ export default function DebtsPage() {
             onToggleCollapse={() => setCollapsed(!collapsed)}
           />
           <Content className={styles.content}>
-            {/* Header */}
             <div className={styles.pageHeader}>
               <div>
-                <h2>Gestão de Dívidas e Empréstimos</h2>
+                <h1>Gestão de Dívidas e Empréstimos</h1>
                 <p>Monitore, amortize e planeje a quitação de financiamentos, cartões e empréstimos bancários.</p>
               </div>
               <div className={styles.headerControls}>
@@ -603,7 +598,6 @@ export default function DebtsPage() {
               </div>
             </div>
 
-            {/* Metric Overview Row */}
             <Row gutter={[16, 16]} className={styles.metricRow}>
               <Col xs={24} sm={12} lg={6}>
                 <Card>
@@ -663,7 +657,6 @@ export default function DebtsPage() {
               </Col>
             </Row>
 
-            {/* View Mode Toggle */}
             <Card className={styles.viewToggleCard}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <span style={{ fontWeight: 600, fontSize: "1rem" }}>Carteira de Dívidas</span>
@@ -679,7 +672,6 @@ export default function DebtsPage() {
               </div>
             </Card>
 
-            {/* View 1: Treemap / Visual Cards */}
             {viewMode === "treemap" && (
               <div>
                 {summary.debts.length === 0 ? (
@@ -776,7 +768,6 @@ export default function DebtsPage() {
               </div>
             )}
 
-            {/* View 2: Distribution Pie Chart */}
             {viewMode === "pie" && (
               <Card>
                 {distributionData.items.length === 0 ? (
@@ -800,7 +791,6 @@ export default function DebtsPage() {
                             <title>{`${item.name} (${item.issuer}): R$ ${item.amount.toLocaleString()} (${item.percentage}%)`}</title>
                           </path>
                         ))}
-                        {/* Donut hole center */}
                         <circle cx="130" cy="130" r="55" fill="#161b22" />
                         <text
                           x="130"
@@ -856,7 +846,6 @@ export default function DebtsPage() {
               </Card>
             )}
 
-            {/* View 3: Table / List */}
             {viewMode === "list" && (
               <Card>
                 <Table
@@ -869,7 +858,6 @@ export default function DebtsPage() {
               </Card>
             )}
 
-            {/* Add Loan Modal */}
             <Modal
               title="Cadastrar Nova Dívida / Empréstimo"
               open={isAddModalOpen}
@@ -1062,7 +1050,6 @@ export default function DebtsPage() {
               </Form>
             </Modal>
 
-            {/* Make Payment Modal */}
             <Modal
               title={`Registrar Pagamento para ${selectedDebt?.name || "Dívida"}`}
               open={isPaymentModalOpen}
@@ -1125,7 +1112,6 @@ export default function DebtsPage() {
               </Form>
             </Modal>
 
-            {/* Debt Detail & Schedule Modal */}
             <Modal
               title={
                 selectedDebt && (
@@ -1184,7 +1170,6 @@ export default function DebtsPage() {
             >
               {selectedDebt && (
                 <div>
-                  {/* Hero stats */}
                   <div className={styles.detailHero}>
                     <div className={styles.heroStat}>
                       <div className={styles.statTitle}>Saldo Devedor</div>

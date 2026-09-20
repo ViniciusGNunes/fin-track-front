@@ -56,7 +56,6 @@ export const Header: React.FC<HeaderProps> = ({
     } catch (error) {
       console.error("Logout failed:", error);
       Cookies.remove("X-Access-Token");
-      // Even if backend fails, navigate back to landing page
       router.push("/");
     } finally {
       setLoggingOut(false);

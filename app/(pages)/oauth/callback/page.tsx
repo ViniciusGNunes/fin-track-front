@@ -2,10 +2,11 @@
 
 import React, { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Spin, Card, Typography, Button, Result } from "antd";
+import { Spin, Card, Typography, Button, Result, ConfigProvider } from "antd";
 import Cookies from "js-cookie";
 import { api } from "@/app/lib/api";
 import Link from "next/link";
+import { FINTRACK_THEME } from "@/app/lib/theme";
 
 const { Text, Title } = Typography;
 
@@ -128,7 +129,8 @@ function OAuthCallbackContent() {
 
       {status === "success" && (
         <div style={{ padding: "32px 0" }}>
-          <Title level={4} style={{ color: "var(--color-success, #52c41a)" }}>
+          <Spin size="large" />
+          <Title level={4} style={{ color: "var(--color-success, #52c41a)", marginTop: 24, marginBottom: 8 }}>
             Login realizado com sucesso!
           </Title>
           <Text style={{ color: "var(--text-secondary)" }}>
@@ -161,35 +163,37 @@ function OAuthCallbackContent() {
 
 export default function OAuthCallbackPage() {
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 24,
-        background: "var(--bg-canvas, #0a0d10)",
-      }}
-    >
-      <Suspense
-        fallback={
-          <Card
-            style={{
-              maxWidth: 480,
-              width: "100%",
-              background: "var(--bg-surface, #14171a)",
-              borderColor: "var(--border-subtle, rgba(255, 255, 255, 0.12))",
-              borderRadius: "var(--radius-lg, 16px)",
-              textAlign: "center",
-              padding: "48px 12px",
-            }}
-          >
-            <Spin size="large" />
-          </Card>
-        }
+    <ConfigProvider theme={FINTRACK_THEME}>
+      <main
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: 24,
+          background: "var(--bg-canvas, #0a0d10)",
+        }}
       >
-        <OAuthCallbackContent />
-      </Suspense>
-    </main>
+        <Suspense
+          fallback={
+            <Card
+              style={{
+                maxWidth: 480,
+                width: "100%",
+                background: "var(--bg-surface, #14171a)",
+                borderColor: "var(--border-subtle, rgba(255, 255, 255, 0.12))",
+                borderRadius: "var(--radius-lg, 16px)",
+                textAlign: "center",
+                padding: "48px 12px",
+              }}
+            >
+              <Spin size="large" />
+            </Card>
+          }
+        >
+          <OAuthCallbackContent />
+        </Suspense>
+      </main>
+    </ConfigProvider>
   );
 }

@@ -75,7 +75,6 @@ export default function LandingPage() {
       <div className={styles.landingWrapper}>
         <div className={styles.ambientIllumination} />
 
-        {/* Navigation */}
         <header className={styles.navbar}>
           <div className={styles.brandLogo} onClick={() => router.push("/")}>
             <div className={styles.logoBadge}>F</div>
@@ -99,7 +98,6 @@ export default function LandingPage() {
           </div>
         </header>
 
-        {/* Hero Section */}
         <main className={styles.container}>
           <section className={styles.heroSection}>
             <div className={styles.heroBadge}>
@@ -128,7 +126,6 @@ export default function LandingPage() {
               </Button>
             </div>
 
-            {/* Interactive Preview Mock */}
             <div className={styles.dashboardPreview} id="overview">
               <div className={styles.previewHeader}>
                 <div className={styles.windowDots}>
@@ -190,7 +187,6 @@ export default function LandingPage() {
             </div>
           </section>
 
-          {/* Features Grid */}
           <section className={styles.featuresSection} id="features">
             <div className={styles.sectionHeader}>
               <div className={styles.sectionPretitle}>Construído para Clareza</div>
@@ -216,7 +212,6 @@ export default function LandingPage() {
             </div>
           </section>
 
-          {/* Bottom CTA Banner */}
           <section className={styles.ctaBanner} id="security">
             <h2>Assuma o Controle das Suas Finanças</h2>
             <p>
@@ -232,7 +227,6 @@ export default function LandingPage() {
             </Button>
           </section>
 
-          {/* Footer */}
           <footer className={styles.footer}>
             <div className={styles.footerText}>
               © {new Date().getFullYear()} FinTrack. Todos os direitos reservados.

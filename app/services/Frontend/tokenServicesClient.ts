@@ -1,4 +1,3 @@
-// app/services/Frontend/tokenServicesClient.ts
 import { jwtDecode } from "jwt-decode";
 import { UserCookieInfo } from "@/app/interfaces/UserCookieInfo";
 
@@ -8,10 +7,6 @@ interface JwtPayload {
   name: string;
 }
 
-/**
- * Reads and decodes the JWT cookie on the CLIENT (React Client Components).
- * Note: Requires the cookie to NOT have the HttpOnly flag set on your backend.
- */
 export function getUserFromCookiesClient(
   cookieName: string = "X-Access-Token",
 ): UserCookieInfo | null {

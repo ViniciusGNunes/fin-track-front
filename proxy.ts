@@ -13,14 +13,12 @@ export function proxy(request: NextRequest) {
 
   const isOAuthCallback = pathname.startsWith("/oauth");
 
-  const isPublicPage = pathname === "/" || isAuthPage || isOAuthCallback;
+  const isPublicPage = pathname === "/" || pathname === "/404" || isAuthPage || isOAuthCallback;
 
-  // If visiting an auth page while already logged in, redirect to dashboard
   if (isAuthPage && token) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
-  // If trying to access protected private app pages without a token, redirect to login
   if (!isPublicPage && !token) {
     return NextResponse.redirect(new URL("/login", request.url));
   }

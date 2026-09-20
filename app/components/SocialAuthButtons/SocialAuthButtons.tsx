@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useGoogleLogin } from "@react-oauth/google";
-import { message } from "antd";
+import { message, Spin } from "antd";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import { api } from "@/app/lib/api";
@@ -10,6 +10,7 @@ import styles from "./styles.module.scss";
 
 interface SocialAuthButtonsProps {
   text?: "signin_with" | "signup_with" | "continue_with";
+  onLoadingChange?: (loading: boolean, title?: string, description?: string) => void;
 }
 
 function generateRandomString(length: number): string {
@@ -42,37 +43,48 @@ function base64UrlEncode(buffer: ArrayBuffer): string {
     .replace(/=+$/, "");
 }
 
-export const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = () => {
+export const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = ({
+  text = "continue_with",
+  onLoadingChange,
+}) => {
   const router = useRouter();
   const [googleLoading, setGoogleLoading] = useState(false);
   const [redirectingProvider, setRedirectingProvider] = useState<string | null>(
     null
   );
+  const [loadingText, setLoadingText] = useState<string>("");
 
-  // Reset busy states when navigating back via browser history / bfcache
   useEffect(() => {
     const handlePageShow = () => {
       setRedirectingProvider(null);
       setGoogleLoading(false);
+      setLoadingText("");
+      onLoadingChange?.(false);
     };
 
     window.addEventListener("pageshow", handlePageShow);
     return () => {
       window.removeEventListener("pageshow", handlePageShow);
     };
-  }, []);
+  }, [onLoadingChange]);
 
   const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
   const githubClientId = process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID;
   const discordClientId = process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID;
   const twitterClientId = process.env.NEXT_PUBLIC_TWITTER_CLIENT_ID;
 
-  // Custom Google Login Hook with auth-code flow
   const triggerGoogleLogin = useGoogleLogin({
     flow: "auth-code",
     onSuccess: async (codeResponse) => {
       try {
         setGoogleLoading(true);
+        setLoadingText("Conectando com o Google...");
+        onLoadingChange?.(
+          true,
+          "Conectando com o Google...",
+          "Validando suas credenciais e preparando o painel..."
+        );
+
         const redirectUri = window.location.origin;
         const res = await api.post("/users/google-login", {
           idToken: codeResponse.code,
@@ -89,9 +101,17 @@ export const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = () => {
           });
 
           message.success(res.data.message || "Autenticado com sucesso!");
+          onLoadingChange?.(
+            true,
+            "Login realizado com sucesso!",
+            "Redirecionando para o painel..."
+          );
           router.push("/dashboard");
         } else {
           message.error("Resposta de autenticação inválida.");
+          setGoogleLoading(false);
+          setLoadingText("");
+          onLoadingChange?.(false);
         }
       } catch (error: unknown) {
         console.error("Google login failed:", error);
@@ -99,11 +119,15 @@ export const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = () => {
         const msg =
           err?.response?.data?.message || "Falha ao autenticar com o Google.";
         message.error(msg);
-      } finally {
         setGoogleLoading(false);
+        setLoadingText("");
+        onLoadingChange?.(false);
       }
     },
     onError: () => {
+      setGoogleLoading(false);
+      setLoadingText("");
+      onLoadingChange?.(false);
       message.error("Falha na autenticação com o Google. Tente novamente.");
     },
   });
@@ -124,6 +148,12 @@ export const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = () => {
       return;
     }
     setRedirectingProvider("github");
+    setLoadingText("Redirecionando para o GitHub...");
+    onLoadingChange?.(
+      true,
+      "Redirecionando para o GitHub...",
+      "Aguarde um momento enquanto você é redirecionado para autorização..."
+    );
     const redirectUri = `${window.location.origin}/oauth/callback?provider=github`;
     const authUrl = `https://github.com/login/oauth/authorize?client_id=${githubClientId}&redirect_uri=${encodeURIComponent(
       redirectUri
@@ -139,6 +169,12 @@ export const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = () => {
       return;
     }
     setRedirectingProvider("discord");
+    setLoadingText("Redirecionando para o Discord...");
+    onLoadingChange?.(
+      true,
+      "Redirecionando para o Discord...",
+      "Aguarde um momento enquanto você é redirecionado para autorização..."
+    );
     const redirectUri = `${window.location.origin}/oauth/callback?provider=discord`;
     const authUrl = `https://discord.com/api/oauth2/authorize?client_id=${discordClientId}&redirect_uri=${encodeURIComponent(
       redirectUri
@@ -156,6 +192,12 @@ export const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = () => {
 
     try {
       setRedirectingProvider("twitter");
+      setLoadingText("Redirecionando para o X (Twitter)...");
+      onLoadingChange?.(
+        true,
+        "Redirecionando para o X (Twitter)...",
+        "Aguarde um momento enquanto você é redirecionado para autorização..."
+      );
       const verifier = generateRandomString(64);
       sessionStorage.setItem("fintrack_twitter_verifier", verifier);
 
@@ -173,6 +215,8 @@ export const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = () => {
     } catch (err) {
       console.error("Twitter PKCE generation error:", err);
       setRedirectingProvider(null);
+      setLoadingText("");
+      onLoadingChange?.(false);
       message.error("Não foi possível inicializar a autenticação com o X.");
     }
   };
@@ -182,7 +226,6 @@ export const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = () => {
   return (
     <div className={styles.socialAuthContainer}>
       <div className={styles.oauthGrid}>
-        {/* Google Button */}
         <button
           type="button"
           onClick={handleGoogleAuth}
@@ -211,7 +254,6 @@ export const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = () => {
           <span>Google</span>
         </button>
 
-        {/* GitHub Button */}
         <button
           type="button"
           onClick={handleGitHubAuth}
@@ -229,7 +271,6 @@ export const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = () => {
           <span>GitHub</span>
         </button>
 
-        {/* Discord Button */}
         <button
           type="button"
           onClick={handleDiscordAuth}
@@ -243,7 +284,6 @@ export const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = () => {
           <span>Discord</span>
         </button>
 
-        {/* X / Twitter Button */}
         <button
           type="button"
           onClick={handleTwitterAuth}
@@ -257,6 +297,27 @@ export const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = () => {
           <span>X</span>
         </button>
       </div>
+
+      {isBusy && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 12,
+            marginTop: 16,
+            padding: "12px 16px",
+            borderRadius: "var(--radius-sm, 8px)",
+            background: "rgba(255, 255, 255, 0.04)",
+            border: "1px solid var(--border-subtle, rgba(255, 255, 255, 0.08))",
+          }}
+        >
+          <Spin size="small" />
+          <span style={{ color: "var(--text-secondary)", fontSize: "0.85rem" }}>
+            {loadingText || "Processando autenticação..."}
+          </span>
+        </div>
+      )}
     </div>
   );
 };

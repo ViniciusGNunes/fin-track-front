@@ -1,0 +1,18 @@
+# FinTrack
+
+> Plataforma moderna de gestão e inteligência financeira pessoal e compartilhada.
+
+## Overview
+FinTrack consolida gestão patrimonial, carteira de investimentos multi-moeda, controle detalhado de despesas, cronogramas de amortização de dívidas e rateio de despesas compartilhadas em um único painel.
+
+## Principais Módulos
+- **Investimentos**: Renda fixa (CDB, Tesouro, CDI), renda variável (ações B3, FIIs, internacional, criptoativos) e controle de saldo livre em conta (Portfolio Cash).
+- **Despesas & Fluxo de Caixa**: Gestão de transações parceladas e recorrentes, categorização inteligente e visão em calendário mensal.
+- **Amortização de Dívidas**: Acompanhamento de saldo devedor, simulação de quitação e cálculo de juros contratados.
+- **Rateios a Receber**: Gestão de despesas divididas com terceiros e liquidação pontual.
+- **Metas Financeiras**: Objetivos de acumulação de patrimônio com ritmo dinâmico.
+
+## Arquitetura & Stack
+- **Frontend**: Next.js 16 (App Router), TypeScript, Ant Design, SCSS Modules.
+- **Backend**: .NET 9 Web API, Entity Framework Core, PostgreSQL, JWT Authentication, OAuth 2.0 (Google, GitHub, Discord, Twitter PKCE).
+- **Segurança**: Autenticação via cookies seguros e bearer token, autorização por inquilino/usuário.

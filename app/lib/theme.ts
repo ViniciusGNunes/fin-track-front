@@ -6,16 +6,16 @@ export const FINTRACK_LOCALE = ptBR;
 export const FINTRACK_THEME: ThemeConfig = {
   algorithm: theme.darkAlgorithm,
   token: {
-    colorPrimary: "#10b981", // Emerald Fintech Primary
+    colorPrimary: "#10b981",
     colorSuccess: "#10b981",
-    colorWarning: "#f59e0b", // Warm Amber
-    colorError: "#f43f5e",   // Rose Red
-    colorInfo: "#38bdf8",    // Sky Blue
-    colorBgBase: "#090d16",  // Canvas background
-    colorBgContainer: "#111827", // Card surface
-    colorBgElevated: "#182234",  // Modal & dropdown surface
+    colorWarning: "#f59e0b",
+    colorError: "#f43f5e",
+    colorInfo: "#38bdf8",
+    colorBgBase: "#090d16",
+    colorBgContainer: "#111827",
+    colorBgElevated: "#182234",
     colorBgLayout: "#090d16",
-    colorBorder: "#243042",      // Crisp border
+    colorBorder: "#243042",
     colorBorderSecondary: "#1e293b",
     colorText: "#f8fafc",
     colorTextSecondary: "#94a3b8",

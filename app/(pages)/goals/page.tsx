@@ -99,7 +99,6 @@ export default function GoalsPage() {
   const [debts, setDebts] = useState<IDebt[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Modals state
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isProgressModalOpen, setIsProgressModalOpen] = useState(false);
@@ -324,10 +323,9 @@ export default function GoalsPage() {
             onToggleCollapse={() => setCollapsed(!collapsed)}
           />
           <Content className={styles.content}>
-            {/* Header */}
             <div className={styles.pageHeader}>
               <div>
-                <h2>Metas Financeiras & Ritmo</h2>
+                <h1>Metas Financeiras & Ritmo</h1>
                 <p>Defina objetivos para aportes mensais, amortização de dívidas, metas de poupança e tetos de gastos.</p>
               </div>
               <div className={styles.headerControls}>
@@ -350,7 +348,6 @@ export default function GoalsPage() {
               </div>
             </div>
 
-            {/* Metric Overview Row */}
             <Row gutter={[16, 16]} className={styles.metricRow}>
               <Col xs={24} sm={12} lg={6}>
                 <Card>
@@ -409,7 +406,6 @@ export default function GoalsPage() {
               </Col>
             </Row>
 
-            {/* View Mode Tabs */}
             <Card className={styles.viewToggleCard}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <span style={{ fontWeight: 600, fontSize: "1rem" }}>Painel de Metas</span>
@@ -425,7 +421,6 @@ export default function GoalsPage() {
               </div>
             </Card>
 
-            {/* Goals Cards Grid */}
             {filteredGoals.length === 0 ? (
               <Card>
                 <Empty
@@ -570,7 +565,6 @@ export default function GoalsPage() {
               </div>
             )}
 
-            {/* Create Goal Modal */}
             <Modal
               title="Definir Nova Meta Financeira"
               open={isAddModalOpen}
@@ -700,7 +694,6 @@ export default function GoalsPage() {
               </Form>
             </Modal>
 
-            {/* Edit Goal Modal */}
             <Modal
               title="Editar Meta Financeira"
               open={isEditModalOpen}
@@ -813,7 +806,6 @@ export default function GoalsPage() {
               </Form>
             </Modal>
 
-            {/* Log Progress Modal */}
             <Modal
               title={`Registrar Progresso: ${selectedGoal?.title || ""}`}
               open={isProgressModalOpen}

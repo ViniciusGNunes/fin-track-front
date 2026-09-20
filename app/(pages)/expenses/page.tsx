@@ -224,7 +224,6 @@ export default function ExpensesPage() {
         const catData = await getCategories();
         if (isMounted) setCategories(catData);
       } catch {
-        // noop
       }
 
       if (isMounted) {
@@ -535,7 +534,7 @@ export default function ExpensesPage() {
           <Content className={styles.content}>
             <div className={styles.pageHeader}>
               <div>
-                <h2>Despesas e Saídas</h2>
+                <h1>Despesas e Saídas</h1>
                 <p>
                   Acompanhe, parcele e planeje suas compras, boletos e contas recorrentes.
                 </p>

@@ -74,7 +74,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <>
-      {/* Desktop Sider */}
       <Sider
         trigger={null}
         collapsible
@@ -97,7 +96,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
         />
       </Sider>
 
-      {/* Mobile Navigation Drawer */}
       <Drawer
         placement="left"
         closable={false}
@@ -140,7 +138,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
         />
       </Drawer>
 
-      {/* Mobile Bottom Navigation Bar */}
       <BottomNav
         selectedKey={selectedKey}
         onOpenMore={() => setMobileOpen(true)}

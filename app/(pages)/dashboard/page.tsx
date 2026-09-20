@@ -66,7 +66,6 @@ export default function DashboardPage() {
     return null;
   });
 
-  // Live state from all modules
   const [goalsSummary, setGoalsSummary] = useState<IGoalSummary | null>(null);
   const [portfolio, setPortfolio] = useState<IPortfolioSummary | null>(null);
   const [debts, setDebts] = useState<IDebtSummary | null>(null);
@@ -106,12 +105,10 @@ export default function DashboardPage() {
     loadDashboardData();
   }, [loadDashboardData]);
 
-  // Calculate monthly expense sum from current transactions
   const monthlyExpenseTotal = recentTransactions
-    .filter((t) => t.type === 1) // Expense
+    .filter((t) => t.type === 1)
     .reduce((acc, t) => acc + (t.totalAmount || 0), 0);
 
-  // Table columns for Recent Transactions Activity
   const activityColumns = [
     {
       title: "Transação",
@@ -190,7 +187,7 @@ export default function DashboardPage() {
           <Content className={styles.content}>
             <div className={styles.pageHeader}>
               <div>
-                <h2>Visão Geral Financeira</h2>
+                <h1>Visão Geral Financeira</h1>
                 <p>Inteligência consolidada em tempo real sobre seus investimentos, dívidas, contas a receber e metas.</p>
               </div>
               <div className={styles.headerActions}>
@@ -200,9 +197,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Top Metrics Row */}
             <Row gutter={[16, 16]} className={styles.metricRow}>
-              {/* 1. Investments Portfolio */}
               <Col xs={24} sm={12} lg={6}>
                 <Card
                   hoverable
@@ -232,7 +227,6 @@ export default function DashboardPage() {
                 </Card>
               </Col>
 
-              {/* 2. Total Remaining Debts */}
               <Col xs={24} sm={12} lg={6}>
                 <Card
                   hoverable
@@ -263,7 +257,6 @@ export default function DashboardPage() {
                 </Card>
               </Col>
 
-              {/* 3. Pending Receivables */}
               <Col xs={24} sm={12} lg={6}>
                 <Card
                   hoverable
@@ -290,7 +283,6 @@ export default function DashboardPage() {
                 </Card>
               </Col>
 
-              {/* 4. Monthly Expenses */}
               <Col xs={24} sm={12} lg={6}>
                 <Card
                   hoverable
@@ -318,9 +310,7 @@ export default function DashboardPage() {
               </Col>
             </Row>
 
-            {/* Middle Section: Recent Activity Table & Goals Progress Card */}
             <Row gutter={[16, 16]} className={styles.middleRow}>
-              {/* Activity Table */}
               <Col xs={24} lg={16}>
                 <Card
                   title="Transações Financeiras Recentes"
@@ -348,7 +338,6 @@ export default function DashboardPage() {
                 </Card>
               </Col>
 
-              {/* Live Goals & Targets Card */}
               <Col xs={24} lg={8}>
                 <Card
                   title="Metas e Objetivos"
@@ -407,9 +396,7 @@ export default function DashboardPage() {
               </Col>
             </Row>
 
-            {/* Bottom Section: Quick Links & Summary Cards */}
             <Row gutter={[16, 16]} className={styles.bottomRow}>
-              {/* Investments Quick Card */}
               <Col xs={24} md={8}>
                 <Card
                   title="Destaques em Investimentos"
@@ -448,7 +435,6 @@ export default function DashboardPage() {
                 </Card>
               </Col>
 
-              {/* Debts Quick Card */}
               <Col xs={24} md={8}>
                 <Card
                   title="Empréstimos e Dívidas"
@@ -487,7 +473,6 @@ export default function DashboardPage() {
                 </Card>
               </Col>
 
-              {/* Shared Receivables Quick Card */}
               <Col xs={24} md={8}>
                 <Card
                   title="Contas Compartilhadas"
