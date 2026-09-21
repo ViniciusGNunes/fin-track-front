@@ -62,3 +62,10 @@ export const resetPassword = async (
   });
   return response.data;
 };
+
+export const resetUserFinances = async (userId?: number): Promise<{ message: string }> => {
+  const userInfo = getUserFromCookiesClient();
+  const uid = userId ?? (userInfo?.id ? Number(userInfo.id) : undefined);
+  const response = await api.post(`/users/reset-finances${uid ? `?userId=${uid}` : ""}`);
+  return response.data;
+};

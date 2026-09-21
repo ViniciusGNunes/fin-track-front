@@ -88,7 +88,6 @@ export default function ReceivablesPage() {
   });
   const [loading, setLoading] = useState(false);
 
-  // Modals state
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedReceivable, setSelectedReceivable] = useState<IReceivable | null>(null);
@@ -270,7 +269,6 @@ export default function ReceivablesPage() {
     setIsEditModalOpen(true);
   };
 
-  // Flattened items table data
   const flatItemsData = summary.receivables.flatMap((r) =>
     r.items.map((i) => ({
       ...i,
@@ -357,10 +355,9 @@ export default function ReceivablesPage() {
             onToggleCollapse={() => setCollapsed(!collapsed)}
           />
           <Content className={styles.content}>
-            {/* Header */}
             <div className={styles.pageHeader}>
               <div>
-                <h2>Contas a Receber e Rateios</h2>
+                <h1>Contas a Receber e Rateios</h1>
                 <p>Gerencie despesas compartilhadas em grupo, monitore quem te deve e controle acertos de contas.</p>
               </div>
               <div className={styles.headerControls}>
@@ -382,7 +379,6 @@ export default function ReceivablesPage() {
               </div>
             </div>
 
-            {/* Metric Overview Row */}
             <Row gutter={[16, 16]} className={styles.metricRow}>
               <Col xs={24} sm={12} lg={6}>
                 <Card>
@@ -441,7 +437,6 @@ export default function ReceivablesPage() {
               </Col>
             </Row>
 
-            {/* View Mode Toggle */}
             <Card className={styles.viewToggleCard}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <span style={{ fontWeight: 600, fontSize: "1rem" }}>Contas e Saldos Compartilhados</span>
@@ -457,7 +452,6 @@ export default function ReceivablesPage() {
               </div>
             </Card>
 
-            {/* View 1: Shared Bills Cards Grid */}
             {viewMode === "cards" && (
               <div>
                 {summary.receivables.length === 0 ? (
@@ -483,12 +477,10 @@ export default function ReceivablesPage() {
                       return (
                         <div
                           key={rec.receivableID}
-                          className={`${styles.billCard} ${
-                            isSettled ? styles.settledCard : styles.pendingCard
-                          }`}
+                          className={`${styles.billCard} ${isSettled ? styles.settledCard : styles.pendingCard
+                            }`}
                         >
                           <div>
-                            {/* Header */}
                             <div className={styles.tileHeader}>
                               <div className={styles.tileTitleGroup}>
                                 <div className={styles.tileTitle}>{rec.title}</div>
@@ -508,7 +500,6 @@ export default function ReceivablesPage() {
                               )}
                             </div>
 
-                            {/* Body */}
                             <div className={styles.tileBody}>
                               <div className={styles.balanceLabel}>Valor Total</div>
                               <div className={styles.tileValue}>
@@ -528,7 +519,6 @@ export default function ReceivablesPage() {
                               </div>
                             </div>
 
-                            {/* Participants */}
                             <div className={styles.participantsSection}>
                               <div className={styles.sectionTitle}>
                                 <span>Participantes ({rec.items.length})</span>
@@ -573,7 +563,6 @@ export default function ReceivablesPage() {
                             </div>
                           </div>
 
-                          {/* Footer */}
                           <div className={styles.cardFooter}>
                             <span>
                               {paidCount} de {rec.items.length} pagos
@@ -603,7 +592,6 @@ export default function ReceivablesPage() {
               </div>
             )}
 
-            {/* View 2: Grouped by Friend / Debtor */}
             {viewMode === "people" && (
               <div>
                 {summary.debtors.length === 0 ? (
@@ -671,7 +659,6 @@ export default function ReceivablesPage() {
               </div>
             )}
 
-            {/* View 3: All Items Tabular List */}
             {viewMode === "table" && (
               <Card>
                 <Table
@@ -684,7 +671,6 @@ export default function ReceivablesPage() {
               </Card>
             )}
 
-            {/* Add Shared Expense Modal */}
             <Modal
               title="Criar Rateio / Despesa"
               open={isAddModalOpen}
@@ -752,7 +738,6 @@ export default function ReceivablesPage() {
                   </Col>
                 </Row>
 
-                {/* Split Calculation Helper */}
                 <div className={styles.splitHelperBar}>
                   <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>
                     Ação rápida: divide automaticamente o valor restante entre os participantes.
@@ -766,7 +751,6 @@ export default function ReceivablesPage() {
                   </Button>
                 </div>
 
-                {/* Dynamic Participants List */}
                 <Form.List name="items">
                   {(fields, { add, remove }) => (
                     <div>
@@ -831,7 +815,6 @@ export default function ReceivablesPage() {
               </Form>
             </Modal>
 
-            {/* Modal 2: Edit Shared Bill */}
             <Modal
               title="Editar Rateio"
               open={isEditModalOpen}

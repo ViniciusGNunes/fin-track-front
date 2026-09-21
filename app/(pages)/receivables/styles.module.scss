@@ -28,6 +28,7 @@
       margin-bottom: 16px;
     }
 
+    h1,
     h2 {
       margin: 0;
       color: var(--text-primary, #f8fafc);
@@ -96,7 +97,6 @@
   margin-bottom: 20px;
 }
 
-// ─── Shared Bills Cards Grid ────────────────────────────────────────────────
 .billsGrid {
   display: flex;
   flex-wrap: wrap;
@@ -202,7 +202,6 @@
   margin-top: 4px;
 }
 
-// ─── Participants Section ───────────────────────────────────────────────────
 .participantsSection {
   margin-top: 4px;
 }
@@ -259,7 +258,6 @@
   font-variant-numeric: tabular-nums;
 }
 
-// ─── Card Footer ────────────────────────────────────────────────────────────
 .cardFooter {
   display: flex;
   justify-content: space-between;
@@ -271,7 +269,6 @@
   margin-top: 4px;
 }
 
-// ─── Debtor Summary Cards ───────────────────────────────────────────────────
 .debtorsGrid {
   display: flex;
   flex-wrap: wrap;
@@ -340,7 +337,6 @@
   }
 }
 
-// ─── Split Helper Bar (Modal) ───────────────────────────────────────────────
 .splitHelperBar {
   background: var(--bg-surface-raised, #182234);
   border: 1px dashed var(--border-subtle, #1e293b);

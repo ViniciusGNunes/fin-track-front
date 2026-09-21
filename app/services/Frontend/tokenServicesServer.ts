@@ -1,4 +1,3 @@
-// app/services/Backend/tokenServicesServer.ts
 import "server-only";
 import { cookies } from "next/headers";
 import { jwtDecode } from "jwt-decode";
@@ -10,9 +9,6 @@ interface JwtPayload {
   name: string;
 }
 
-/**
- * Reads and decodes the JWT cookie on the SERVER (Server Components, Route Handlers, Server Actions).
- */
 export async function getUserFromCookiesServer(
   cookieName: string = "X-Access-Token",
 ): Promise<UserCookieInfo | null> {

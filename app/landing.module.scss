@@ -6,7 +6,6 @@
   position: relative;
 }
 
-/* Subtle, purposeful top illumination */
 .ambientIllumination {
   position: absolute;
   top: 0;
@@ -20,7 +19,6 @@
   z-index: 0;
 }
 
-/* Navigation Bar */
 .navbar {
   position: sticky;
   top: 0;
@@ -94,7 +92,6 @@
   }
 }
 
-/* Page Container */
 .container {
   max-width: 1200px;
   margin: 0 auto;
@@ -107,7 +104,6 @@
   }
 }
 
-/* Hero Section */
 .heroSection {
   padding: var(--space-16) 0 var(--space-12);
   text-align: center;
@@ -182,7 +178,6 @@
     }
   }
 
-  /* Structured Mock Preview */
   .dashboardPreview {
     max-width: 1040px;
     margin: 0 auto;
@@ -271,7 +266,6 @@
   }
 }
 
-/* Features Section */
 .featuresSection {
   padding: var(--space-16) 0 var(--space-12);
 
@@ -358,7 +352,6 @@
 }
 
 
-/* Call to Action Banner */
 .ctaBanner {
   margin: var(--space-16) 0;
   background: var(--bg-surface);
@@ -402,7 +395,6 @@
   }
 }
 
-/* Footer */
 .footer {
   border-top: 1px solid var(--border-subtle);
   padding: var(--space-8) 0;

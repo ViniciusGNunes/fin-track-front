@@ -38,7 +38,6 @@
   }
 }
 
-// Hide classical desktop sider on mobile so it doesn't take 80px or 240px
 .desktopSider {
   @media (max-width: 768px) {
     display: none !important;
@@ -49,7 +48,6 @@
   }
 }
 
-// Mobile Drawer Styling
 .mobileDrawerRoot {
   :global(.ant-drawer-content) {
     background: var(--bg-surface-subtle, #0f172a) !important;

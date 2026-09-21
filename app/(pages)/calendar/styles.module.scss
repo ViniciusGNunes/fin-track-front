@@ -1,4 +1,3 @@
-/* ─── Layout shell ─────────────────────────────────────────────── */
 .layout {
   min-height: 100vh;
   background-color: var(--bg-canvas, #090d16);
@@ -9,7 +8,6 @@
   background: var(--bg-canvas, #090d16);
 }
 
-/* ─── Page header ──────────────────────────────────────────────── */
 .content {
   margin: 24px;
 
@@ -31,6 +29,7 @@
     margin-bottom: 16px;
   }
 
+  h1,
   h2 {
     margin: 0;
     color: var(--text-primary, #f8fafc);
@@ -50,12 +49,10 @@
   }
 }
 
-/* ─── Metrics row ──────────────────────────────────────────────── */
 .metricRow {
   margin-bottom: 24px;
 }
 
-/* ─── Controls bar ─────────────────────────────────────────────── */
 .titleSelect {
   min-width: 140px;
   margin-right: 8px;
@@ -77,14 +74,12 @@
   user-select: none;
 }
 
-/* ─── Calendar card wrapper ────────────────────────────────────── */
 .calendarCard {
   background: var(--bg-surface, #111827);
   border: 1px solid #26354a;
   border-radius: 10px;
 }
 
-/* ─── Period header (e.g. "Aug 2026") ──────────────────────────── */
 .periodLabel {
   display: flex;
   align-items: center;
@@ -101,7 +96,6 @@
   }
 }
 
-/* ─── Year view: month section divider ─────────────────────────── */
 .yearMonthBlock {
   margin-bottom: 28px;
 }
@@ -115,7 +109,6 @@
   border-bottom: 1px solid var(--border-subtle, #1e293b);
 }
 
-/* ─── Day card (masonry item) ──────────────────────────────────── */
 .dayCard {
   background: var(--bg-surface, #111827);
   border: 1px solid #2d3f56;
@@ -131,7 +124,6 @@
   }
 }
 
-/* Today gets a clean green border without glow using project standard green */
 .dayCardToday {
   border-color: var(--color-success, #10b981);
 
@@ -140,7 +132,6 @@
   }
 }
 
-/* ─── Day card header ──────────────────────────────────────────── */
 .dayCardHeader {
   display: flex;
   align-items: center;
@@ -182,7 +173,6 @@
   gap: 8px;
 }
 
-/* total badge */
 .dayTotal {
   font-size: 0.72rem;
   font-weight: 700;
@@ -220,7 +210,6 @@
   text-align: center;
 }
 
-/* ─── Expense chip ─────────────────────────────────────────────── */
 .expenseChip {
   display: flex;
   align-items: flex-start;
@@ -250,7 +239,6 @@
     transform: translateY(0);
   }
 
-  /* status colour variants */
   &.statusPending {
     background: rgba(250, 173, 20, 0.1);
     border-color: rgba(250, 173, 20, 0.25);
@@ -309,7 +297,6 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* ─── Modal overrides ──────────────────────────────────────────── */
 .modalChipPreview {
   display: flex;
   align-items: center;

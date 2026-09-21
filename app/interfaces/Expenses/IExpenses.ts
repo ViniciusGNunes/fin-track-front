@@ -5,8 +5,8 @@ export interface IExpenseRead {
   transactionID: number;
   amount: number;
   paidAmount: number;
-  remainingAmount: number; // Calculated property returned by JSON serializer
-  dueDate: string;         // ISO 8601 string (e.g., "2026-08-07T00:00:00Z")
+  remainingAmount: number;
+  dueDate: string;
   paidDate?: string | null;
   currentInstallment: number;
   status: ExpenseStatus;

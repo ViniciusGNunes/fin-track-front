@@ -53,6 +53,7 @@ import {
 import {
   getUserProfile,
   updateUserProfile,
+  resetUserFinances,
   IUserProfile,
 } from "@/app/services/Backend/UserService";
 import { getPortfolioSummary } from "@/app/services/Backend/InvestmentService";
@@ -97,11 +98,9 @@ export default function SettingsPage() {
   const [categories, setCategories] = useState<ICategory[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Category modal
   const [isCatModalOpen, setIsCatModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<ICategory | null>(null);
 
-  // Forms
   const [profileForm] = Form.useForm();
   const [prefForm] = Form.useForm();
   const [catForm] = Form.useForm();
@@ -249,6 +248,22 @@ export default function SettingsPage() {
     }
   };
 
+  const [resettingFinances, setResettingFinances] = useState(false);
+
+  const handleResetFinances = async () => {
+    try {
+      setResettingFinances(true);
+      await resetUserFinances(userInfo?.id ? Number(userInfo.id) : undefined);
+      message.success("Todos os registros financeiros foram redefinidos com sucesso!");
+      await loadData();
+    } catch (err) {
+      console.error("Failed to reset finances", err);
+      message.error("Não foi possível redefinir os registros financeiros.");
+    } finally {
+      setResettingFinances(false);
+    }
+  };
+
   return (
     <ConfigProvider theme={FINTRACK_THEME} locale={FINTRACK_LOCALE}>
       <Layout className={styles.layout}>
@@ -265,7 +280,7 @@ export default function SettingsPage() {
           <Content className={styles.content}>
             <div className={styles.pageHeader}>
               <div>
-                <h2>Configurações do Sistema</h2>
+                <h1>Configurações do Sistema</h1>
                 <p>Gerencie seu perfil, preferências monetárias, categorias de despesas e exportação de dados.</p>
               </div>
             </div>
@@ -571,9 +586,12 @@ export default function SettingsPage() {
                             description="Isso removerá seus registros em todos os módulos."
                             okText="Sim, Limpar"
                             cancelText="Cancelar"
-                            okButtonProps={{ danger: true }}
+                            okButtonProps={{ danger: true, loading: resettingFinances }}
+                            onConfirm={handleResetFinances}
                           >
-                            <Button danger>Redefinir Registros Financeiros</Button>
+                            <Button danger loading={resettingFinances}>
+                              Redefinir Registros Financeiros
+                            </Button>
                           </Popconfirm>
                         </Space>
                       </Card>
@@ -583,7 +601,6 @@ export default function SettingsPage() {
               ]}
             />
 
-            {/* Category Create/Edit Modal */}
             <Modal
               title={editingCategory ? "Editar Categoria" : "Nova Categoria"}
               open={isCatModalOpen}

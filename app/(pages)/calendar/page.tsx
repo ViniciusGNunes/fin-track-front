@@ -60,15 +60,12 @@ import { camelToNormalCase, EnumToList, IEnumOptions, getTimeCategoryLabel, getT
 const { Content } = Layout;
 const { Option } = Select;
 
-/* ─── Constants ─────────────────────────────────────────────────── */
 const WEEKDAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 const MONTH_NAMES = [
   "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
   "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
 ];
-// Masonry column config per view
 
-/* ─── Types ─────────────────────────────────────────────────────── */
 interface CalendarExpenseItem {
   key: string;
   expenseId: number;
@@ -78,7 +75,7 @@ interface CalendarExpenseItem {
   categoryId: number;
   paymentMethod: PaymentMethod;
   rawAmount: number;
-  dueDate: string; // "YYYY-MM-DD"
+  dueDate: string;
   status: ExpenseStatus;
   isRecurrent: boolean;
   transactionStatus: TransactionStatus;
@@ -92,7 +89,6 @@ interface RealDay {
   items: CalendarExpenseItem[];
 }
 
-/* ─── Date helpers ───────────────────────────────────────────────── */
 function toDateStr(d: Date): string {
   const year = d.getFullYear();
   const month = String(d.getMonth() + 1).padStart(2, "0");
@@ -110,10 +106,6 @@ function today(): Date {
   return new Date(n.getFullYear(), n.getMonth(), n.getDate());
 }
 
-/**
- * Returns the exact [start, end] date window for the given
- * TimeCategory × TimePeriod combination.
- */
 function getPeriodWindow(
   timeCat: TimeCategory,
   timePer: TimePeriod
@@ -178,11 +170,6 @@ function getPeriodWindow(
   }
 }
 
-/**
- * Builds an array of days within the period window.
- * If hideEmptyDays is false (default), all days in the period are returned.
- * If hideEmptyDays is true, only days with at least one expense item are returned.
- */
 function buildRealDays(
   timeCat: TimeCategory,
   timePer: TimePeriod,
@@ -199,7 +186,6 @@ function buildRealDays(
     const ds = toDateStr(cur);
     const isToday = ds === todayStr;
     const items = itemsByDate.get(ds) || [];
-    // Always include today or days with expenses when hideEmptyDays is on
     if (!hideEmptyDays || items.length > 0 || isToday) {
       days.push({ date: new Date(cur), dateStr: ds, isToday, items });
     }
@@ -209,7 +195,6 @@ function buildRealDays(
   return days;
 }
 
-/* ─── Map transactions → flat items ─────────────────────────────── */
 function mapToCalendarItems(txs: ITransactionRead[]): CalendarExpenseItem[] {
   const items: CalendarExpenseItem[] = [];
   for (const t of txs) {
@@ -252,7 +237,6 @@ function mapToCalendarItems(txs: ITransactionRead[]): CalendarExpenseItem[] {
   return items;
 }
 
-/* ─── Status helpers ─────────────────────────────────────────────── */
 function statusChipClass(status: ExpenseStatus): string {
   switch (status) {
     case ExpenseStatus.Paid: return styles.statusPaid;
@@ -281,7 +265,6 @@ function statusTagColor(status: ExpenseStatus): string {
   }
 }
 
-/* ─── Component ──────────────────────────────────────────────────── */
 export default function CalendarPage() {
   const [collapsed, setCollapsed] = useState(false);
 
@@ -290,15 +273,12 @@ export default function CalendarPage() {
   const [loadingTable, setLoadingTable] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  /* Create Expense modal */
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
 
-  /* Edit modal */
   const [editingItem, setEditingItem] = useState<CalendarExpenseItem | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editForm] = Form.useForm();
 
-  /* Time filter options */
   const paymentOptions = useMemo(() => EnumToList(PaymentMethod), []);
   const timeCategoryOptions = useMemo(() => EnumToList(TimeCategory), []);
   const timePeriodOptions = useMemo(() => EnumToList(TimePeriod), []);
@@ -316,7 +296,6 @@ export default function CalendarPage() {
   const [selectedPeriod, setSelectedPeriod] = useState<IEnumOptions>(initialPeriod);
   const [hideEmptyDays, setHideEmptyDays] = useState(false);
 
-  /* ── Fetch ─────────────────────────────────────────────────────── */
   const fetchData = useCallback(async (catVal: number, perVal: number) => {
     try {
       setLoadingTable(true);
@@ -328,14 +307,13 @@ export default function CalendarPage() {
     } finally {
       setLoadingTable(false);
     }
-  }, []); // no state deps — callers always pass values explicitly
+  }, []);
 
   useEffect(() => {
     getCategories().then(setCategories).catch(() => { });
     fetchData(TimeCategory.Current, TimePeriod.Month);
-  }, [fetchData]); // run only once on mount — fetchData is stable
+  }, [fetchData]);
 
-  /* ── Derived data ──────────────────────────────────────────────── */
   const calendarItems = useMemo(() => mapToCalendarItems(transactions), [transactions]);
 
   const itemsByDate = useMemo(() => {
@@ -365,7 +343,6 @@ export default function CalendarPage() {
     return { xs: 1, sm: 2, md: 3, lg: 4, xl: 5 };
   }, [selectedPeriod.value]);
 
-  /* Stats */
   const totalPeriodExpenses = useMemo(() =>
     transactions.reduce((acc, t) => {
       if (t.expenses?.length > 0) return acc + t.expenses.reduce((s, e) => s + Number(e.amount || 0), 0);
@@ -386,7 +363,6 @@ export default function CalendarPage() {
       return acc;
     }, 0), [transactions]);
 
-  /* ── Actions ───────────────────────────────────────────────────── */
   const openEditModal = (item: CalendarExpenseItem) => {
     setEditingItem(item);
     editForm.setFieldsValue({
@@ -465,7 +441,6 @@ export default function CalendarPage() {
     }
   };
 
-  /* ── Period label ─────────────────────────────────────────────── */
   const periodRangeLabel = useMemo(() => {
     const { start, end } = getPeriodWindow(
       Number(selectedCategory.value) as TimeCategory,
@@ -481,7 +456,6 @@ export default function CalendarPage() {
 
   const realDayCount = realDays.length;
 
-  /* ── Year view: group by month ───────────────────────────────── */
   const yearMonthGroups = useMemo(() => {
     if (Number(selectedPeriod.value) !== TimePeriod.Year) return null;
     type Group = { label: string; days: RealDay[] };
@@ -495,7 +469,6 @@ export default function CalendarPage() {
     return groups;
   }, [realDays, selectedPeriod.value]);
 
-  /* ── Render chip ─────────────────────────────────────────────── */
   const renderChip = (item: CalendarExpenseItem) => (
     <div
       key={item.key}
@@ -508,7 +481,6 @@ export default function CalendarPage() {
     </div>
   );
 
-  /* ── Render day card (masonry item) ──────────────────────────── */
   const renderDayCard = (day: RealDay) => {
     const hasExpenses = day.items.length > 0;
     const dayTotal = day.items.reduce((s, i) => s + i.rawAmount, 0);
@@ -541,7 +513,6 @@ export default function CalendarPage() {
     );
   };
 
-  /* ── Render masonry ─────────────────────────────────────────── */
   const renderMasonry = () => {
     if (realDays.length === 0) {
       return (
@@ -591,16 +562,14 @@ export default function CalendarPage() {
           />
 
           <Content className={styles.content}>
-            {/* Page header */}
             <div className={styles.pageHeader}>
               <div>
-                <h2>Calendário de Despesas</h2>
+                <h1>Calendário de Despesas</h1>
                 <p>Visualize suas contas vencidas, atuais e futuras distribuídas pelo calendário.</p>
               </div>
               <LogExpenseButton onClick={() => setIsLogModalOpen(true)} />
             </div>
 
-            {/* Stat cards */}
             <Row gutter={[16, 16]} className={styles.metricRow}>
               <Col xs={24} sm={8}>
                 <Card variant="borderless">
@@ -636,7 +605,6 @@ export default function CalendarPage() {
               </Col>
             </Row>
 
-            {/* Calendar card */}
             <Card
               className={styles.calendarCard}
               title={
@@ -710,7 +678,6 @@ export default function CalendarPage() {
               }
               variant="borderless"
             >
-              {/* Period range label */}
               <div className={styles.periodLabel}>
                 <CalendarOutlined />
                 {periodRangeLabel}
@@ -726,7 +693,6 @@ export default function CalendarPage() {
         </Layout>
       </Layout>
 
-      {/* ── Edit / Action Modal ─────────────────────────────────── */}
       <Modal
         title={`Editar: ${editingItem?.transactionName || ""}`}
         open={isEditModalOpen}
@@ -736,7 +702,6 @@ export default function CalendarPage() {
         destroyOnHidden
         style={{ top: 40 }}
       >
-        {/* Info banner */}
         {editingItem && (
           <div className={styles.modalChipPreview}>
             <div className={styles.chipPreviewDetails}>
@@ -810,7 +775,6 @@ export default function CalendarPage() {
             </Col>
           </Row>
 
-          {/* Footer action buttons */}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8 }}>
             <Space>
               {editingItem && editingItem.expenseId > 0 &&
@@ -873,7 +837,6 @@ export default function CalendarPage() {
         </Form>
       </Modal>
 
-      {/* ── Log New Expense Modal ─────────────────────────────── */}
       <LogExpenseModal
         open={isLogModalOpen}
         onCancel={() => setIsLogModalOpen(false)}
