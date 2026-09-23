@@ -1,15 +1,10 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useGoogleLogin } from "@react-oauth/google";
 import { message, Spin } from "antd";
-import { useRouter } from "next/navigation";
-import Cookies from "js-cookie";
-import { api } from "@/app/lib/api";
 import styles from "./styles.module.scss";
 
 interface SocialAuthButtonsProps {
-  text?: "signin_with" | "signup_with" | "continue_with";
   onLoadingChange?: (loading: boolean, title?: string, description?: string) => void;
 }
 
@@ -44,11 +39,8 @@ function base64UrlEncode(buffer: ArrayBuffer): string {
 }
 
 export const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = ({
-  text = "continue_with",
   onLoadingChange,
 }) => {
-  const router = useRouter();
-  const [googleLoading, setGoogleLoading] = useState(false);
   const [redirectingProvider, setRedirectingProvider] = useState<string | null>(
     null
   );
@@ -57,7 +49,6 @@ export const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = ({
   useEffect(() => {
     const handlePageShow = () => {
       setRedirectingProvider(null);
-      setGoogleLoading(false);
       setLoadingText("");
       onLoadingChange?.(false);
     };
@@ -73,71 +64,25 @@ export const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = ({
   const discordClientId = process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID;
   const twitterClientId = process.env.NEXT_PUBLIC_TWITTER_CLIENT_ID;
 
-  const triggerGoogleLogin = useGoogleLogin({
-    flow: "auth-code",
-    onSuccess: async (codeResponse) => {
-      try {
-        setGoogleLoading(true);
-        setLoadingText("Conectando com o Google...");
-        onLoadingChange?.(
-          true,
-          "Conectando com o Google...",
-          "Validando suas credenciais e preparando o painel..."
-        );
-
-        const redirectUri = window.location.origin;
-        const res = await api.post("/users/google-login", {
-          idToken: codeResponse.code,
-          code: codeResponse.code,
-          redirectUri,
-        });
-
-        if (res.data?.token) {
-          Cookies.set("X-Access-Token", res.data.token, {
-            expires: 7,
-            secure: window.location.protocol === "https:",
-            sameSite: "lax",
-            path: "/",
-          });
-
-          message.success(res.data.message || "Autenticado com sucesso!");
-          onLoadingChange?.(
-            true,
-            "Login realizado com sucesso!",
-            "Redirecionando para o painel..."
-          );
-          router.push("/dashboard");
-        } else {
-          message.error("Resposta de autenticação inválida.");
-          setGoogleLoading(false);
-          setLoadingText("");
-          onLoadingChange?.(false);
-        }
-      } catch (error: unknown) {
-        console.error("Google login failed:", error);
-        const err = error as { response?: { data?: { message?: string } } };
-        const msg =
-          err?.response?.data?.message || "Falha ao autenticar com o Google.";
-        message.error(msg);
-        setGoogleLoading(false);
-        setLoadingText("");
-        onLoadingChange?.(false);
-      }
-    },
-    onError: () => {
-      setGoogleLoading(false);
-      setLoadingText("");
-      onLoadingChange?.(false);
-      message.error("Falha na autenticação com o Google. Tente novamente.");
-    },
-  });
-
   const handleGoogleAuth = () => {
     if (!googleClientId) {
       message.info("Configure NEXT_PUBLIC_GOOGLE_CLIENT_ID no .env para ativar o login com Google.");
       return;
     }
-    triggerGoogleLogin();
+    setRedirectingProvider("google");
+    setLoadingText("Redirecionando para o Google...");
+    onLoadingChange?.(
+      true,
+      "Redirecionando para o Google...",
+      "Aguarde um momento enquanto você é redirecionado para autorização..."
+    );
+    const redirectUri = `${window.location.origin}/oauth/callback?provider=google`;
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${googleClientId}&redirect_uri=${encodeURIComponent(
+      redirectUri
+    )}&response_type=code&scope=${encodeURIComponent(
+      "openid email profile"
+    )}&access_type=offline&prompt=consent`;
+    window.location.href = authUrl;
   };
 
   const handleGitHubAuth = () => {
@@ -221,7 +166,7 @@ export const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = ({
     }
   };
 
-  const isBusy = Boolean(redirectingProvider) || googleLoading;
+  const isBusy = Boolean(redirectingProvider);
 
   return (
     <div className={styles.socialAuthContainer}>

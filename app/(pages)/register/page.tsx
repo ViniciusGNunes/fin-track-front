@@ -53,7 +53,6 @@ export default function Page() {
 
                 <div style={{ marginTop: 8, marginBottom: 8 }}>
                   <SocialAuthButtons
-                    text="signup_with"
                     onLoadingChange={(loading, title, description) =>
                       setLoadingState({ loading, title, description })
                     }
