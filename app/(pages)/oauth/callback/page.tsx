@@ -14,14 +14,19 @@ function OAuthCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
+  const [status, setStatus] = useState<"loading" | "success" | "error">(
+    "loading",
+  );
   const [errorMessage, setErrorMessage] = useState<string>("");
 
   useEffect(() => {
     let isMounted = true;
 
     async function handleExchange() {
-      const provider = searchParams.get("provider");
+      const providerParam = searchParams.get("provider");
+      const provider =
+        providerParam ??
+        (searchParams.get("state") === "google" ? "google" : null);
       const code = searchParams.get("code");
       const errorParam = searchParams.get("error");
       const errorDesc = searchParams.get("error_description");
@@ -29,15 +34,21 @@ function OAuthCallbackContent() {
       if (errorParam) {
         if (!isMounted) return;
         setStatus("error");
-        let translatedError = "O usuário ou o provedor de autenticação recusou o pedido de autorização.";
+        let translatedError =
+          "O usuário ou o provedor de autenticação recusou o pedido de autorização.";
         if (errorDesc) {
-          if (errorDesc.toLowerCase().includes("denied the request") || errorDesc.toLowerCase().includes("access_denied")) {
-            translatedError = "O usuário ou o servidor de autorização recusou a solicitação de acesso.";
+          if (
+            errorDesc.toLowerCase().includes("denied the request") ||
+            errorDesc.toLowerCase().includes("access_denied")
+          ) {
+            translatedError =
+              "O usuário ou o servidor de autorização recusou a solicitação de acesso.";
           } else {
             translatedError = errorDesc;
           }
         } else if (errorParam === "access_denied") {
-          translatedError = "Acesso negado: a autorização foi cancelada ou recusada.";
+          translatedError =
+            "Acesso negado: a autorização foi cancelada ou recusada.";
         } else {
           translatedError = `Autenticação cancelada ou recusada (${errorParam}).`;
         }
@@ -48,18 +59,23 @@ function OAuthCallbackContent() {
       if (!provider || !code) {
         if (!isMounted) return;
         setStatus("error");
-        setErrorMessage("Parâmetros de autenticação ausentes na requisição de retorno.");
+        setErrorMessage(
+          "Parâmetros de autenticação ausentes na requisição de retorno.",
+        );
         return;
       }
 
       try {
         let codeVerifier: string | undefined = undefined;
         if (provider === "twitter") {
-          codeVerifier = sessionStorage.getItem("fintrack_twitter_verifier") || undefined;
+          codeVerifier =
+            sessionStorage.getItem("fintrack_twitter_verifier") || undefined;
           sessionStorage.removeItem("fintrack_twitter_verifier");
         }
 
-        const redirectUri = `${window.location.origin}/oauth/callback?provider=${provider}`;
+        const redirectUri = providerParam
+          ? `${window.location.origin}/oauth/callback?provider=${provider}`
+          : `${window.location.origin}/oauth/callback`;
 
         const response = await api.post("/users/oauth-login", {
           provider,
@@ -118,7 +134,10 @@ function OAuthCallbackContent() {
       {status === "loading" && (
         <div style={{ padding: "32px 0" }}>
           <Spin size="large" />
-          <Title level={4} style={{ color: "var(--text-primary)", marginTop: 24 }}>
+          <Title
+            level={4}
+            style={{ color: "var(--text-primary)", marginTop: 24 }}
+          >
             Conectando à sua conta...
           </Title>
           <Text style={{ color: "var(--text-secondary)" }}>
@@ -130,7 +149,14 @@ function OAuthCallbackContent() {
       {status === "success" && (
         <div style={{ padding: "32px 0" }}>
           <Spin size="large" />
-          <Title level={4} style={{ color: "var(--color-success, #52c41a)", marginTop: 24, marginBottom: 8 }}>
+          <Title
+            level={4}
+            style={{
+              color: "var(--color-success, #52c41a)",
+              marginTop: 24,
+              marginBottom: 8,
+            }}
+          >
             Login realizado com sucesso!
           </Title>
           <Text style={{ color: "var(--text-secondary)" }}>
@@ -142,7 +168,11 @@ function OAuthCallbackContent() {
       {status === "error" && (
         <Result
           status="error"
-          title={<span style={{ color: "var(--text-primary)" }}>Falha na autenticação</span>}
+          title={
+            <span style={{ color: "var(--text-primary)" }}>
+              Falha na autenticação
+            </span>
+          }
           subTitle={
             <span style={{ color: "var(--text-secondary)" }}>
               {errorMessage}
