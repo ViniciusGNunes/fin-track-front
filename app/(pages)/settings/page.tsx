@@ -12,7 +12,6 @@ import {
   Form,
   Input,
   Select,
-  Switch,
   Space,
   Avatar,
   message,
@@ -25,7 +24,6 @@ import {
   UserOutlined,
   SettingOutlined,
   AppstoreOutlined,
-  BellOutlined,
   DownloadOutlined,
   PlusOutlined,
   EditOutlined,
@@ -497,54 +495,6 @@ export default function SettingsPage() {
                           </div>
                         ))}
                       </div>
-                    </Card>
-                  ),
-                },
-                {
-                  key: "notifications",
-                  label: (
-                    <span>
-                      <BellOutlined /> Alertas & Notificações
-                    </span>
-                  ),
-                  children: (
-                    <Card className={styles.settingsCard} style={{ maxWidth: 700 }}>
-                      <div className={styles.cardSectionTitle}>
-                        <BellOutlined /> Preferências de Notificação
-                      </div>
-                      <Space direction="vertical" size="large" style={{ width: "100%" }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <div>
-                            <div style={{ fontWeight: 600, color: "var(--text-primary)" }}>Alertas de Vencimento de Despesas</div>
-                            <div style={{ color: "var(--text-secondary)", fontSize: "0.85rem" }}>Notificar 3 dias antes do vencimento de faturas e boletos</div>
-                          </div>
-                          <Switch defaultChecked />
-                        </div>
-
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <div>
-                            <div style={{ fontWeight: 600, color: "var(--text-primary)" }}>Lembretes de Pagamento de Dívidas</div>
-                            <div style={{ color: "var(--text-secondary)", fontSize: "0.85rem" }}>Lembretes de parcelas de empréstimos e financiamentos</div>
-                          </div>
-                          <Switch defaultChecked />
-                        </div>
-
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <div>
-                            <div style={{ fontWeight: 600, color: "var(--text-primary)" }}>Acompanhamento de Rateios</div>
-                            <div style={{ color: "var(--text-secondary)", fontSize: "0.85rem" }}>Lembretes de cobranças pendentes de despesas compartilhadas</div>
-                          </div>
-                          <Switch defaultChecked />
-                        </div>
-
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <div>
-                            <div style={{ fontWeight: 600, color: "var(--text-primary)" }}>Notificações de Ritmo de Metas</div>
-                            <div style={{ color: "var(--text-secondary)", fontSize: "0.85rem" }}>Alertar quando os gastos mensais ultrapassarem o teto planejado</div>
-                          </div>
-                          <Switch defaultChecked />
-                        </div>
-                      </Space>
                     </Card>
                   ),
                 },

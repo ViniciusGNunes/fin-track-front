@@ -5,7 +5,6 @@ import { Layout, Button, Space, Avatar, Tooltip, Popconfirm, message } from "ant
 import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
-  BellOutlined,
   UserOutlined,
   LogoutOutlined,
 } from "@ant-design/icons";
@@ -90,14 +89,6 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       <Space size="middle" className={styles.headerActions}>
-        <Tooltip title="Notificações">
-          <Button
-            type="text"
-            icon={<BellOutlined />}
-            style={{ color: "#94a3b8" }}
-          />
-        </Tooltip>
-
         <Space
           style={{ cursor: "pointer" }}
           onClick={() => router.push("/settings")}

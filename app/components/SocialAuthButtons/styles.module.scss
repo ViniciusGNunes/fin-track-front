@@ -6,8 +6,8 @@
 
 .oauthGrid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
+  grid-template-columns: 1fr;
+  gap: 16px;
   width: 100%;
 }
 
@@ -70,9 +70,3 @@
   box-shadow: 0 0 16px rgba(255, 255, 255, 0.18);
 }
 
-@media (max-width: 380px) {
-  .oauthGrid {
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
-}
